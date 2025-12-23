@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, Prediction, Driver } from '../types';
 import { DRIVERS } from '../constants';
-import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock } from 'lucide-react';
+import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3 } from 'lucide-react';
 
 interface PredictionsProps {
   gp: RaceGP;
@@ -18,20 +18,24 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   const [activeSessionIdx, setActiveSessionIdx] = useState(0);
   const activeSession = sessions[activeSessionIdx];
   
-  // VERIFICAÇÃO DE TRAVA: Já existe palpite salvo para esta sessão?
-  const isAlreadyPredicted = savedPredictions.some(p => p.session === activeSession);
+  // O palpite já existe?
+  const currentPrediction = savedPredictions.find(p => p.session === activeSession);
+  const isAlreadyPredicted = !!currentPrediction;
   const isSessionOpen = gp.sessionStatus[activeSession] !== false;
   
-  // A edição só é permitida se a sessão estiver aberta E o usuário ainda não palpitou
-  const isEditable = isSessionOpen && !isAlreadyPredicted;
+  // Estado para permitir edição manual após já ter enviado
+  const [manualEditMode, setManualEditMode] = useState(false);
   
-  const currentPrediction = savedPredictions.find(p => p.session === activeSession);
+  // A edição é permitida se: (Sessão Aberta) E (Ainda não palpitou OU clicou em Alterar)
+  const isEditable = isSessionOpen && (!isAlreadyPredicted || manualEditMode);
+  
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>(currentPrediction?.top5 || []);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const pred = savedPredictions.find(p => p.session === activeSession);
     setSelectedDrivers(pred?.top5 || []);
+    setManualEditMode(false); // Resetar modo edição ao mudar de aba/sessão
   }, [activeSession, savedPredictions]);
 
   const toggleDriver = (id: string) => {
@@ -54,16 +58,16 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
     if (selectedDrivers.length === 5 && isEditable) {
       onSave(gp.id, activeSession, selectedDrivers);
       setShowSuccess(true);
+      setManualEditMode(false);
       setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
   return (
     <div className="p-6">
-      {/* Toast Success */}
       {showSuccess && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-2xl animate-bounce flex items-center gap-3 border-2 border-green-400">
-          <CheckCircle size={18} /> PALPITES GRAVADOS COM SUCESSO!
+          <CheckCircle size={18} /> PALPITES ATUALIZADOS!
         </div>
       )}
 
@@ -72,7 +76,6 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
         <p className="text-xs text-gray-500 uppercase tracking-widest">{gp.date} • MELBOURNE</p>
       </div>
       
-      {/* Session Navigation */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
         {sessions.map((s, idx) => {
           const isCompleted = savedPredictions.some(p => p.session === s);
@@ -94,21 +97,39 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
         })}
       </div>
 
-      {/* Alertas de Status */}
       {!isSessionOpen ? (
         <div className="bg-red-900/20 border border-red-900/40 p-4 rounded-2xl mb-6 flex items-center gap-3">
           <AlertCircle size={18} className="text-red-500" />
-          <p className="text-xs text-red-400 font-bold uppercase tracking-widest">Votação encerrada por Admin</p>
+          <p className="text-xs text-red-400 font-bold uppercase tracking-widest">Sessão fechada pelo Admin</p>
         </div>
-      ) : isAlreadyPredicted ? (
-        <div className="bg-blue-900/20 border border-blue-900/40 p-4 rounded-2xl mb-6 flex items-center gap-3">
-          <Lock size={18} className="text-blue-500" />
-          <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">Palpite enviado e bloqueado para edições</p>
+      ) : isAlreadyPredicted && !manualEditMode ? (
+        <div className="bg-green-900/10 border border-green-500/20 p-4 rounded-2xl mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle size={18} className="text-green-500" />
+            <p className="text-xs text-green-500 font-bold uppercase tracking-widest">Palpite Enviado</p>
+          </div>
+          <button 
+            onClick={() => setManualEditMode(true)}
+            className="bg-white/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase text-white flex items-center gap-2 active:scale-95 transition-all"
+          >
+            <Edit3 size={12} /> Alterar
+          </button>
+        </div>
+      ) : manualEditMode ? (
+        <div className="bg-yellow-900/20 border border-yellow-900/40 p-4 rounded-2xl mb-6 flex items-center justify-between">
+          <p className="text-xs text-yellow-500 font-bold uppercase tracking-widest flex items-center gap-2">
+            <Edit3 size={16} /> Modo Edição Ativo
+          </p>
+          <button onClick={() => {
+              setManualEditMode(false);
+              const pred = savedPredictions.find(p => p.session === activeSession);
+              setSelectedDrivers(pred?.top5 || []);
+          }} className="text-[10px] text-gray-500 font-bold uppercase">Cancelar</button>
         </div>
       ) : null}
 
       <div className="mb-8">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Seu TOP 5</h3>
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">TOP 5 Pilotos</h3>
         
         <div className="space-y-2 mb-8 min-h-[300px]">
           {[1, 2, 3, 4, 5].map((pos, idx) => {
@@ -129,9 +150,6 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                       {isEditable && (
                         <button onClick={() => moveUp(idx)} className="p-2 text-gray-500 hover:text-white"><GripVertical size={18} /></button>
                       )}
-                      {!isEditable && isAlreadyPredicted && (
-                        <CheckCircle size={16} className="text-green-500 opacity-50" />
-                      )}
                     </>
                   ) : (
                     <span className="text-xs text-gray-600 italic">Selecione abaixo</span>
@@ -142,10 +160,6 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
           })}
         </div>
 
-        <h3 className={`text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 ${!isEditable ? 'opacity-30' : ''}`}>
-          {isAlreadyPredicted ? 'Escolhas Confirmadas' : 'Selecione os Pilotos'}
-        </h3>
-        
         <div className={`grid grid-cols-2 gap-2 mb-24 transition-opacity ${!isEditable ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
           {DRIVERS.map(driver => {
             const isSelected = selectedDrivers.includes(driver.id);
@@ -183,15 +197,13 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
           className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-black transition-all shadow-2xl ${
             isEditable && selectedDrivers.length === 5
               ? 'bg-[#e10600] text-white active:scale-95 shadow-red-600/30' 
-              : isAlreadyPredicted 
-                ? 'bg-green-600/20 text-green-500 border border-green-500/30 cursor-not-allowed'
-                : 'bg-white/10 text-gray-600 cursor-not-allowed border border-white/5'
+              : 'bg-white/10 text-gray-600 cursor-not-allowed border border-white/5'
           }`}
         >
-          {isAlreadyPredicted ? (
+          {isAlreadyPredicted && !manualEditMode ? (
             <><Lock size={18} /> PALPITE ENVIADO</>
           ) : (
-            <>CONFIRMAR PALPITE <Save size={20} /></>
+            <>{manualEditMode ? 'SALVAR ALTERAÇÕES' : 'CONFIRMAR PALPITE'} <Save size={20} /></>
           )}
         </button>
       </div>

@@ -22,19 +22,7 @@ const App: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Verificar Login de Convidado (Manual) primeiro
-    const savedGuest = localStorage.getItem('f1_guest_user');
-    if (savedGuest) {
-      const guestData = JSON.parse(savedGuest);
-      const userRef = ref(db, `users/${guestData.id}`);
-      onValue(userRef, (snapshot) => {
-        if (snapshot.exists()) setUser(snapshot.val());
-        else setUser(guestData);
-      });
-      setIsInitialLoading(false);
-    }
-
-    // 2. Carregar Calendário
+    // 1. Carregar Calendário
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -42,17 +30,17 @@ const App: React.FC = () => {
       else set(calendarRef, INITIAL_CALENDAR);
     });
 
-    // 3. Carregar Ranking
+    // 2. Carregar Ranking (Apenas usuários oficiais do banco)
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const userList = Object.values(data) as User[];
+        const userList = (Object.values(data) as User[]).filter(u => !u.id.startsWith('guest_'));
         setAllUsers(userList.sort((a, b) => (b.points || 0) - (a.points || 0)));
       }
     });
 
-    // 4. Carregar Predições
+    // 3. Carregar Predições
     const predictionsRef = ref(db, 'predictions');
     onValue(predictionsRef, (snapshot) => {
       const data = snapshot.val();
@@ -65,10 +53,9 @@ const App: React.FC = () => {
       setPredictions(predList);
     });
 
-    // 5. Autenticação Google
+    // 4. Autenticação Google (Único método permitido agora)
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        localStorage.removeItem('f1_guest_user');
         const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
         const userRef = ref(db, `users/${userKey}`);
         const snapshot = await get(userRef);
@@ -91,7 +78,7 @@ const App: React.FC = () => {
           await set(userRef, userData);
         }
         setUser(userData);
-      } else if (!savedGuest) {
+      } else {
         setUser(null);
       }
       setIsInitialLoading(false);
@@ -101,7 +88,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('f1_guest_user');
     signOut(auth);
     setUser(null);
     setActiveTab('home');
@@ -168,6 +154,7 @@ const App: React.FC = () => {
   if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin mb-6"></div>
         <h1 className="text-4xl font-black f1-font text-[#e10600] animate-pulse">F1 2026</h1>
         <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-4">Aquecendo Motores...</p>
       </div>
@@ -176,7 +163,6 @@ const App: React.FC = () => {
 
   if (!user) return <Login />;
 
-  // Posição calculada em tempo real para a Home
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
   const userWithRealRank = { ...user, rank: realTimeRank };
 
