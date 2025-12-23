@@ -1,6 +1,15 @@
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, onValue, update, get, remove } from "firebase/database";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  signOut, 
+  onAuthStateChanged 
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCCaCGK8aa6Qnru8tEcCmm9pRwZz8TOBqI",
@@ -13,5 +22,18 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getDatabase(app);
-export { ref, set, onValue, update, get, remove };
+const db = getDatabase(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+// Força a seleção de conta para evitar logins automáticos indesejados
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+export { 
+  db, auth, googleProvider, 
+  ref, set, onValue, update, get, remove, 
+  signInWithPopup, signInWithRedirect, getRedirectResult, 
+  signOut, onAuthStateChanged 
+};
