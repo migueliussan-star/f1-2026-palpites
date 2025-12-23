@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, Prediction, Driver } from '../types';
 import { DRIVERS } from '../constants';
-import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3 } from 'lucide-react';
+import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3, Trash2, RotateCcw } from 'lucide-react';
 
 interface PredictionsProps {
   gp: RaceGP;
@@ -18,15 +18,11 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   const [activeSessionIdx, setActiveSessionIdx] = useState(0);
   const activeSession = sessions[activeSessionIdx];
   
-  // O palpite já existe?
   const currentPrediction = savedPredictions.find(p => p.session === activeSession);
   const isAlreadyPredicted = !!currentPrediction;
   const isSessionOpen = gp.sessionStatus[activeSession] !== false;
   
-  // Estado para permitir edição manual após já ter enviado
   const [manualEditMode, setManualEditMode] = useState(false);
-  
-  // A edição é permitida se: (Sessão Aberta) E (Ainda não palpitou OU clicou em Alterar)
   const isEditable = isSessionOpen && (!isAlreadyPredicted || manualEditMode);
   
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>(currentPrediction?.top5 || []);
@@ -35,7 +31,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   useEffect(() => {
     const pred = savedPredictions.find(p => p.session === activeSession);
     setSelectedDrivers(pred?.top5 || []);
-    setManualEditMode(false); // Resetar modo edição ao mudar de aba/sessão
+    setManualEditMode(false);
   }, [activeSession, savedPredictions]);
 
   const toggleDriver = (id: string) => {
@@ -52,6 +48,12 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
     const newArr = [...selectedDrivers];
     [newArr[idx], newArr[idx - 1]] = [newArr[idx - 1], newArr[idx]];
     setSelectedDrivers(newArr);
+  };
+
+  const handleClear = () => {
+    if (window.confirm('Deseja limpar sua seleção atual?')) {
+      setSelectedDrivers([]);
+    }
   };
 
   const handleSave = () => {
@@ -73,7 +75,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
 
       <div className="mb-6">
         <h2 className="text-xl font-black f1-font text-[#e10600]">{gp.name.toUpperCase()}</h2>
-        <p className="text-xs text-gray-500 uppercase tracking-widest">{gp.date} • MELBOURNE</p>
+        <p className="text-xs text-gray-500 uppercase tracking-widest">{gp.date} • {gp.location.toUpperCase()}</p>
       </div>
       
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -100,36 +102,57 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       {!isSessionOpen ? (
         <div className="bg-red-900/20 border border-red-900/40 p-4 rounded-2xl mb-6 flex items-center gap-3">
           <AlertCircle size={18} className="text-red-500" />
-          <p className="text-xs text-red-400 font-bold uppercase tracking-widest">Sessão fechada pelo Admin</p>
+          <p className="text-xs text-red-400 font-bold uppercase tracking-widest">Sessão fechada para palpites</p>
         </div>
       ) : isAlreadyPredicted && !manualEditMode ? (
-        <div className="bg-green-900/10 border border-green-500/20 p-4 rounded-2xl mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="bg-green-900/10 border border-green-500/20 p-4 rounded-3xl mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3 ml-2">
             <CheckCircle size={18} className="text-green-500" />
-            <p className="text-xs text-green-500 font-bold uppercase tracking-widest">Palpite Enviado</p>
+            <p className="text-xs text-green-500 font-bold uppercase tracking-widest">Palpite Salvo</p>
           </div>
           <button 
             onClick={() => setManualEditMode(true)}
-            className="bg-white/10 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase text-white flex items-center gap-2 active:scale-95 transition-all"
+            className="bg-white/10 px-4 py-2 rounded-2xl text-[10px] font-black uppercase text-white flex items-center gap-2 active:scale-95 transition-all hover:bg-white/20"
           >
-            <Edit3 size={12} /> Alterar
+            <Edit3 size={14} /> Alterar
           </button>
         </div>
       ) : manualEditMode ? (
-        <div className="bg-yellow-900/20 border border-yellow-900/40 p-4 rounded-2xl mb-6 flex items-center justify-between">
-          <p className="text-xs text-yellow-500 font-bold uppercase tracking-widest flex items-center gap-2">
-            <Edit3 size={16} /> Modo Edição Ativo
-          </p>
-          <button onClick={() => {
-              setManualEditMode(false);
-              const pred = savedPredictions.find(p => p.session === activeSession);
-              setSelectedDrivers(pred?.top5 || []);
-          }} className="text-[10px] text-gray-500 font-bold uppercase">Cancelar</button>
+        <div className="bg-yellow-900/20 border border-yellow-900/40 p-4 rounded-3xl mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2 ml-2">
+            <Edit3 size={16} className="text-yellow-500" />
+            <p className="text-xs text-yellow-500 font-bold uppercase tracking-widest">Modo Edição</p>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleClear}
+              className="bg-white/5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase text-gray-400 flex items-center gap-2 hover:bg-red-500/10 hover:text-red-500 transition-all"
+            >
+              <Trash2 size={14} /> Limpar
+            </button>
+            <button 
+              onClick={() => {
+                setManualEditMode(false);
+                const pred = savedPredictions.find(p => p.session === activeSession);
+                setSelectedDrivers(pred?.top5 || []);
+              }} 
+              className="text-[10px] text-gray-500 font-bold uppercase px-2"
+            >
+              Sair
+            </button>
+          </div>
         </div>
       ) : null}
 
       <div className="mb-8">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">TOP 5 Pilotos</h3>
+        <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">TOP 5 Pilotos</h3>
+            {isEditable && selectedDrivers.length > 0 && (
+                <button onClick={handleClear} className="text-[10px] text-red-500 font-black uppercase tracking-tighter flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
+                    <RotateCcw size={10} /> Reiniciar Escolhas
+                </button>
+            )}
+        </div>
         
         <div className="space-y-2 mb-8 min-h-[300px]">
           {[1, 2, 3, 4, 5].map((pos, idx) => {
@@ -139,20 +162,20 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             return (
               <div key={pos} className="flex items-center gap-3">
                 <span className="w-6 text-center font-black f1-font text-gray-500">{pos}</span>
-                <div className={`flex-1 h-14 rounded-xl flex items-center px-4 gap-3 transition-all ${driver ? 'bg-white/10' : 'border border-dashed border-white/10'}`}>
+                <div className={`flex-1 h-14 rounded-xl flex items-center px-4 gap-3 transition-all ${driver ? 'bg-white/10 border border-white/5' : 'border border-dashed border-white/10'}`}>
                   {driver ? (
                     <>
                       <div className="w-1 bg-current h-8 rounded-full" style={{ color: driver.color }} />
                       <div className="flex-1">
-                        <p className="text-sm font-bold">{driver.name}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">{driver.team}</p>
+                        <p className="text-sm font-bold leading-none mb-1">{driver.name}</p>
+                        <p className="text-[9px] text-gray-500 uppercase font-black">{driver.team}</p>
                       </div>
                       {isEditable && (
-                        <button onClick={() => moveUp(idx)} className="p-2 text-gray-500 hover:text-white"><GripVertical size={18} /></button>
+                        <button onClick={() => moveUp(idx)} className="p-2 text-gray-500 hover:text-white active:scale-125 transition-transform"><GripVertical size={18} /></button>
                       )}
                     </>
                   ) : (
-                    <span className="text-xs text-gray-600 italic">Selecione abaixo</span>
+                    <span className="text-[10px] text-gray-600 uppercase font-bold tracking-widest italic">Toque em um piloto abaixo</span>
                   )}
                 </div>
               </div>
@@ -160,28 +183,34 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
           })}
         </div>
 
-        <div className={`grid grid-cols-2 gap-2 mb-24 transition-opacity ${!isEditable ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
+        <div className={`grid grid-cols-2 gap-2 mb-24 transition-all duration-500 ${!isEditable ? 'opacity-30 grayscale pointer-events-none scale-95' : 'opacity-100'}`}>
           {DRIVERS.map(driver => {
             const isSelected = selectedDrivers.includes(driver.id);
+            const selectionIndex = selectedDrivers.indexOf(driver.id) + 1;
+            
             return (
               <button
                 key={driver.id}
                 disabled={isSelected || !isEditable}
                 onClick={() => toggleDriver(driver.id)}
-                className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden ${
+                className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden group ${
                   isSelected 
-                    ? 'border-[#e10600]/50 bg-red-500/10 opacity-50 scale-95' 
-                    : !isEditable ? 'opacity-30' : 'border-white/10 bg-white/5 active:scale-95'
+                    ? 'border-red-600 bg-red-600/10 opacity-40' 
+                    : !isEditable ? 'opacity-30' : 'border-white/10 bg-white/5 active:scale-95 hover:border-white/20'
                 }`}
               >
                 <div className="absolute top-1 right-1">
-                   <span className="text-[10px] opacity-20 font-bold f1-font">#{driver.number}</span>
+                   {isSelected ? (
+                       <span className="text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded-full font-black">{selectionIndex}º</span>
+                   ) : (
+                       <span className="text-[10px] opacity-10 font-bold f1-font group-hover:opacity-30">#{driver.number}</span>
+                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-6 rounded-full" style={{ backgroundColor: driver.color }} />
                   <div>
-                    <p className="text-xs font-bold leading-tight truncate">{driver.name.split(' ')[1]}</p>
-                    <p className="text-[8px] text-gray-500 uppercase">{driver.team}</p>
+                    <p className="text-xs font-bold leading-tight truncate">{driver.name.split(' ').pop()}</p>
+                    <p className="text-[8px] text-gray-500 uppercase font-black">{driver.team.split(' ')[0]}</p>
                   </div>
                 </div>
               </button>
@@ -194,16 +223,16 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
         <button 
           onClick={handleSave}
           disabled={!isEditable || selectedDrivers.length < 5}
-          className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-black transition-all shadow-2xl ${
+          className={`w-full py-5 rounded-3xl flex items-center justify-center gap-2 font-black transition-all shadow-2xl uppercase tracking-widest text-xs ${
             isEditable && selectedDrivers.length === 5
               ? 'bg-[#e10600] text-white active:scale-95 shadow-red-600/30' 
               : 'bg-white/10 text-gray-600 cursor-not-allowed border border-white/5'
           }`}
         >
           {isAlreadyPredicted && !manualEditMode ? (
-            <><Lock size={18} /> PALPITE ENVIADO</>
+            <><Lock size={16} /> PALPITE CONFIRMADO</>
           ) : (
-            <>{manualEditMode ? 'SALVAR ALTERAÇÕES' : 'CONFIRMAR PALPITE'} <Save size={20} /></>
+            <>{manualEditMode ? 'SALVAR NOVOS PALPITES' : 'ENVIAR MEU TOP 5'} <Save size={18} /></>
           )}
         </button>
       </div>
