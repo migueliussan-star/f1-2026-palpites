@@ -1,0 +1,66 @@
+
+import { Driver, RaceGP, Team } from './types';
+
+export const TEAM_COLORS: Record<string, string> = {
+  'McLaren': '#FF8700',
+  'Mercedes': '#27F4D2',
+  'Red Bull': '#3671C6',
+  'Ferrari': '#E80020',
+  'Racing Bulls': '#6692FF',
+  'Aston Martin': '#229971',
+  'Haas': '#B6BABD',
+  'Audi': '#A2A2A2',
+  'Alpine': '#0093CC',
+  'Cadillac': '#FFCC00',
+  'Williams': '#00A0DE'
+};
+
+export const DRIVERS: Driver[] = [
+  { id: 'norris', name: 'Lando Norris', number: 1, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'GBR' },
+  { id: 'piastri', name: 'Oscar Piastri', number: 81, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'AUS' },
+  { id: 'russell', name: 'George Russell', number: 63, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'GBR' },
+  { id: 'antonelli', name: 'Kimi Antonelli', number: 12, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'ITA' },
+  { id: 'verstappen', name: 'Max Verstappen', number: 3, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED' },
+  { id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA' },
+  { id: 'leclerc', name: 'Charles Leclerc', number: 16, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'MON' },
+  { id: 'hamilton', name: 'Lewis Hamilton', number: 44, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'GBR' },
+  { id: 'lawson', name: 'Liam Lawson', number: 30, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'NZL' },
+  { id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR' },
+  { id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP' },
+  { id: 'stroll', name: 'Lance Stroll', number: 18, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'CAN' },
+  { id: 'ocon', name: 'Esteban Ocon', number: 31, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'FRA' },
+  { id: 'bearman', name: 'Oliver Bearman', number: 87, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'GBR' },
+  { id: 'hulkenberg', name: 'Nico Hülkenberg', number: 27, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'GER' },
+  { id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA' },
+  { id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA' },
+  { id: 'colapinto', name: 'Franco Colapinto', number: 43, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'ARG' },
+  { id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'MEX' },
+  { id: 'bottas', name: 'Valtteri Bottas', number: 77, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'FIN' },
+  { id: 'albon', name: 'Alex Albon', number: 23, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'THA' },
+  { id: 'sainz', name: 'Carlos Sainz', number: 55, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'ESP' },
+];
+
+export const INITIAL_CALENDAR: RaceGP[] = [
+  { id: 1, name: 'Austrália', location: 'Melbourne', date: '06-08 Mar', isSprint: false, status: 'OPEN', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 2, name: 'Shanghai', location: 'China', date: '13-15 Mar', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 3, name: 'Japão', location: 'Suzuka', date: '27-29 Mar', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 4, name: 'Bahrein', location: 'Sakhir', date: '03-05 Abr', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 5, name: 'Arábia Saudita', location: 'Jeddah', date: '17-19 Abr', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 6, name: 'Miami', location: 'USA', date: '02-04 Mai', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 7, name: 'Canadá', location: 'Montreal', date: '22-24 Mai', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 8, name: 'Espanha', location: 'Barcelona', date: '05-07 Jun', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 9, name: 'Áustria', location: 'Spielberg', date: '26-28 Jun', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 10, name: 'Grã-Bretanha', location: 'Silverstone', date: '03-05 Jul', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 11, name: 'Hungria', location: 'Budapest', date: '18-20 Jul', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 12, name: 'Bélgica', location: 'Spa', date: '01-03 Ago', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 13, name: 'Holanda', location: 'Zandvoort', date: '21-23 Ago', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 14, name: 'Mônaco', location: 'Monte Carlo', date: '04-06 Set', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 15, name: 'Azerbaijão', location: 'Baku', date: '18-20 Set', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 16, name: 'Singapura', location: 'Marina Bay', date: '03-05 Out', isSprint: true, status: 'UPCOMING', sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 17, name: 'EUA', location: 'Austin', date: '23-25 Out', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 18, name: 'México', location: 'Mexico City', date: '06-08 Nov', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 19, name: 'Brasil', location: 'Interlagos', date: '06-08 Nov', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 20, name: 'Las Vegas', location: 'Nevada', date: '19-21 Nov', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 21, name: 'Catar', location: 'Lusail', date: '27-29 Nov', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+  { id: 22, name: 'Abu Dhabi', location: 'Yas Marina', date: '04-06 Dez', isSprint: false, status: 'UPCOMING', sessionStatus: { 'Qualy corrida': true, 'corrida principal': true } },
+];
