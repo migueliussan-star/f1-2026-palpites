@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // Verifica se existe algum administrador na lista de usuários
+  const hasAnyAdmin = useMemo(() => allUsers.some(u => u.isAdmin), [allUsers]);
+
   useEffect(() => {
     // 1. Carregar Calendário
     const calendarRef = ref(db, 'calendar');
@@ -30,12 +33,15 @@ const App: React.FC = () => {
       else set(calendarRef, INITIAL_CALENDAR);
     });
 
-    // 2. Carregar Ranking (Apenas usuários oficiais do banco)
+    // 2. Carregar Ranking (Filtra convidados e ordena)
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const userList = (Object.values(data) as User[]).filter(u => !u.id.startsWith('guest_'));
+        const userList = (Object.values(data) as User[]).filter(u => {
+            // Remove perfis de convidados do ranking visual
+            return u.id && !u.id.startsWith('guest_') && u.email;
+        });
         setAllUsers(userList.sort((a, b) => (b.points || 0) - (a.points || 0)));
       }
     });
@@ -53,31 +59,29 @@ const App: React.FC = () => {
       setPredictions(predList);
     });
 
-    // 4. Autenticação Google (Único método permitido agora)
+    // 4. Autenticação Google
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
         const userRef = ref(db, `users/${userKey}`);
         const snapshot = await get(userRef);
         
-        let userData: User;
         if (snapshot.exists()) {
-          userData = snapshot.val();
+          setUser(snapshot.val());
         } else {
-          const allUsersSnap = await get(ref(db, 'users'));
-          const currentTotal = allUsersSnap.exists() ? Object.keys(allUsersSnap.val()).length : 0;
-          userData = {
+          // Se for o primeiro usuário oficial, ou se não houver admins, ele pode se tornar um
+          const userData: User = {
             id: userKey,
             name: firebaseUser.displayName || 'Piloto',
             email: firebaseUser.email || '',
             points: 0,
-            rank: currentTotal + 1,
+            rank: 0,
             level: 'Bronze',
-            isAdmin: currentTotal === 0
+            isAdmin: false // Inicializa como false, o botão na Home permitirá assumir se necessário
           };
           await set(userRef, userData);
+          setUser(userData);
         }
-        setUser(userData);
       } else {
         setUser(null);
       }
@@ -86,6 +90,15 @@ const App: React.FC = () => {
 
     return () => unsubscribeAuth();
   }, []);
+
+  const handlePromoteSelfToAdmin = async () => {
+    if (!user) return;
+    const userRef = ref(db, `users/${user.id}`);
+    const updatedUser = { ...user, isAdmin: true };
+    await update(userRef, { isAdmin: true });
+    setUser(updatedUser);
+    alert("Você agora é o Administrador do sistema!");
+  };
 
   const handleLogout = () => {
     signOut(auth);
@@ -156,7 +169,6 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin mb-6"></div>
         <h1 className="text-4xl font-black f1-font text-[#e10600] animate-pulse">F1 2026</h1>
-        <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-4">Aquecendo Motores...</p>
       </div>
     );
   }
@@ -171,7 +183,19 @@ const App: React.FC = () => {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={user.isAdmin}>
-      {activeTab === 'home' && <Home user={userWithRealRank} nextGP={activeGP} predictionsCount={new Set(predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} totalUsers={allUsers.length} onNavigateToPredict={() => setActiveTab('palpites')} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />}
+      {activeTab === 'home' && (
+        <Home 
+          user={userWithRealRank} 
+          nextGP={activeGP} 
+          predictionsCount={new Set(predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
+          totalUsers={allUsers.length} 
+          onNavigateToPredict={() => setActiveTab('palpites')} 
+          onLogout={handleLogout} 
+          onDeleteAccount={handleDeleteAccount}
+          hasNoAdmin={!hasAnyAdmin}
+          onClaimAdmin={handlePromoteSelfToAdmin}
+        />
+      )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
       {activeTab === 'palpitometro' && <Palpitometro gp={activeGP} stats={communityStats[activeGP.id] || {}} totalUsers={new Set(predictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size || 1} />}
       {activeTab === 'ranking' && <Ranking currentUser={userWithRealRank} users={allUsers} calendar={calendar} />}

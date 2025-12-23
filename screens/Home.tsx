@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, UserMinus, AlertTriangle, Loader2, X } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, UserMinus, AlertTriangle, Loader2, ShieldCheck } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -11,9 +11,13 @@ interface HomeProps {
   onNavigateToPredict: () => void;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
+  hasNoAdmin: boolean;
+  onClaimAdmin: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ user, nextGP, predictionsCount, totalUsers, onNavigateToPredict, onLogout, onDeleteAccount }) => {
+const Home: React.FC<HomeProps> = ({ 
+  user, nextGP, predictionsCount, totalUsers, onNavigateToPredict, onLogout, onDeleteAccount, hasNoAdmin, onClaimAdmin 
+}) => {
   const [timeLeft, setTimeLeft] = useState<{ d: number, h: number, m: number, s: number }>({ d: 0, h: 0, m: 0, s: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -46,34 +50,33 @@ const Home: React.FC<HomeProps> = ({ user, nextGP, predictionsCount, totalUsers,
   const handleFinalDeletion = async () => {
     setIsDeleting(true);
     await onDeleteAccount();
-    // O App.tsx cuidará do logout
   };
 
   return (
     <div className="p-6">
-      {/* Custom Confirmation Modal */}
+      {/* Modal de confirmação para deletar conta */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#1a1a1e] border border-red-900/30 rounded-[40px] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-red-600/10 rounded-full flex items-center justify-center mb-6 mx-auto">
               <AlertTriangle className="text-red-500" size={32} />
             </div>
-            <h3 className="text-center text-xl font-black f1-font mb-4">VOCÊ TEM CERTEZA?</h3>
+            <h3 className="text-center text-xl font-black f1-font mb-4">CONFIRMAR EXCLUSÃO</h3>
             <p className="text-center text-gray-400 text-sm mb-8">
-              Isso apagará permanentemente seu progresso, ranking e todos os palpites da temporada 2026. <span className="text-red-500 font-bold uppercase underline">Não há volta!</span>
+              Isso apagará permanentemente seu progresso na temporada 2026.
             </p>
             <div className="space-y-3">
               <button 
                 onClick={handleFinalDeletion}
                 disabled={isDeleting}
-                className="w-full bg-red-600 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+                className="w-full bg-red-600 text-white font-black py-5 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'SIM, APAGAR TUDO'}
+                {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'SIM, APAGAR CONTA'}
               </button>
               <button 
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isDeleting}
-                className="w-full bg-white/5 text-gray-400 font-black py-5 rounded-2xl text-xs uppercase tracking-widest border border-white/5 active:scale-95 transition-all"
+                className="w-full bg-white/5 text-gray-400 font-black py-5 rounded-2xl text-xs uppercase tracking-widest"
               >
                 CANCELAR
               </button>
@@ -95,7 +98,7 @@ const Home: React.FC<HomeProps> = ({ user, nextGP, predictionsCount, totalUsers,
           <div>
             <h1 className="text-xl font-bold">{user.name}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400">{user.rank}º lugar</span>
+              <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400">{user.rank > 0 ? `${user.rank}º lugar` : 'Estreante'}</span>
               {user.isAdmin && <span className="text-[10px] bg-red-600/20 text-red-500 px-2 py-0.5 rounded-full font-black">ADMIN</span>}
             </div>
           </div>
@@ -104,6 +107,23 @@ const Home: React.FC<HomeProps> = ({ user, nextGP, predictionsCount, totalUsers,
           <LogOut size={20} />
         </button>
       </div>
+
+      {/* Botão de Emergência para Admin (Só aparece se não houver NENHUM admin no sistema) */}
+      {hasNoAdmin && !user.isAdmin && (
+        <div className="mb-6 p-5 bg-blue-600/10 border border-blue-600/20 rounded-[32px] animate-pulse">
+            <div className="flex items-center gap-3 mb-3">
+                <ShieldCheck className="text-blue-500" size={20} />
+                <p className="text-[10px] font-black uppercase text-blue-500 tracking-widest">Configuração do Sistema</p>
+            </div>
+            <p className="text-xs text-gray-400 mb-4 leading-relaxed">Nenhum administrador detectado no banco de dados. Você deseja assumir este papel?</p>
+            <button 
+                onClick={onClaimAdmin}
+                className="w-full bg-blue-600 text-white font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20"
+            >
+                TORNAR-SE ADMINISTRADOR
+            </button>
+        </div>
+      )}
 
       <div className="bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c] rounded-[40px] p-8 mb-6 relative overflow-hidden border border-white/5 shadow-2xl">
         <div className="absolute -right-8 -bottom-8 opacity-5">
@@ -146,31 +166,23 @@ const Home: React.FC<HomeProps> = ({ user, nextGP, predictionsCount, totalUsers,
       <div className="grid grid-cols-2 gap-4 mb-12">
         <div className="bg-white/5 p-6 rounded-[32px] border border-white/5 shadow-inner">
           <Zap className="text-yellow-500 mb-3" size={24} />
-          <p className="text-[10px] uppercase text-gray-500 font-bold tracking-widest mb-1">Pontuação</p>
+          <p className="text-[10px] uppercase text-gray-500 font-bold tracking-widest mb-1">Pontos</p>
           <p className="text-2xl font-black f1-font">{user.points || 0}</p>
         </div>
         <div className="bg-white/5 p-6 rounded-[32px] border border-white/5 shadow-inner">
           <Trophy className="text-[#e10600] mb-3" size={24} />
           <p className="text-[10px] uppercase text-gray-500 font-bold tracking-widest mb-1">Ranking</p>
-          <p className="text-2xl font-black f1-font">{user.rank}º</p>
+          <p className="text-2xl font-black f1-font">{user.rank > 0 ? `${user.rank}º` : '--'}</p>
         </div>
       </div>
 
-      {/* Danger Zone */}
       <div className="mt-8 pt-8 border-t border-white/5 pb-24">
-        <div className="flex items-center gap-2 mb-4 text-gray-600">
-            <AlertTriangle size={14} />
-            <h3 className="text-[10px] font-black uppercase tracking-widest">Zona de Segurança</h3>
-        </div>
         <button 
             onClick={() => setShowConfirmModal(true)}
             className="w-full bg-red-900/10 border border-red-900/20 text-red-500 py-4 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
         >
-            <UserMinus size={16} /> Sair e Apagar meus Dados
+            <UserMinus size={16} /> APAGAR MEUS DADOS
         </button>
-        <p className="text-center text-[8px] text-gray-700 mt-3 font-bold uppercase tracking-tight">
-            * Seus pontos e ranking serão deletados permanentemente.
-        </p>
       </div>
     </div>
   );
