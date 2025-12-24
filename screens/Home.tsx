@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -16,17 +16,20 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, canInstall, onInstall 
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, onDeleteAccount, hasNoAdmin, onClaimAdmin, canInstall, onInstall 
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     setIsStandalone(!!standalone);
 
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
     const interval = setInterval(() => {
-      // Data alvo da primeira corrida de 2026 (Austrália)
       const target = new Date('2026-03-08T00:00:00'); 
       const diff = target.getTime() - Date.now();
       if (diff > 0) {
@@ -57,37 +60,59 @@ const Home: React.FC<HomeProps> = ({
             </div>
           </div>
         </div>
-        <button onClick={onLogout} className="text-gray-600 hover:text-white transition-colors"><LogOut size={20} /></button>
+        <button onClick={onLogout} className="bg-white/5 p-3 rounded-2xl text-gray-400 hover:text-white transition-all active:scale-90" title="Sair">
+          <LogOut size={20} />
+        </button>
       </div>
 
-      {/* Banner de Instalação Real (PWA) */}
+      {/* Guia de Instalação (PWA) */}
       {!isStandalone && (
-        <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-blue-900/20 border border-blue-600/30 p-5 rounded-[32px] animate-in slide-in-from-top duration-500">
-           <div className="flex items-center gap-4">
+        <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-blue-900/20 border border-blue-600/30 p-5 rounded-[32px] animate-in slide-in-from-top duration-500 shadow-2xl shadow-blue-600/10">
+           <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
                 <Smartphone className="text-white" size={24} />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Transformar em App</p>
-                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Remova a barra do navegador e acesse direto da tela inicial.</p>
+                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Baixar Aplicativo</p>
+                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Acesse direto da sua tela inicial sem barras de navegação.</p>
               </div>
            </div>
            
-           <button 
-             onClick={onInstall}
-             className={`w-full mt-4 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-               canInstall 
-               ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 active:scale-95' 
-               : 'bg-white/5 text-gray-500 border border-white/5 cursor-default'
-             }`}
-           >
-             {canInstall ? 'INSTALAR APLICATIVO AGORA' : 'AGUARDANDO NAVEGADOR...'}
-           </button>
-           
-           {!canInstall && (
-             <p className="text-[8px] text-gray-500 mt-3 text-center uppercase font-bold">
-               Se o botão não ativar, use: <span className="text-white">Menu &gt; Instalar Aplicativo</span>
-             </p>
+           {isIOS ? (
+             <div className="space-y-3 bg-blue-900/30 p-4 rounded-2xl border border-blue-500/20">
+               <p className="text-[10px] text-blue-100 font-bold uppercase tracking-tight text-center">Para instalar no seu iPhone:</p>
+               <div className="flex items-center justify-center gap-4">
+                 <div className="flex flex-col items-center gap-1">
+                   <div className="bg-white/10 p-2 rounded-lg"><Share size={16} className="text-white" /></div>
+                   <span className="text-[8px] text-blue-200 font-black uppercase">1. Compartilhar</span>
+                 </div>
+                 <ChevronRight size={14} className="text-blue-500" />
+                 <div className="flex flex-col items-center gap-1">
+                   <div className="bg-white/10 p-2 rounded-lg"><PlusSquare size={16} className="text-white" /></div>
+                   <span className="text-[8px] text-blue-200 font-black uppercase">2. Adicionar à Tela</span>
+                 </div>
+               </div>
+             </div>
+           ) : (
+             <>
+               <button 
+                 onClick={onInstall}
+                 disabled={!canInstall}
+                 className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                   canInstall 
+                   ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 active:scale-95' 
+                   : 'bg-white/5 text-gray-500 border border-white/5 cursor-default'
+                 }`}
+               >
+                 {canInstall ? 'INSTALAR AGORA' : 'VERIFICANDO NAVEGADOR...'}
+               </button>
+               
+               {!canInstall && (
+                 <p className="text-[8px] text-gray-500 mt-3 text-center uppercase font-bold px-2">
+                   Se o botão não ativar: <span className="text-white">Menu &gt; Adicionar à Tela de Início</span>
+                 </p>
+               )}
+             </>
            )}
         </div>
       )}
@@ -135,6 +160,52 @@ const Home: React.FC<HomeProps> = ({
           <p className="text-[10px] uppercase text-gray-500 font-bold tracking-widest mb-1">Ranking</p>
           <p className="text-2xl font-black f1-font">{user.rank > 0 ? `${user.rank}º` : '--'}</p>
         </div>
+      </div>
+
+      {/* Seção de Gerenciamento de Conta */}
+      <div className="mb-24">
+        <div className="flex items-center gap-2 mb-4 px-2">
+            <UserCircle size={16} className="text-gray-600" />
+            <h3 className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Gerenciamento de Conta</h3>
+        </div>
+        
+        <div className="space-y-3">
+          <button 
+            onClick={onLogout}
+            className="w-full bg-white/5 border border-white/10 p-5 rounded-[24px] flex items-center justify-between hover:bg-white/10 transition-all active:scale-95 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gray-500/10 rounded-2xl group-hover:bg-gray-500/20 transition-all">
+                <LogOut size={18} className="text-gray-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-black uppercase text-white tracking-widest">Sair da Conta</p>
+                <p className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter">Desconectar do dispositivo atual</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-gray-600" />
+          </button>
+
+          <button 
+            onClick={onDeleteAccount}
+            className="w-full bg-red-600/5 border border-red-600/10 p-5 rounded-[24px] flex items-center justify-between hover:bg-red-600/10 transition-all active:scale-95 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-red-600/10 rounded-2xl group-hover:bg-red-600/20 transition-all">
+                <Trash2 size={18} className="text-red-500" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-black uppercase text-red-500 tracking-widest">Excluir Dados</p>
+                <p className="text-[8px] font-bold text-red-900 uppercase tracking-tighter">Apagar conta e todos os palpites</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-red-900" />
+          </button>
+        </div>
+
+        <p className="text-[8px] text-gray-700 font-black text-center mt-6 uppercase tracking-widest">
+          App Palpites F1 2026 • v1.2.0
+        </p>
       </div>
     </div>
   );

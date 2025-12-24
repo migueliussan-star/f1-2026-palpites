@@ -15,7 +15,8 @@ if (container) {
   // Registro do Service Worker para permitir a instalação como App
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      // Usando caminho absoluto para garantir o registro na raiz
+      navigator.serviceWorker.register('/sw.js')
         .then(registration => {
           console.log('SW registrado com sucesso:', registration.scope);
         })
