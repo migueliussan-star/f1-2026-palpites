@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Trash2, UserCircle, MapPin, Download, Share, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Trophy, LogOut, MapPin, Download, Share, CheckCircle2 } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -9,13 +9,12 @@ interface HomeProps {
   predictionsCount: number;
   onNavigateToPredict: () => void;
   onLogout: () => void;
-  onDeleteAccount: () => Promise<void>;
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, onDeleteAccount, hasNoAdmin, onClaimAdmin
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -187,7 +186,7 @@ const Home: React.FC<HomeProps> = ({
 
       {/* Install App Section - ONLY visible if browser allows or is iOS */}
       {(deferredPrompt || isIOS) && (
-        <div className="mb-8 animate-enter" style={{animationDelay: '0.35s'}}>
+        <div className="mb-24 animate-enter" style={{animationDelay: '0.35s'}}>
              <div className="flex items-center gap-3 mb-6 px-2 opacity-50">
                 <div className="h-[1px] flex-1 bg-white/20"></div>
                 <span className="text-[10px] font-black uppercase tracking-widest">Instalação</span>
@@ -228,30 +227,6 @@ const Home: React.FC<HomeProps> = ({
             </div>
         </div>
       )}
-
-      {/* Account Management */}
-      <div className="mb-24 animate-enter" style={{animationDelay: '0.4s'}}>
-        <div className="flex items-center gap-3 mb-6 px-2 opacity-50">
-            <div className="h-[1px] flex-1 bg-white/20"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest">Conta</span>
-            <div className="h-[1px] flex-1 bg-white/20"></div>
-        </div>
-        
-        <button 
-        onClick={onDeleteAccount}
-        className="w-full glass p-5 rounded-[24px] flex items-center justify-between hover:bg-red-900/20 transition-all active:scale-95 group border border-red-500/10"
-        >
-        <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-600/10 rounded-2xl group-hover:bg-red-600/20 transition-all">
-            <Trash2 size={18} className="text-red-500" />
-            </div>
-            <div className="text-left">
-            <p className="text-xs font-black uppercase text-red-500 tracking-widest">Excluir Conta</p>
-            </div>
-        </div>
-        <ChevronRight size={16} className="text-red-900" />
-        </button>
-      </div>
     </div>
   );
 };

@@ -158,14 +158,13 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
-  // Nova função para resetar histórico
   const handleResetHistory = async () => {
     if (!window.confirm("ATENÇÃO: Isso apagará o GRÁFICO DE DOMINÂNCIA e histórico de posições de TODOS os usuários. Os pontos totais serão mantidos. Continuar?")) return;
 
     const updates: any = {};
     allUsers.forEach(u => {
-        updates[`users/${u.id}/positionHistory`] = null; // Remove do firebase
-        updates[`users/${u.id}/previousRank`] = u.rank; // Reseta indicador de subida/descida
+        updates[`users/${u.id}/positionHistory`] = null; 
+        updates[`users/${u.id}/previousRank`] = u.rank; 
     });
 
     try {
@@ -174,6 +173,20 @@ const App: React.FC = () => {
     } catch (error) {
         console.error("Erro ao resetar histórico:", error);
         alert("Erro ao resetar histórico.");
+    }
+  };
+
+  // Função para Admin excluir usuários
+  const handleDeleteUser = async (targetUserId: string) => {
+    if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
+    
+    try {
+        await remove(ref(db, `predictions/${targetUserId}`));
+        await remove(ref(db, `users/${targetUserId}`));
+        alert("Usuário removido com sucesso.");
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao remover usuário.");
     }
   };
 
@@ -209,13 +222,6 @@ const App: React.FC = () => {
           predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
-          onDeleteAccount={async () => {
-            if (user && window.confirm("CUIDADO: Isso apagará sua conta e TODOS os seus votos imediatamente. Confirmar?")) {
-              await remove(ref(db, `predictions/${user.id}`));
-              await remove(ref(db, `users/${user.id}`));
-              handleLogout();
-            }
-          }} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
         />
@@ -248,10 +254,13 @@ const App: React.FC = () => {
         <Admin 
           gp={adminGP} 
           calendar={calendar} 
+          users={allUsers}
+          currentUser={user}
           onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
           onSelectGp={(id) => setAdminEditingGpId(id)} 
           onCalculatePoints={handleCalculatePoints} 
           onResetHistory={handleResetHistory}
+          onDeleteUser={handleDeleteUser}
         />
       )}
     </Layout>

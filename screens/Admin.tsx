@@ -1,19 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
-import { RaceGP, SessionType } from '../types';
+import { RaceGP, SessionType, User } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, AlertTriangle } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, AlertTriangle, Users } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
   calendar: RaceGP[];
+  users: User[];
+  currentUser: User;
   onUpdateCalendar: (newCalendar: RaceGP[]) => void;
   onSelectGp: (id: number) => void;
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
   onResetHistory: () => void;
+  onDeleteUser: (userId: string) => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectGp, onCalculatePoints, onResetHistory }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onResetHistory, onDeleteUser }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -198,6 +201,39 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
               </div>
             ))}
           </div>
+        </div>
+
+        {/* GESTÃO DE PILOTOS (DELETE) */}
+        <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+            <h3 className="text-xs font-black mb-6 uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                <Users size={14} /> Gestão de Pilotos ({users.length})
+            </h3>
+            
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                {users.map((u) => {
+                    if (u.id === currentUser.id) return null; // Não mostra o próprio admin
+                    return (
+                        <div key={u.id} className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">
+                                    {u.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="text-xs font-bold truncate text-white">{u.name}</p>
+                                    <p className="text-[8px] text-gray-500 truncate">{u.email}</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => onDeleteUser(u.id)}
+                                className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-lg transition-colors"
+                                title="Excluir Usuário"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
 
         {/* ZONA DE PERIGO */}
