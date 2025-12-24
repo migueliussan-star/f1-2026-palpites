@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle, HelpCircle } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -73,23 +73,23 @@ const Home: React.FC<HomeProps> = ({
                 <Smartphone className="text-white" size={24} />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Baixar Aplicativo</p>
-                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Acesse direto da sua tela inicial sem barras de navegação.</p>
+                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Instalar no Telefone</p>
+                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Use como um app real e ganhe mais espaço na tela.</p>
               </div>
            </div>
            
            {isIOS ? (
              <div className="space-y-3 bg-blue-900/30 p-4 rounded-2xl border border-blue-500/20">
-               <p className="text-[10px] text-blue-100 font-bold uppercase tracking-tight text-center">Para instalar no seu iPhone:</p>
+               <p className="text-[10px] text-blue-100 font-bold uppercase tracking-tight text-center">No iPhone (Safari):</p>
                <div className="flex items-center justify-center gap-4">
-                 <div className="flex flex-col items-center gap-1">
+                 <div className="flex flex-col items-center gap-1 text-center">
                    <div className="bg-white/10 p-2 rounded-lg"><Share size={16} className="text-white" /></div>
-                   <span className="text-[8px] text-blue-200 font-black uppercase">1. Compartilhar</span>
+                   <span className="text-[8px] text-blue-200 font-black uppercase leading-none mt-1">Botão<br/>Compartilhar</span>
                  </div>
                  <ChevronRight size={14} className="text-blue-500" />
-                 <div className="flex flex-col items-center gap-1">
+                 <div className="flex flex-col items-center gap-1 text-center">
                    <div className="bg-white/10 p-2 rounded-lg"><PlusSquare size={16} className="text-white" /></div>
-                   <span className="text-[8px] text-blue-200 font-black uppercase">2. Adicionar à Tela</span>
+                   <span className="text-[8px] text-blue-200 font-black uppercase leading-none mt-1">Adicionar à<br/>Tela de Início</span>
                  </div>
                </div>
              </div>
@@ -104,13 +104,20 @@ const Home: React.FC<HomeProps> = ({
                    : 'bg-white/5 text-gray-500 border border-white/5 cursor-default'
                  }`}
                >
-                 {canInstall ? 'INSTALAR AGORA' : 'VERIFICANDO NAVEGADOR...'}
+                 {canInstall ? 'INSTALAR AGORA' : 'PREPARANDO INSTALAÇÃO...'}
                </button>
                
                {!canInstall && (
-                 <p className="text-[8px] text-gray-500 mt-3 text-center uppercase font-bold px-2">
-                   Se o botão não ativar: <span className="text-white">Menu &gt; Adicionar à Tela de Início</span>
-                 </p>
+                 <div className="mt-3 p-3 bg-white/5 rounded-xl">
+                    <p className="text-[8px] text-gray-500 text-center uppercase font-bold px-2">
+                      Se o botão não ativar em 5s:
+                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                        <span className="text-[9px] text-white font-black bg-white/10 px-2 py-0.5 rounded">Menu (⋮)</span>
+                        <ChevronRight size={10} className="text-gray-600" />
+                        <span className="text-[9px] text-white font-black bg-white/10 px-2 py-0.5 rounded">Adicionar à Tela</span>
+                    </div>
+                 </div>
                )}
              </>
            )}
@@ -203,8 +210,16 @@ const Home: React.FC<HomeProps> = ({
           </button>
         </div>
 
-        <p className="text-[8px] text-gray-700 font-black text-center mt-6 uppercase tracking-widest">
-          App Palpites F1 2026 • v1.2.0
+        <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/5 flex items-start gap-4">
+            <HelpCircle size={20} className="text-gray-500 shrink-0" />
+            <div className="flex-1">
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Dúvidas sobre instalação?</p>
+                <p className="text-[9px] text-gray-600 font-bold leading-relaxed uppercase">O App utiliza tecnologia PWA. Se não conseguir baixar, verifique se está usando o Chrome (Android) ou Safari (iOS).</p>
+            </div>
+        </div>
+
+        <p className="text-[8px] text-gray-700 font-black text-center mt-8 uppercase tracking-widest">
+          App Palpites F1 2026 • v1.3.0
         </p>
       </div>
     </div>

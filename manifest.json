@@ -1,39 +1,30 @@
-
 {
-  "name": "App Palpites F1 2026",
+  "name": "Palpites F1 2026",
   "short_name": "F1 2026",
-  "description": "Fantasy League para a Temporada 2026 da F1",
-  "id": "/?source=pwa",
+  "description": "Fantasy League para a Temporada 2026 da Formula 1",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0a0a0c",
   "theme_color": "#e10600",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/stars/wb_sunny/2x/ic_stars_wb_sunny_white_48dp.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554930.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/806/806543.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554930.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554930.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/806/806543.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/806/806543.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
