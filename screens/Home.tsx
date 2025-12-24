@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Trash2, UserCircle, MapPin, Download, Share } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Trash2, UserCircle, MapPin, Download, Share, CheckCircle2 } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -21,10 +21,34 @@ const Home: React.FC<HomeProps> = ({
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
 
+  // Lógica de Cores baseada nos palpites
+  const totalSessions = nextGP.isSprint ? 4 : 2;
+  const isComplete = predictionsCount >= totalSessions;
+  const isPartial = predictionsCount > 0 && predictionsCount < totalSessions;
+
+  let cardOverlayClass = "from-[#e10600]/20"; // Padrão (Vermelho)
+  let statusText = "Aberto";
+  let statusColor = "bg-green-500"; 
+  let buttonClass = "bg-[#e10600] text-white shadow-[0_0_30px_rgba(225,6,0,0.4)] hover:bg-[#ff0a00]";
+
+  if (isComplete) {
+    // Verde Limão (Lime) para Completo
+    cardOverlayClass = "from-lime-600/80 to-lime-900/90 mix-blend-multiply"; 
+    statusText = "Completo";
+    statusColor = "bg-lime-400";
+    buttonClass = "bg-lime-400 text-black shadow-[0_0_30px_rgba(163,230,53,0.6)] hover:bg-lime-300";
+  } else if (isPartial) {
+    // Amarelo para Parcial
+    cardOverlayClass = "from-yellow-500/30 to-yellow-600/10 mix-blend-normal"; 
+    statusText = "Em andamento";
+    statusColor = "bg-yellow-400";
+    buttonClass = "bg-yellow-400 text-black shadow-[0_0_30px_rgba(250,204,21,0.4)] hover:bg-yellow-300";
+  }
+
   useEffect(() => {
-    // Timer do Countdown
+    // Timer do Countdown - Ajustado para 06 de Março (Início do GP)
     const interval = setInterval(() => {
-      const target = new Date('2026-03-08T00:00:00'); 
+      const target = new Date('2026-03-06T00:00:00'); 
       const diff = target.getTime() - Date.now();
       if (diff > 0) {
         setTimeLeft({
@@ -93,17 +117,19 @@ const Home: React.FC<HomeProps> = ({
       )}
 
       {/* Main GP Card */}
-      <div className="relative w-full aspect-[4/5] max-h-[420px] rounded-[40px] overflow-hidden mb-8 shadow-2xl group animate-enter" style={{animationDelay: '0.2s'}}>
+      <div className={`relative w-full aspect-[4/5] max-h-[420px] rounded-[40px] overflow-hidden mb-8 shadow-2xl group animate-enter transition-all duration-500 ${isComplete ? 'shadow-lime-900/40 border border-lime-500/20' : isPartial ? 'shadow-yellow-900/40 border border-yellow-500/20' : ''}`} style={{animationDelay: '0.2s'}}>
         {/* Background Image / Gradient */}
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1535136829775-7b3b3d81b947?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-[#0a0a0c]/80 to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#e10600]/20 to-transparent mix-blend-overlay"></div>
+        
+        {/* Dynamic Color Overlay based on Status */}
+        <div className={`absolute inset-0 bg-gradient-to-b ${cardOverlayClass} transition-colors duration-500`}></div>
 
         <div className="absolute inset-0 p-8 flex flex-col justify-between">
             <div className="flex justify-between items-start">
                 <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Aberto</span>
+                    <div className={`w-2 h-2 rounded-full ${statusColor} animate-pulse`}></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{statusText}</span>
                 </div>
                 <div className="text-right">
                     <p className="text-4xl font-black f1-font leading-none mb-1">{nextGP.id}</p>
@@ -113,7 +139,7 @@ const Home: React.FC<HomeProps> = ({
 
             <div className="space-y-6">
                 <div>
-                    <div className="flex items-center gap-2 text-[#e10600] mb-2">
+                    <div className={`flex items-center gap-2 mb-2 transition-colors ${isComplete ? 'text-lime-400' : isPartial ? 'text-yellow-400' : 'text-[#e10600]'}`}>
                         <MapPin size={16} />
                         <span className="text-xs font-black uppercase tracking-widest">{nextGP.location}</span>
                     </div>
@@ -131,9 +157,13 @@ const Home: React.FC<HomeProps> = ({
 
                 <button 
                     onClick={onNavigateToPredict} 
-                    className="w-full bg-[#e10600] text-white font-black py-5 rounded-3xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-[0_0_30px_rgba(225,6,0,0.4)] text-xs uppercase tracking-widest border border-white/20 hover:bg-[#ff0a00]"
+                    className={`w-full font-black py-5 rounded-3xl flex items-center justify-center gap-3 active:scale-95 transition-all text-xs uppercase tracking-widest border border-white/20 ${buttonClass}`}
                 >
-                    FAZER PALPITE <ChevronRight size={18} />
+                    {isComplete ? (
+                        <>PALPITES COMPLETOS <CheckCircle2 size={18} /></>
+                    ) : (
+                        <>FAZER PALPITE <ChevronRight size={18} /></>
+                    )}
                 </button>
             </div>
         </div>

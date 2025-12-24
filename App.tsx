@@ -35,7 +35,19 @@ const App: React.FC = () => {
       const data = snapshot.val();
       if (data) {
         const userList = (Object.values(data) as User[]).filter(u => u.id && !u.id.startsWith('guest_') && u.email);
-        setAllUsers(userList.sort((a, b) => (b.points || 0) - (a.points || 0)));
+        
+        // Ordena para garantir ranking correto
+        const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
+        
+        // Adiciona dados mockados de histórico se não existirem (para visualização do layout)
+        const processedList = sortedList.map((u, index) => ({
+            ...u,
+            rank: index + 1,
+            previousRank: u.previousRank || (Math.random() > 0.5 ? index + 2 : index), // Mock para setas funcionarem visualmente
+            positionHistory: u.positionHistory || [index + 1, index + 2, index + 1] // Mock para gráfico
+        }));
+
+        setAllUsers(processedList);
       } else {
         setAllUsers([]);
       }
@@ -69,7 +81,9 @@ const App: React.FC = () => {
             points: 0,
             rank: 0,
             level: 'Bronze',
-            isAdmin: false
+            isAdmin: false,
+            previousRank: 0,
+            positionHistory: []
           };
           await set(userRef, userData);
           setUser(userData);
@@ -93,6 +107,8 @@ const App: React.FC = () => {
   const handleCalculatePoints = async (gp: RaceGP) => {
     if (!gp.results) return;
     const userPointsMap: Record<string, number> = {};
+    
+    // Calcula pontos
     allUsers.forEach(u => {
       let totalGpPoints = 0;
       const userPreds = predictions.filter(p => p.gpId === gp.id && p.userId === u.id);
@@ -108,8 +124,30 @@ const App: React.FC = () => {
       userPointsMap[u.id] = (u.points || 0) + totalGpPoints;
     });
 
-    for (const [uid, pts] of Object.entries(userPointsMap)) {
-      await update(ref(db, `users/${uid}`), { points: pts });
+    // Atualiza BD com lógica de histórico
+    // Precisamos reordenar com os NOVOS pontos para saber o novo rank
+    const sortedByNewPoints = [...allUsers].sort((a, b) => {
+        const pointsA = userPointsMap[a.id] || 0;
+        const pointsB = userPointsMap[b.id] || 0;
+        return pointsB - pointsA;
+    });
+
+    for (let i = 0; i < sortedByNewPoints.length; i++) {
+        const u = sortedByNewPoints[i];
+        const newRank = i + 1;
+        const newPoints = userPointsMap[u.id];
+        
+        // Mantém histórico
+        const history = u.positionHistory || [];
+        history.push(newRank);
+        if (history.length > 5) history.shift(); // Mantém apenas os últimos 5
+
+        await update(ref(db, `users/${u.id}`), { 
+            points: newPoints,
+            rank: newRank,
+            previousRank: u.rank, // O rank atual vira o previous
+            positionHistory: history
+        });
     }
     
     const newCalendar = calendar.map(c => c.id === gp.id ? { ...c, status: 'FINISHED' as const } : c);
@@ -137,7 +175,6 @@ const App: React.FC = () => {
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
-  // Filtra palpites apenas de usuários que ainda existem NO MOMENTO (segurança dupla)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
 
   return (
@@ -151,9 +188,7 @@ const App: React.FC = () => {
           onLogout={handleLogout} 
           onDeleteAccount={async () => {
             if (user && window.confirm("CUIDADO: Isso apagará sua conta e TODOS os seus votos imediatamente. Confirmar?")) {
-              // Deleta palpites primeiro
               await remove(ref(db, `predictions/${user.id}`));
-              // Deleta o usuário
               await remove(ref(db, `users/${user.id}`));
               handleLogout();
             }

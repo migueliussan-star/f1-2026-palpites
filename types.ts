@@ -39,6 +39,8 @@ export interface User {
   email: string;
   points: number;
   rank: number;
+  previousRank?: number; // Rank na rodada anterior
+  positionHistory?: number[]; // Histórico de posições nas últimas corridas
   level: 'Ouro' | 'Prata' | 'Bronze';
   isAdmin: boolean;
 }
