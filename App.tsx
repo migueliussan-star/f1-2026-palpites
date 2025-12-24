@@ -167,18 +167,24 @@ const App: React.FC = () => {
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
+  // Filtra palpites apenas de usuários que ainda existem (para limpar votos de contas deletadas)
+  const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
+
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={user.isAdmin}>
       {activeTab === 'home' && (
         <Home 
           user={{...user, rank: realTimeRank}} 
           nextGP={activeGP} 
-          predictionsCount={new Set(predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           onDeleteAccount={async () => {
-            if (user && window.confirm("Excluir sua conta e todos os seus palpites?")) {
+            if (user && window.confirm("Excluir sua conta e TODOS os seus palpites permanentemente?")) {
+              // Remove o usuário da lista de usuários
               await remove(ref(db, `users/${user.id}`));
+              // Remove todos os palpites deste usuário
+              await remove(ref(db, `predictions/${user.id}`));
               handleLogout();
             }
           }} 
@@ -188,13 +194,13 @@ const App: React.FC = () => {
           onInstall={handleInstallClick}
         />
       )}
-      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
+      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
       
       {activeTab === 'adversarios' && (
         <Adversarios 
           gp={activeGP}
           users={allUsers}
-          predictions={predictions}
+          predictions={activePredictions}
           currentUser={user}
         />
       )}
@@ -202,12 +208,12 @@ const App: React.FC = () => {
       {activeTab === 'palpitometro' && (
         <Palpitometro 
           gp={activeGP} 
-          stats={predictions.filter(p => p.gpId === activeGP.id).reduce((acc, p) => {
+          stats={activePredictions.filter(p => p.gpId === activeGP.id).reduce((acc, p) => {
             if (!acc[p.session]) acc[p.session] = {};
             p.top5.forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
             return acc;
           }, {} as any)} 
-          totalUsers={new Set(predictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
+          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
         />
       )}
       {activeTab === 'ranking' && <Ranking currentUser={user} users={allUsers} calendar={calendar} />}
