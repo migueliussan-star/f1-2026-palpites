@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP, SessionType, Prediction } from './types';
 import { INITIAL_CALENDAR } from './constants';

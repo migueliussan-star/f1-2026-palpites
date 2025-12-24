@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, ExternalLink, Globe } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, Globe, Users, CreditCard } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup } from '../firebase';
 
 const Login: React.FC = () => {
@@ -15,14 +15,13 @@ const Login: React.FC = () => {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
       console.error(err);
-      // Erro comum de domínio não autorizado ou app em modo teste
       if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed' || err.code === 'auth/unauthorized-domain') {
         setError('Configuração pendente no console.');
         setShowConfigGuide(true);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Login cancelado.');
       } else {
-        setError('Erro ao conectar. Verifique o domínio.');
+        setError('Erro ao conectar. Verifique o console.');
         setShowConfigGuide(true);
       }
       setLoading(false);
@@ -44,43 +43,50 @@ const Login: React.FC = () => {
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font">RESOLVER ACESSO</h3>
+              <h3 className="text-xl font-black f1-font uppercase leading-tight">Configuração Final</h3>
             </div>
             
             <div className="space-y-6">
-              <section>
+              <section className="bg-white/5 p-4 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <Globe size={14} className="text-blue-400" />
-                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest">1. Autorizar Domínio (Vercel)</h4>
+                  <Users size={14} className="text-[#e10600]" />
+                  <h4 className="text-[10px] font-black uppercase text-white tracking-widest">1. Liberar Acesso (Público-alvo)</h4>
                 </div>
-                <p className="text-gray-400 text-[11px] mb-3">No Console do Firebase > Authentication > Settings > Authorized Domains, adicione:</p>
-                <code className="block bg-black p-3 rounded-xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all mb-2">
+                <p className="text-gray-400 text-[11px] mb-3 leading-relaxed">Para remover o erro "Aguardando Aprovação":</p>
+                <ol className="text-[10px] text-gray-500 space-y-2 list-decimal ml-4 font-bold uppercase">
+                  <li>No menu lateral, clique em <span className="text-white">"Público-alvo"</span>.</li>
+                  <li>Clique no botão <span className="text-green-500">"PUBLICAR APLICATIVO"</span>.</li>
+                  <li>Confirme. Agora qualquer pessoa pode entrar.</li>
+                </ol>
+              </section>
+
+              <section className="bg-white/5 p-4 rounded-3xl border border-white/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard size={14} className="text-blue-400" />
+                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest">2. Autorizar Site (Clientes)</h4>
+                </div>
+                <p className="text-gray-400 text-[11px] mb-2 leading-relaxed">Se o login falhar, verifique se o site está na lista branca:</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Menu "Clientes" > Web Client > Origens JavaScript:</p>
+                <code className="block bg-black p-3 rounded-xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all">
                   {currentDomain}
                 </code>
               </section>
 
-              <section>
+              <section className="bg-white/5 p-4 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <ShieldCheck size={14} className="text-green-400" />
-                  <h4 className="text-[10px] font-black uppercase text-green-400 tracking-widest">2. Publicar App (Modo Produção)</h4>
+                  <Globe size={14} className="text-green-400" />
+                  <h4 className="text-[10px] font-black uppercase text-green-400 tracking-widest">3. Domínio no Firebase</h4>
                 </div>
-                <p className="text-gray-400 text-[11px] mb-2">Para tirar o erro "Aguardando Aprovação":</p>
-                <ol className="text-[10px] text-gray-500 space-y-1 list-decimal ml-4">
-                  <li>Vá no <b>Google Cloud Console</b>.</li>
-                  <li>Menu > APIs e Serviços > <b>Tela de consentimento OAuth</b>.</li>
-                  <li>Clique no botão <b>"PUBLICAR APLICATIVO"</b>.</li>
-                </ol>
+                <p className="text-gray-400 text-[11px] mb-2 leading-relaxed">No console do Firebase, em "Authorized Domains", adicione o mesmo link acima.</p>
               </section>
             </div>
 
             <button 
               onClick={() => setShowConfigGuide(false)}
-              className="w-full mt-8 bg-white text-black font-black py-4 rounded-3xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+              className="w-full mt-8 bg-[#e10600] text-white font-black py-5 rounded-3xl text-[10px] uppercase tracking-widest shadow-xl shadow-red-600/20 active:scale-95 transition-all"
             >
-              ENTENDI, TENTAR LOGIN
+              FECHAR E TENTAR LOGIN
             </button>
-            
-            <p className="text-[9px] text-gray-600 mt-4 text-center uppercase font-bold">Essas etapas são feitas apenas uma vez pelo dono do projeto.</p>
           </div>
         </div>
       )}
@@ -118,7 +124,7 @@ const Login: React.FC = () => {
                 <p className="text-red-500 text-[10px] font-black uppercase tracking-widest mb-1">
                     {error}
                 </p>
-                <p className="text-[9px] text-red-500/60 uppercase font-bold">Clique aqui para ver o guia de correção</p>
+                <p className="text-[9px] text-red-500/60 uppercase font-bold">Clique aqui para ver como liberar o acesso</p>
               </div>
             </div>
           )}
@@ -127,7 +133,7 @@ const Login: React.FC = () => {
             onClick={() => setShowConfigGuide(true)}
             className="w-full text-[9px] text-gray-600 font-black uppercase tracking-[0.2em] py-4 hover:text-gray-400 transition-colors"
           >
-            Ajuda para o Administrador
+            Guia para o Administrador
           </button>
         </div>
 

@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle, HelpCircle, MoreVertical, X } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, SquarePlus, Trash2, UserCircle, HelpCircle, MoreVertical, X } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -85,7 +86,7 @@ const Home: React.FC<HomeProps> = ({
                 </div>
                 <div className="w-full h-px bg-white/5"></div>
                 <div className="flex items-center gap-4">
-                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><PlusSquare size={18} /></div>
+                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><SquarePlus size={18} /></div>
                   <p className="text-xs font-bold">2. Role para baixo e toque em <span className="text-blue-400">Adicionar à Tela de Início</span>.</p>
                 </div>
               </div>
@@ -132,7 +133,6 @@ const Home: React.FC<HomeProps> = ({
         </button>
       </div>
 
-      {/* Guia de Instalação Inteligente */}
       {!isStandalone && (
         <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-blue-900/20 border border-blue-600/30 p-5 rounded-[32px] animate-in slide-in-from-top duration-500 shadow-2xl shadow-blue-600/10">
            <div className="flex items-center gap-4 mb-4">
@@ -164,7 +164,6 @@ const Home: React.FC<HomeProps> = ({
         </div>
       )}
 
-      {/* Alerta de Administrador */}
       {hasNoAdmin && !user.isAdmin && (
         <div className="mb-6 p-6 bg-amber-600/10 border-2 border-amber-600/40 rounded-[32px]">
             <div className="flex items-center gap-3 mb-4"><ShieldCheck className="text-amber-500" size={24} /><p className="text-[12px] font-black uppercase text-amber-500">Sistema sem Admin</p></div>
@@ -209,7 +208,6 @@ const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Seção de Gerenciamento de Conta */}
       <div className="mb-24">
         <div className="flex items-center gap-2 mb-4 px-2">
             <UserCircle size={16} className="text-gray-600" />
@@ -251,7 +249,7 @@ const Home: React.FC<HomeProps> = ({
         </div>
 
         <p className="text-[8px] text-gray-700 font-black text-center mt-8 uppercase tracking-widest">
-          App Palpites F1 2026 • v1.4.0
+          App Palpites F1 2026 • v1.4.1
         </p>
       </div>
     </div>
