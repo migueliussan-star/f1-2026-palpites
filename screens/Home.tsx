@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Trash2, UserCircle, X } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Trash2, UserCircle } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -12,8 +12,6 @@ interface HomeProps {
   onDeleteAccount: () => Promise<void>;
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
-  canInstall: boolean;
-  onInstall: () => void;
 }
 
 const Home: React.FC<HomeProps> = ({ 
@@ -134,8 +132,8 @@ const Home: React.FC<HomeProps> = ({
                 <Trash2 size={18} className="text-red-500" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-black uppercase text-red-500 tracking-widest">Excluir Dados</p>
-                <p className="text-[8px] font-bold text-red-900 uppercase tracking-tighter">Apagar conta e todos os palpites</p>
+                <p className="text-xs font-black uppercase text-red-500 tracking-widest">Excluir Tudo</p>
+                <p className="text-[8px] font-bold text-red-900 uppercase tracking-tighter">Apagar conta e palpites para sempre</p>
               </div>
             </div>
             <ChevronRight size={16} className="text-red-900" />
@@ -143,7 +141,7 @@ const Home: React.FC<HomeProps> = ({
         </div>
 
         <p className="text-[8px] text-gray-700 font-black text-center mt-8 uppercase tracking-widest">
-          App Palpites F1 2026 • v1.5.0
+          App Palpites F1 2026 • v1.6.0
         </p>
       </div>
     </div>

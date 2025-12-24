@@ -13,16 +13,6 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
-// Interface para o evento de instalação do PWA
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
-
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios'>('home');
   const [user, setUser] = useState<User | null>(null);
@@ -31,17 +21,8 @@ const App: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    // Handler para capturar o prompt de instalação do PWA
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -55,6 +36,8 @@ const App: React.FC = () => {
       if (data) {
         const userList = (Object.values(data) as User[]).filter(u => u.id && !u.id.startsWith('guest_') && u.email);
         setAllUsers(userList.sort((a, b) => (b.points || 0) - (a.points || 0)));
+      } else {
+        setAllUsers([]);
       }
     });
 
@@ -97,27 +80,14 @@ const App: React.FC = () => {
       setIsInitialLoading(false);
     });
 
-    return () => {
-        unsubscribeAuth();
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => unsubscribeAuth();
   }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
 
   const handlePromoteSelfToAdmin = async () => {
     if (!user) return;
     const userRef = ref(db, `users/${user.id}`);
     await update(userRef, { isAdmin: true });
     setUser({ ...user, isAdmin: true });
-    alert("Você agora é o Administrador!");
   };
 
   const handleCalculatePoints = async (gp: RaceGP) => {
@@ -167,7 +137,7 @@ const App: React.FC = () => {
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
-  // Filtra palpites apenas de usuários que ainda existem (para limpar votos de contas deletadas)
+  // Filtra palpites apenas de usuários que ainda existem NO MOMENTO (segurança dupla)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
 
   return (
@@ -180,18 +150,16 @@ const App: React.FC = () => {
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           onDeleteAccount={async () => {
-            if (user && window.confirm("Excluir sua conta e TODOS os seus palpites permanentemente?")) {
-              // Remove o usuário da lista de usuários
-              await remove(ref(db, `users/${user.id}`));
-              // Remove todos os palpites deste usuário
+            if (user && window.confirm("CUIDADO: Isso apagará sua conta e TODOS os seus votos imediatamente. Confirmar?")) {
+              // Deleta palpites primeiro
               await remove(ref(db, `predictions/${user.id}`));
+              // Deleta o usuário
+              await remove(ref(db, `users/${user.id}`));
               handleLogout();
             }
           }} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
-          canInstall={!!deferredPrompt}
-          onInstall={handleInstallClick}
         />
       )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
