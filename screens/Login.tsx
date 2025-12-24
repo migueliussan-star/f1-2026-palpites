@@ -66,7 +66,7 @@ const Login: React.FC = () => {
                   <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest">2. Autorizar Site (Clientes)</h4>
                 </div>
                 <p className="text-gray-400 text-[11px] mb-2 leading-relaxed">Se o login falhar, verifique se o site está na lista branca:</p>
-                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Menu "Clientes" > Web Client > Origens JavaScript:</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Menu "Clientes" &gt; Web Client &gt; Origens JavaScript:</p>
                 <code className="block bg-black p-3 rounded-xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all">
                   {currentDomain}
                 </code>
