@@ -26,7 +26,7 @@ const App: React.FC = () => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('beforeinstallprompt' as any, handleBeforeInstallPrompt);
 
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
@@ -85,7 +85,7 @@ const App: React.FC = () => {
 
     return () => {
         unsubscribeAuth();
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('beforeinstallprompt' as any, handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -145,7 +145,9 @@ const App: React.FC = () => {
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
-  const activeGP = calendar.find(gp => gp.status === 'OPEN') || calendar.find(gp => gp.status === 'UPCOMING') || calendar[0] || INITIAL_CALENDAR[0];
+  
+  // Garantia de objeto para evitar erros de renderização
+  const activeGP = (calendar.length > 0 ? (calendar.find(gp => gp.status === 'OPEN') || calendar.find(gp => gp.status === 'UPCOMING') || calendar[0]) : INITIAL_CALENDAR[0]);
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
   return (
