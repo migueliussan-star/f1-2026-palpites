@@ -22,21 +22,6 @@ const App: React.FC = () => {
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Função auxiliar para gerar histórico estável baseado no ID do usuário (Mock)
-  const generateStableHistory = (userId: string, currentRank: number) => {
-    // Soma simples dos caracteres do ID para semente
-    const seed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const history = [];
-    for (let i = 0; i < 5; i++) {
-        // Gera posições "realistas" próximas ao rank atual
-        const variation = (seed + i) % 5 - 2; // -2 a +2
-        let hRank = currentRank + variation;
-        if (hRank < 1) hRank = 1;
-        history.push(hRank);
-    }
-    return history.reverse(); // Mais antigo para mais novo
-  };
-
   useEffect(() => {
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
@@ -54,15 +39,15 @@ const App: React.FC = () => {
         // Ordena para garantir ranking correto
         const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
-        // Adiciona dados mockados de histórico se não existirem (para visualização do layout)
+        // Processa lista (sem dados mockados agora, apenas dados reais)
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
             return {
                 ...u,
                 rank: currentRank,
-                // Usa histórico do BD se existir, senão gera um estável para visualização
-                positionHistory: u.positionHistory || generateStableHistory(u.id, currentRank),
-                previousRank: u.previousRank || (currentRank + ((u.id.charCodeAt(0) % 3) - 1))
+                // Se não tiver histórico, inicia com array vazio para o gráfico não quebrar, mas não inventa dados
+                positionHistory: u.positionHistory || [],
+                previousRank: u.previousRank || currentRank
             };
         });
 
@@ -173,6 +158,25 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
+  // Nova função para resetar histórico
+  const handleResetHistory = async () => {
+    if (!window.confirm("ATENÇÃO: Isso apagará o GRÁFICO DE DOMINÂNCIA e histórico de posições de TODOS os usuários. Os pontos totais serão mantidos. Continuar?")) return;
+
+    const updates: any = {};
+    allUsers.forEach(u => {
+        updates[`users/${u.id}/positionHistory`] = null; // Remove do firebase
+        updates[`users/${u.id}/previousRank`] = u.rank; // Reseta indicador de subida/descida
+    });
+
+    try {
+        await update(ref(db), updates);
+        alert("Histórico do gráfico apagado com sucesso.");
+    } catch (error) {
+        console.error("Erro ao resetar histórico:", error);
+        alert("Erro ao resetar histórico.");
+    }
+  };
+
   const handleLogout = () => { signOut(auth); setUser(null); setActiveTab('home'); };
 
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
@@ -247,6 +251,7 @@ const App: React.FC = () => {
           onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
           onSelectGp={(id) => setAdminEditingGpId(id)} 
           onCalculatePoints={handleCalculatePoints} 
+          onResetHistory={handleResetHistory}
         />
       )}
     </Layout>

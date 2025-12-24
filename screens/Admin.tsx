@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, AlertTriangle } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -10,9 +10,10 @@ interface AdminProps {
   onUpdateCalendar: (newCalendar: RaceGP[]) => void;
   onSelectGp: (id: number) => void;
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
+  onResetHistory: () => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectGp, onCalculatePoints }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectGp, onCalculatePoints, onResetHistory }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -197,6 +198,22 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ZONA DE PERIGO */}
+        <div className="bg-red-900/10 p-6 rounded-3xl border border-red-500/20">
+            <h3 className="text-xs font-black mb-4 uppercase tracking-widest text-red-500 flex items-center gap-2">
+                <AlertTriangle size={14} /> Zona de Perigo
+            </h3>
+            <p className="text-[10px] text-gray-500 mb-4 leading-relaxed">
+                Ações aqui são irreversíveis e afetam todos os usuários. Use com cautela.
+            </p>
+            <button 
+                onClick={onResetHistory}
+                className="w-full bg-red-600/10 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+            >
+                <Trash2 size={16} /> RESETAR GRÁFICO DE DOMINÂNCIA
+            </button>
         </div>
       </div>
     </div>
