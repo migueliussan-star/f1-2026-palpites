@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Loader2, AlertCircle, ShieldCheck, Settings, Lock } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, ExternalLink, Globe } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup } from '../firebase';
 
 const Login: React.FC = () => {
@@ -15,62 +15,72 @@ const Login: React.FC = () => {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed') {
-        setError('Google Auth pendente no Firebase.');
+      // Erro comum de domínio não autorizado ou app em modo teste
+      if (err.code === 'auth/configuration-not-found' || err.code === 'auth/operation-not-allowed' || err.code === 'auth/unauthorized-domain') {
+        setError('Configuração pendente no console.');
         setShowConfigGuide(true);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Login cancelado.');
       } else {
-        setError('Erro de conexão com o servidor.');
+        setError('Erro ao conectar. Verifique o domínio.');
+        setShowConfigGuide(true);
       }
       setLoading(false);
     }
   };
 
-  const currentDomain = window.location.origin;
+  const currentDomain = window.location.hostname;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#0a0a0c] relative overflow-hidden">
-      {/* Luzes de fundo para estética F1 */}
+      {/* Estética F1 */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-600/5 blur-[120px] rounded-full"></div>
 
       {showConfigGuide && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl">
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font">LIBERAR ACESSO</h3>
+              <h3 className="text-xl font-black f1-font">RESOLVER ACESSO</h3>
             </div>
             
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              O Google exige que você autorize este domínio no painel do Firebase:
-            </p>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex gap-4">
-                <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">1</div>
-                <p className="text-xs text-gray-300">No Console do Firebase, defina o <b>E-mail de suporte</b> e salve.</p>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">2</div>
-                <div className="space-y-2 flex-1">
-                   <p className="text-xs text-gray-300">Adicione este domínio em "Domínios Autorizados":</p>
-                   <code className="block bg-black p-4 rounded-2xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all">
-                     {currentDomain}
-                   </code>
+            <div className="space-y-6">
+              <section>
+                <div className="flex items-center gap-2 mb-2">
+                  <Globe size={14} className="text-blue-400" />
+                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest">1. Autorizar Domínio (Vercel)</h4>
                 </div>
-              </div>
+                <p className="text-gray-400 text-[11px] mb-3">No Console do Firebase > Authentication > Settings > Authorized Domains, adicione:</p>
+                <code className="block bg-black p-3 rounded-xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all mb-2">
+                  {currentDomain}
+                </code>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck size={14} className="text-green-400" />
+                  <h4 className="text-[10px] font-black uppercase text-green-400 tracking-widest">2. Publicar App (Modo Produção)</h4>
+                </div>
+                <p className="text-gray-400 text-[11px] mb-2">Para tirar o erro "Aguardando Aprovação":</p>
+                <ol className="text-[10px] text-gray-500 space-y-1 list-decimal ml-4">
+                  <li>Vá no <b>Google Cloud Console</b>.</li>
+                  <li>Menu > APIs e Serviços > <b>Tela de consentimento OAuth</b>.</li>
+                  <li>Clique no botão <b>"PUBLICAR APLICATIVO"</b>.</li>
+                </ol>
+              </section>
             </div>
 
             <button 
               onClick={() => setShowConfigGuide(false)}
-              className="w-full bg-[#e10600] text-white font-black py-5 rounded-3xl flex items-center justify-center gap-2 text-xs uppercase tracking-widest shadow-xl shadow-red-600/20 active:scale-95 transition-all"
+              className="w-full mt-8 bg-white text-black font-black py-4 rounded-3xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
             >
-              JÁ AUTORIZEI, TENTAR AGORA
+              ENTENDI, TENTAR LOGIN
             </button>
+            
+            <p className="text-[9px] text-gray-600 mt-4 text-center uppercase font-bold">Essas etapas são feitas apenas uma vez pelo dono do projeto.</p>
           </div>
         </div>
       )}
@@ -101,20 +111,27 @@ const Login: React.FC = () => {
           {error && (
             <div 
               onClick={() => setShowConfigGuide(true)}
-              className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 mt-6 cursor-pointer hover:bg-red-500/20 transition-colors animate-in slide-in-from-top duration-300"
+              className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 mt-6 cursor-pointer hover:bg-red-500/20 transition-colors"
             >
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
               <div className="flex-1">
                 <p className="text-red-500 text-[10px] font-black uppercase tracking-widest mb-1">
                     {error}
                 </p>
-                <p className="text-[9px] text-red-500/60 uppercase font-bold">Clique aqui para ver o tutorial de ajuda</p>
+                <p className="text-[9px] text-red-500/60 uppercase font-bold">Clique aqui para ver o guia de correção</p>
               </div>
             </div>
           )}
+          
+          <button 
+            onClick={() => setShowConfigGuide(true)}
+            className="w-full text-[9px] text-gray-600 font-black uppercase tracking-[0.2em] py-4 hover:text-gray-400 transition-colors"
+          >
+            Ajuda para o Administrador
+          </button>
         </div>
 
-        <div className="mt-24 pt-10 border-t border-white/5 opacity-30 text-center">
+        <div className="mt-12 pt-10 border-t border-white/5 opacity-30 text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
                 <Lock size={12} className="text-gray-400" />
                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Acesso Seguro Criptografado</span>

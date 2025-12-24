@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DRIVERS } from '../constants';
 import { RaceGP } from '../types';
@@ -38,6 +39,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
         <div className="space-y-8 mb-24">
           {sessions.map(session => {
             const sessionData = stats[session] || {};
+            // Mostra TODOS os pilotos que receberam votos
             const rankedDrivers = Object.entries(sessionData)
               .sort(([, a], [, b]) => (b as number) - (a as number));
 
@@ -54,6 +56,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                   {rankedDrivers.map(([driverId, votes], idx) => {
                     const driver = DRIVERS.find(d => d.id === driverId);
                     const voteCount = votes as number;
+                    // Percentual apenas para a largura da barra visual
                     const percent = Math.min(100, Math.round((voteCount / totalUsers) * 100));
                     
                     return (
@@ -63,6 +66,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                             <span className="text-[10px] font-black f1-font text-gray-600">#{idx + 1}</span>
                             <p className="text-sm font-bold">{driver?.name}</p>
                           </div>
+                          {/* Apenas o número de votos, sem a porcentagem por escrito */}
                           <span className="text-xs font-black text-white">
                              {voteCount} <span className="text-[8px] text-gray-500 font-normal uppercase">{voteCount === 1 ? 'voto' : 'votos'}</span>
                           </span>
