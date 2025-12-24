@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, Driver } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, Calendar as CalIcon, CheckCircle, ShieldCheck, PlayCircle, Trophy } from 'lucide-react';
+import { Settings, Lock, Unlock, Calendar as CalIcon, CheckCircle, ShieldCheck, PlayCircle, Trophy, Edit2, Save } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -15,6 +15,23 @@ interface AdminProps {
 const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectGp, onCalculatePoints }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
+  const [editingDate, setEditingDate] = useState(gp.date);
+
+  // Sincroniza o input de data quando o GP selecionado muda
+  useEffect(() => {
+    setEditingDate(gp.date);
+  }, [gp.id, gp.date]);
+
+  const handleUpdateDate = () => {
+    const newCalendar = calendar.map(c => {
+      if (c.id === gp.id) {
+        return { ...c, date: editingDate };
+      }
+      return c;
+    });
+    onUpdateCalendar(newCalendar);
+    alert(`Data do GP ${gp.name} atualizada para: ${editingDate}`);
+  };
 
   // Define o GP selecionado como o GP ATIVO no app
   const setActiveGP = () => {
@@ -75,21 +92,43 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
       </div>
 
       <div className="space-y-6 pb-24">
-        {/* SELEÇÃO DE GP */}
+        {/* SELEÇÃO E INFO DO GP */}
         <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
           <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 block">Gerenciar Grande Prêmio</label>
           <select 
             value={gp.id} 
             onChange={(e) => onSelectGp(Number(e.target.value))}
-            className="w-full bg-[#1a1a1e] border border-white/10 rounded-2xl p-4 text-sm font-bold appearance-none outline-none focus:border-red-600"
+            className="w-full bg-[#1a1a1e] border border-white/10 rounded-2xl p-4 text-sm font-bold appearance-none outline-none focus:border-red-600 mb-4"
           >
             {calendar.map(c => (
               <option key={c.id} value={c.id}>{c.name} {c.isSprint ? '(Sprint)' : ''}</option>
             ))}
           </select>
+
+          <div className="space-y-3 mb-4">
+            <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+              <div className="flex-1">
+                <p className="text-[8px] uppercase text-gray-500 font-black mb-1">Data do Evento (ex: 15-17 Mar)</p>
+                <input 
+                  type="text" 
+                  value={editingDate}
+                  onChange={(e) => setEditingDate(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold outline-none border-b border-white/10 focus:border-[#e10600] pb-1"
+                />
+              </div>
+              <button 
+                onClick={handleUpdateDate}
+                className="bg-[#e10600] p-3 rounded-xl text-white active:scale-95 transition-all shadow-lg shadow-red-600/20"
+                title="Salvar Nova Data"
+              >
+                <Save size={16} />
+              </button>
+            </div>
+          </div>
+
           <button 
             onClick={setActiveGP}
-            className="w-full mt-4 bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
           >
             <PlayCircle size={16} /> Definir como GP Ativo
           </button>
