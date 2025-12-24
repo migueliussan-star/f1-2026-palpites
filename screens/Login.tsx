@@ -16,7 +16,7 @@ const Login: React.FC = () => {
     const isWebView = /wv|Webview/i.test(navigator.userAgent);
     setIsAppEnv(isCapacitor || isWebView);
 
-    // Verifica se voltou de um redirecionamento (caso o popup falhe e o usuário tente redirect)
+    // Verifica se voltou de um redirecionamento
     const checkRedirect = async () => {
       try {
         setLoading(true);
@@ -58,12 +58,9 @@ const Login: React.FC = () => {
     setDetailedError('');
     
     try {
-      // Tenta Popup primeiro (Melhor UX para Web/PWA Desktop)
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-        // Se falhar (ex: bloqueador de popup ou ambiente mobile estrito), tenta Redirect
         console.log("Popup falhou, tentando redirect...", err.code);
-        
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || isAppEnv) {
             try {
                 await signInWithRedirect(auth, googleProvider);
@@ -84,19 +81,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    // Container principal fixo (não rola, segura o background)
-    <div className="fixed inset-0 w-full h-full bg-[#0a0a0c] overflow-hidden">
+    // Estrutura Flex Padrão (ocupa 100% do pai #root)
+    <div className="h-full w-full flex flex-col relative bg-[#0a0a0c] overflow-hidden">
       
-      {/* Background Decorativo */}
+      {/* Background Decorativo (Absoluto para não interferir no fluxo) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[120px] rounded-full pointer-events-none"></div>
       
-      {/* Container de Rolagem (ocupa tudo, permite scroll) */}
-      <div className="absolute inset-0 overflow-y-auto overflow-x-hidden scroll-smooth">
+      {/* Container de Rolagem (Flex-1 força ocupar o espaço restante e scrollar se passar) */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full relative z-10 scroll-smooth">
         
-        {/* Wrapper de Layout (Centraliza verticalmente, mas cresce se precisar) */}
+        {/* Wrapper de Conteúdo (Min-h-full garante que centralize se for pequeno, mas cresça se for grande) */}
         <div className="min-h-full w-full flex flex-col items-center justify-center p-6">
           
-          <div className="w-full max-w-sm relative z-10 py-10">
+          <div className="w-full max-w-sm py-10">
             <div className="text-center mb-12">
               <div className="inline-block p-5 rounded-[40px] bg-red-600/10 mb-8 border border-red-600/20">
                 <h1 className="text-5xl font-black f1-font text-[#e10600] tracking-tighter">F1 2026</h1>
@@ -154,7 +151,7 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal de Ajuda (Fica fixo por cima de tudo) */}
+      {/* Modal de Ajuda (Fixo no topo da tela, independente do scroll) */}
       {showConfigGuide && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">

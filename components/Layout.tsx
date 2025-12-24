@@ -16,7 +16,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       <div className="fixed top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-[#e10600]/10 to-transparent pointer-events-none z-0" />
 
       {/* Main Content - SCROLL HAPPENS HERE */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-32 z-10 animate-enter scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* min-h-0 é crucial para scroll aninhado no flexbox */}
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-32 z-10 animate-enter scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
         {children}
       </main>
 

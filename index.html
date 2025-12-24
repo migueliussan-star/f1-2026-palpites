@@ -17,6 +17,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        html {
+            height: 100%;
+            overflow: hidden; /* O html não rola, quem rola são os componentes internos */
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0a0a0c;
@@ -26,10 +30,10 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Trava rolagem do body */
+            overflow: hidden; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            overscroll-behavior: none; /* Evita o efeito de elástico no iOS */
+            overscroll-behavior: none;
         }
         .f1-font {
             font-family: 'Orbitron', sans-serif;
@@ -47,17 +51,26 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         #root {
-            height: 100vh;
-            height: -webkit-fill-available;
-            width: 100vw;
-            overflow: hidden; /* MUDANÇA: O root não rola mais, quem rola é o main */
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
-        /* Custom Scrollbar */
+        /* Custom Scrollbar - Visível mas discreta */
         ::-webkit-scrollbar {
-            width: 0px;
+            width: 6px;
             background: transparent;
         }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
         .safe-area-top { padding-top: env(safe-area-inset-top); }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         
