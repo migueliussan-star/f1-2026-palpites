@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, Globe, ExternalLink, Smartphone } from 'lucide-react';
-import { auth, googleProvider, signInWithRedirect, getRedirectResult } from '../firebase';
+import { Loader2, AlertCircle, Settings, Lock, Smartphone, ExternalLink } from 'lucide-react';
+import { auth, googleProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from '../firebase';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [detailedError, setDetailedError] = useState('');
   const [showConfigGuide, setShowConfigGuide] = useState(false);
   const [isAppEnv, setIsAppEnv] = useState(false);
 
@@ -15,44 +16,69 @@ const Login: React.FC = () => {
     const isWebView = /wv|Webview/i.test(navigator.userAgent);
     setIsAppEnv(isCapacitor || isWebView);
 
+    // Verifica se voltou de um redirecionamento (caso o popup falhe e o usuário tente redirect)
     const checkRedirect = async () => {
       try {
         setLoading(true);
         const result = await getRedirectResult(auth);
         if (result) {
-          // Logado com sucesso
+          console.log("Login via redirect sucesso");
+        } else {
+            setLoading(false);
         }
       } catch (err: any) {
-        console.error("Erro no login:", err);
-        if (err.code === 'auth/disallowed-user-agent' || err.message?.includes('user-agent')) {
-          setError('O Google bloqueou o login neste formato de app.');
-        } else if (err.code === 'auth/popup-blocked') {
-          setError('O navegador bloqueou a janela de login.');
-        } else {
-          setError('Falha na conexão com o Google.');
-        }
-      } finally {
+        console.error("Erro no login redirect:", err);
+        handleAuthError(err);
         setLoading(false);
       }
     };
     checkRedirect();
   }, []);
 
+  const handleAuthError = (err: any) => {
+    console.error("Auth Error:", err);
+    setDetailedError(err.message || JSON.stringify(err));
+
+    if (err.code === 'auth/unauthorized-domain') {
+        setError('Domínio não autorizado no Firebase.');
+    } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Login cancelado pelo usuário.');
+    } else if (err.code === 'auth/popup-blocked') {
+        setError('Pop-up bloqueado pelo navegador.');
+    } else if (err.code === 'auth/network-request-failed') {
+        setError('Erro de conexão. Verifique sua internet.');
+    } else {
+        setError('Falha ao autenticar.');
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
+    setDetailedError('');
+    
     try {
-      // Em Apps nativos, Redirect é obrigatório
-      await signInWithRedirect(auth, googleProvider);
+      // Tenta Popup primeiro (Melhor UX para Web/PWA Desktop)
+      await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      console.error(err);
-      setError('Erro ao abrir o Google.');
-      setLoading(false);
+        // Se falhar (ex: bloqueador de popup ou ambiente mobile estrito), tenta Redirect
+        console.log("Popup falhou, tentando redirect...", err.code);
+        
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || isAppEnv) {
+            try {
+                await signInWithRedirect(auth, googleProvider);
+            } catch (redirectErr: any) {
+                handleAuthError(redirectErr);
+                setLoading(false);
+            }
+        } else {
+            handleAuthError(err);
+            setLoading(false);
+        }
     }
   };
 
   const handleOpenInBrowser = () => {
-    // Tenta forçar a abertura no navegador padrão se estiver no app
     const url = window.location.href;
     window.open(url, '_system');
   };
@@ -68,27 +94,24 @@ const Login: React.FC = () => {
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font uppercase leading-tight">Problema de Login</h3>
+              <h3 className="text-xl font-black f1-font uppercase leading-tight">Ajuda de Login</h3>
             </div>
             
             <div className="space-y-4">
               <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Smartphone size={14} className="text-blue-400" />
-                  <h4 className="text-[10px] font-black uppercase text-blue-400">Por que o erro 403?</h4>
-                </div>
-                <p className="text-gray-400 text-[11px] leading-relaxed">
-                  O Google bloqueia login em APKs simples por segurança.
-                </p>
+                 <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Erro Técnico:</h4>
+                 <p className="text-[10px] text-red-300 font-mono break-all bg-black/30 p-2 rounded-lg">
+                    {detailedError || "Nenhum detalhe disponível."}
+                 </p>
               </div>
 
               <div className="bg-blue-600/10 p-4 rounded-3xl border border-blue-600/20">
-                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Solução Definitiva:</p>
-                <ol className="text-[10px] text-gray-300 space-y-2 font-bold uppercase">
-                  <li>1. Abra o site no Chrome do celular</li>
-                  <li>2. Faça o login por lá</li>
-                  <li>3. O App reconhecerá seu acesso</li>
-                </ol>
+                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Possíveis Soluções:</p>
+                <ul className="text-[10px] text-gray-300 space-y-2 list-disc list-inside">
+                  <li>Se o erro for "Unauthorized domain", adicione este domínio no Firebase Console.</li>
+                  <li>Verifique sua conexão com a internet.</li>
+                  <li>Tente abrir no Chrome (se estiver em outro app).</li>
+                </ul>
               </div>
             </div>
 
@@ -96,7 +119,7 @@ const Login: React.FC = () => {
               onClick={() => setShowConfigGuide(false)}
               className="w-full mt-8 bg-[#e10600] text-white font-black py-5 rounded-3xl text-[10px] uppercase tracking-widest active:scale-95"
             >
-              FECHAR
+              ENTENDI
             </button>
           </div>
         </div>
@@ -128,12 +151,12 @@ const Login: React.FC = () => {
             <div className="space-y-3">
               <div 
                 onClick={() => setShowConfigGuide(true)}
-                className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 cursor-pointer"
+                className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 cursor-pointer hover:bg-red-500/20 transition-all"
               >
                 <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
                 <div className="flex-1">
                   <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">{error}</p>
-                  <p className="text-[9px] text-red-500/60 uppercase font-bold mt-1">Clique para saber como resolver</p>
+                  <p className="text-[9px] text-red-500/60 uppercase font-bold mt-1">Toque para ver detalhes técnicos</p>
                 </div>
               </div>
 
@@ -142,7 +165,7 @@ const Login: React.FC = () => {
                   onClick={handleOpenInBrowser}
                   className="w-full py-4 rounded-2xl border border-white/10 text-[10px] font-black uppercase text-gray-400 flex items-center justify-center gap-2"
                 >
-                  <ExternalLink size={14} /> Abrir no Navegador
+                  <ExternalLink size={14} /> Tentar no Navegador
                 </button>
               )}
             </div>
