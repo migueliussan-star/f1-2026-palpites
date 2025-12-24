@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, UserMinus, AlertTriangle, Loader2, ShieldCheck, Download, Smartphone } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -17,7 +16,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, onDeleteAccount, hasNoAdmin, onClaimAdmin, canInstall, onInstall 
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, canInstall, onInstall 
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [isStandalone, setIsStandalone] = useState(false);
@@ -27,7 +26,8 @@ const Home: React.FC<HomeProps> = ({
     setIsStandalone(!!standalone);
 
     const interval = setInterval(() => {
-      const target = new Date(2026, 2, 8); // Simplificado para exemplo
+      // Data alvo da primeira corrida de 2026 (Austrália)
+      const target = new Date('2026-03-08T00:00:00'); 
       const diff = target.getTime() - Date.now();
       if (diff > 0) {
         setTimeLeft({
@@ -86,7 +86,7 @@ const Home: React.FC<HomeProps> = ({
            
            {!canInstall && (
              <p className="text-[8px] text-gray-500 mt-3 text-center uppercase font-bold">
-               Se o botão não ativar, use: <span className="text-white">Menu > Instalar Aplicativo</span>
+               Se o botão não ativar, use: <span className="text-white">Menu &gt; Instalar Aplicativo</span>
              </p>
            )}
         </div>
@@ -113,11 +113,11 @@ const Home: React.FC<HomeProps> = ({
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
                 <p className="text-2xl font-black f1-font">{predictionsCount}</p>
-                <p className="text-[8px] uppercase text-gray-500 font-bold tracking-widest">Palpites</p>
+                <p className="text-[8px] uppercase text-gray-500 font-bold tracking-widest">Sessões</p>
             </div>
             <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
-                <p className="text-2xl font-black f1-font">{timeLeft.d}d {timeLeft.h}h</p>
-                <p className="text-[8px] uppercase text-gray-500 font-bold tracking-widest">Tempo</p>
+                <p className="text-2xl font-black f1-font">{timeLeft.d}d</p>
+                <p className="text-[8px] uppercase text-gray-500 font-bold tracking-widest">Countdown</p>
             </div>
           </div>
           <button onClick={onNavigateToPredict} className="w-full bg-[#e10600] text-white font-black py-5 rounded-3xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-red-600/30 text-xs uppercase tracking-widest">PALPITAR AGORA <ChevronRight size={18} /></button>
