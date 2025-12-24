@@ -163,16 +163,16 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 <div 
                     onClick={() => driver && toggleDriver(driver.id)}
                     className={`flex-1 h-16 rounded-2xl flex items-center px-4 gap-4 transition-all relative overflow-hidden 
-                    ${driver ? 'glass border-white/20' : 'bg-white/5 border border-dashed border-white/10'}
-                    ${isEditable && driver ? 'cursor-pointer hover:border-red-500/50 hover:bg-red-500/10 active:scale-[0.98]' : ''}
+                    ${driver ? 'glass border-white/20 cursor-pointer' : 'bg-white/5 border border-dashed border-white/10'}
+                    ${isEditable && driver ? 'hover:border-red-500/50 hover:bg-red-500/10 active:scale-[0.98]' : ''}
                     `}
                 >
                   {driver ? (
                     <>
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: driver.color }} />
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5 pointer-events-none" style={{ backgroundColor: driver.color }} />
                       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/50 to-transparent pointer-events-none" />
                       
-                      <div className="flex-1 z-10">
+                      <div className="flex-1 z-10 pointer-events-none">
                         <div className="flex items-baseline gap-2">
                             <span className="text-xs font-black f1-font text-white/40">#{driver.number}</span>
                             <p className="text-sm font-bold text-white leading-none uppercase">{driver.name}</p>
@@ -181,7 +181,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                       </div>
                       
                       {isEditable && (
-                        <XCircle size={18} className="text-white/20" />
+                        <XCircle size={18} className="text-white/20 pointer-events-none" />
                       )}
                     </>
                   ) : (
@@ -212,16 +212,17 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 disabled={!isEditable} // Allow clicking even if selected to deselect
                 onClick={() => toggleDriver(driver.id)}
                 className={`
-                    relative p-3 rounded-2xl border text-left transition-all overflow-hidden group active:scale-95
+                    relative p-3 rounded-2xl border text-left transition-all overflow-hidden group active:scale-95 cursor-pointer
                     ${isSelected 
                         ? 'border-[#e10600]/50 bg-[#e10600]/10 ring-1 ring-[#e10600]/20' 
                         : 'glass border-white/5 hover:bg-white/10'}
                 `}
               >
-                {/* Team Color Accent */}
-                <div className="absolute top-0 right-0 w-full h-1 opacity-50" style={{ backgroundColor: driver.color }}></div>
+                {/* Team Color Accent - Pointer Events None */}
+                <div className="absolute top-0 right-0 w-full h-1 opacity-50 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
 
-                <div className="flex items-center justify-between relative z-10 mt-1">
+                {/* Content - Pointer Events None to force click on button */}
+                <div className="flex items-center justify-between relative z-10 mt-1 pointer-events-none">
                     <div>
                         <p className={`text-[10px] font-bold f1-font mb-1 ${isSelected ? 'text-[#e10600]' : 'text-gray-500'}`}>#{driver.number}</p>
                         <p className="text-xs font-bold leading-tight uppercase text-white truncate">{driver.name.split(' ').pop()}</p>
