@@ -11,6 +11,12 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
+// Interface para o evento de instalação do PWA
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin'>('home');
   const [user, setUser] = useState<User | null>(null);
@@ -19,14 +25,14 @@ const App: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
-    window.addEventListener('beforeinstallprompt' as any, handleBeforeInstallPrompt);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
@@ -85,7 +91,7 @@ const App: React.FC = () => {
 
     return () => {
         unsubscribeAuth();
-        window.removeEventListener('beforeinstallprompt' as any, handleBeforeInstallPrompt);
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -146,8 +152,9 @@ const App: React.FC = () => {
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
   
-  // Garantia de objeto para evitar erros de renderização
-  const activeGP = (calendar.length > 0 ? (calendar.find(gp => gp.status === 'OPEN') || calendar.find(gp => gp.status === 'UPCOMING') || calendar[0]) : INITIAL_CALENDAR[0]);
+  // Garantia de objeto para evitar erros de undefined
+  const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
+  const activeGP = currentCalendar.find(gp => gp.status === 'OPEN') || currentCalendar.find(gp => gp.status === 'UPCOMING') || currentCalendar[0];
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
   return (
