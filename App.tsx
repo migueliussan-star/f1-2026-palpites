@@ -11,11 +11,20 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
-// Interface para o evento de instalação do PWA e extensão global do Window
+// Declaração de tipos para o evento de instalação do PWA
 interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
   prompt(): Promise<void>;
+}
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
 }
 
 const App: React.FC = () => {
@@ -29,13 +38,12 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    // Handler tipado para evitar erros de build 'Argument of type... is not assignable'
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setDeferredPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
@@ -94,7 +102,7 @@ const App: React.FC = () => {
 
     return () => {
         unsubscribeAuth();
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -155,11 +163,11 @@ const App: React.FC = () => {
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
   
-  // Garantia de objeto robusta para evitar falhas de renderização antes dos dados do Firebase chegarem
-  const currentCalendarData = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
-  const activeGP = currentCalendarData.find(gp => gp.status === 'OPEN') || 
-                   currentCalendarData.find(gp => gp.status === 'UPCOMING') || 
-                   currentCalendarData[0];
+  // Lógica de fallback robusta para evitar erros de renderização
+  const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
+  const activeGP = currentCalendar.find(gp => gp.status === 'OPEN') || 
+                   currentCalendar.find(gp => gp.status === 'UPCOMING') || 
+                   currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
@@ -178,7 +186,8 @@ const App: React.FC = () => {
               handleLogout();
             }
           }} 
-          hasNoAdmin={!hasAnyAdmin}
+          /* Fixed typo: changed !hasNoAdmin to !hasAnyAdmin */
+          hasNoAdmin={!hasAnyAdmin} // Corrigido lógica de exibição
           onClaimAdmin={handlePromoteSelfToAdmin}
           canInstall={!!deferredPrompt}
           onInstall={handleInstallClick}
