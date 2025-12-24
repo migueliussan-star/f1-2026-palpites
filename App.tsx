@@ -22,6 +22,21 @@ const App: React.FC = () => {
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // Função auxiliar para gerar histórico estável baseado no ID do usuário (Mock)
+  const generateStableHistory = (userId: string, currentRank: number) => {
+    // Soma simples dos caracteres do ID para semente
+    const seed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const history = [];
+    for (let i = 0; i < 5; i++) {
+        // Gera posições "realistas" próximas ao rank atual
+        const variation = (seed + i) % 5 - 2; // -2 a +2
+        let hRank = currentRank + variation;
+        if (hRank < 1) hRank = 1;
+        history.push(hRank);
+    }
+    return history.reverse(); // Mais antigo para mais novo
+  };
+
   useEffect(() => {
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
@@ -40,12 +55,16 @@ const App: React.FC = () => {
         const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
         // Adiciona dados mockados de histórico se não existirem (para visualização do layout)
-        const processedList = sortedList.map((u, index) => ({
-            ...u,
-            rank: index + 1,
-            previousRank: u.previousRank || (Math.random() > 0.5 ? index + 2 : index), // Mock para setas funcionarem visualmente
-            positionHistory: u.positionHistory || [index + 1, index + 2, index + 1] // Mock para gráfico
-        }));
+        const processedList = sortedList.map((u, index) => {
+            const currentRank = index + 1;
+            return {
+                ...u,
+                rank: currentRank,
+                // Usa histórico do BD se existir, senão gera um estável para visualização
+                positionHistory: u.positionHistory || generateStableHistory(u.id, currentRank),
+                previousRank: u.previousRank || (currentRank + ((u.id.charCodeAt(0) % 3) - 1))
+            };
+        });
 
         setAllUsers(processedList);
       } else {
