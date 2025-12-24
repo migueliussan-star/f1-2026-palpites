@@ -8,6 +8,7 @@ import Palpitometro from './screens/Palpitometro';
 import Ranking from './screens/Ranking';
 import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
+import Stats from './screens/Stats';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
@@ -210,6 +211,7 @@ const App: React.FC = () => {
         />
       )}
       {activeTab === 'ranking' && <Ranking currentUser={user} users={allUsers} calendar={calendar} />}
+      {activeTab === 'stats' && <Stats user={user} />}
       {activeTab === 'admin' && user.isAdmin && (
         <Admin 
           gp={adminGP} 
