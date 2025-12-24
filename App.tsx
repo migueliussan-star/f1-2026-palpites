@@ -11,20 +11,14 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
-// Declaração de tipos para o evento de instalação do PWA
+// Interface para o evento de instalação do PWA
 interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: Array<string>;
+  readonly platforms: string[];
   readonly userChoice: Promise<{
     outcome: 'accepted' | 'dismissed';
     platform: string;
   }>;
   prompt(): Promise<void>;
-}
-
-declare global {
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
 }
 
 const App: React.FC = () => {
@@ -38,9 +32,10 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
+    // Handler para capturar o prompt de instalação do PWA
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -163,7 +158,6 @@ const App: React.FC = () => {
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
   
-  // Lógica de fallback robusta para evitar erros de renderização
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   const activeGP = currentCalendar.find(gp => gp.status === 'OPEN') || 
                    currentCalendar.find(gp => gp.status === 'UPCOMING') || 
@@ -186,8 +180,7 @@ const App: React.FC = () => {
               handleLogout();
             }
           }} 
-          /* Fixed typo: changed !hasNoAdmin to !hasAnyAdmin */
-          hasNoAdmin={!hasAnyAdmin} // Corrigido lógica de exibição
+          hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
           canInstall={!!deferredPrompt}
           onInstall={handleInstallClick}
