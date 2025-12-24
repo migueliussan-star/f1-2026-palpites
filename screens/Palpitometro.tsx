@@ -38,7 +38,6 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
         <div className="space-y-8 mb-24">
           {sessions.map(session => {
             const sessionData = stats[session] || {};
-            // Removido o .slice(0, 5) para mostrar TODOS os pilotos votados
             const rankedDrivers = Object.entries(sessionData)
               .sort(([, a], [, b]) => (b as number) - (a as number));
 
@@ -54,7 +53,8 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                 <div className="space-y-4">
                   {rankedDrivers.map(([driverId, votes], idx) => {
                     const driver = DRIVERS.find(d => d.id === driverId);
-                    const percent = Math.min(100, Math.round(((votes as number) / totalUsers) * 100));
+                    const voteCount = votes as number;
+                    const percent = Math.min(100, Math.round((voteCount / totalUsers) * 100));
                     
                     return (
                       <div key={driverId}>
@@ -63,7 +63,9 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                             <span className="text-[10px] font-black f1-font text-gray-600">#{idx + 1}</span>
                             <p className="text-sm font-bold">{driver?.name}</p>
                           </div>
-                          <span className="text-xs font-black text-white">{percent}% <span className="text-[8px] text-gray-500 font-normal">({votes} votos)</span></span>
+                          <span className="text-xs font-black text-white">
+                             {voteCount} <span className="text-[8px] text-gray-500 font-normal uppercase">{voteCount === 1 ? 'voto' : 'votos'}</span>
+                          </span>
                         </div>
                         <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                           <div 
