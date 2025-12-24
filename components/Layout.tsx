@@ -11,19 +11,19 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin }) => {
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto shadow-2xl overflow-hidden relative">
+    <div className="flex flex-col h-full w-full max-w-md mx-auto shadow-2xl overflow-hidden relative bg-[#0a0a0c]">
       {/* Background effects */}
       <div className="fixed top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-[#e10600]/10 to-transparent pointer-events-none z-0" />
 
-      {/* Main Content */}
-      <main className="flex-1 pb-32 overflow-y-auto z-10 animate-enter">
+      {/* Main Content - SCROLL HAPPENS HERE */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-32 z-10 animate-enter scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
         {children}
       </main>
 
       {/* Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-4 safe-area-bottom">
-        <nav className="h-20 glass rounded-[32px] px-2 flex justify-between items-center relative overflow-hidden">
-            {/* Glow effect behind active tab - simplified logic for visual enhancement */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-4 safe-area-bottom pointer-events-none">
+        <nav className="h-20 glass rounded-[32px] px-2 flex justify-between items-center relative overflow-hidden pointer-events-auto">
+            {/* Glow effect behind active tab */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             
             <NavButton 

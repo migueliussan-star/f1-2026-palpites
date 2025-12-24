@@ -84,7 +84,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#0a0a0c] relative overflow-hidden">
+    <div className="h-full w-full overflow-y-auto flex flex-col items-center justify-center p-6 bg-[#0a0a0c] relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[120px] rounded-full"></div>
       
       {showConfigGuide && (
@@ -125,7 +125,7 @@ const Login: React.FC = () => {
         </div>
       )}
 
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-sm relative z-10 py-10">
         <div className="text-center mb-12">
           <div className="inline-block p-5 rounded-[40px] bg-red-600/10 mb-8 border border-red-600/20">
             <h1 className="text-5xl font-black f1-font text-[#e10600] tracking-tighter">F1 2026</h1>
