@@ -23,14 +23,12 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // Captura o evento de instalação para permitir instalar via botão
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Carregar Calendário
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -38,7 +36,6 @@ const App: React.FC = () => {
       else set(calendarRef, INITIAL_CALENDAR);
     });
 
-    // Carregar Ranking
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
@@ -48,7 +45,6 @@ const App: React.FC = () => {
       }
     });
 
-    // Carregar Predições
     const predictionsRef = ref(db, 'predictions');
     onValue(predictionsRef, (snapshot) => {
       const data = snapshot.val();
@@ -61,7 +57,6 @@ const App: React.FC = () => {
       setPredictions(predList);
     });
 
-    // Autenticação
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
@@ -112,6 +107,41 @@ const App: React.FC = () => {
     alert("Você agora é o Administrador!");
   };
 
+  const handleCalculatePoints = async (gp: RaceGP) => {
+    if (!gp.results) return;
+    
+    // Lógica simplificada: 5pts por acerto exato de posição
+    const userPointsMap: Record<string, number> = {};
+    
+    allUsers.forEach(u => {
+      let totalGpPoints = 0;
+      const userPreds = predictions.filter(p => p.gpId === gp.id && p.userId === u.id);
+      
+      userPreds.forEach(pred => {
+        const officialResult = gp.results?.[pred.session];
+        if (officialResult) {
+          pred.top5.forEach((driverId, idx) => {
+            if (driverId === officialResult[idx]) {
+              totalGpPoints += 5;
+            } else if (officialResult.includes(driverId)) {
+              totalGpPoints += 1; // 1pt se o piloto estiver no top 5 mas em posição errada
+            }
+          });
+        }
+      });
+      userPointsMap[u.id] = (u.points || 0) + totalGpPoints;
+    });
+
+    // Atualizar no banco
+    for (const [uid, pts] of Object.entries(userPointsMap)) {
+      await update(ref(db, `users/${uid}`), { points: pts });
+    }
+    
+    // Marcar GP como finalizado
+    const newCalendar = calendar.map(c => c.id === gp.id ? { ...c, status: 'FINISHED' as const } : c);
+    await set(ref(db, 'calendar'), newCalendar);
+  };
+
   const handleLogout = () => { signOut(auth); setUser(null); setActiveTab('home'); };
 
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
@@ -125,7 +155,8 @@ const App: React.FC = () => {
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
-  const activeGP = calendar.find(gp => gp.status === 'OPEN') || calendar[0];
+  const activeGP = calendar.find(gp => gp.status === 'OPEN') || calendar[0] || INITIAL_CALENDAR[0];
+  const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={user.isAdmin}>
@@ -136,7 +167,13 @@ const App: React.FC = () => {
           predictionsCount={new Set(predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
-          onDeleteAccount={async () => {}} 
+          onDeleteAccount={async () => {
+            if (user) {
+              await remove(ref(db, `users/${user.id}`));
+              await remove(ref(db, `predictions/${user.id}`));
+              handleLogout();
+            }
+          }} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
           canInstall={!!deferredPrompt}
@@ -144,9 +181,27 @@ const App: React.FC = () => {
         />
       )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
-      {activeTab === 'palpitometro' && <Palpitometro gp={activeGP} stats={{}} totalUsers={1} />}
+      {activeTab === 'palpitometro' && (
+        <Palpitometro 
+          gp={activeGP} 
+          stats={predictions.filter(p => p.gpId === activeGP.id).reduce((acc, p) => {
+            if (!acc[p.session]) acc[p.session] = {};
+            p.top5.forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
+            return acc;
+          }, {} as any)} 
+          totalUsers={new Set(predictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
+        />
+      )}
       {activeTab === 'ranking' && <Ranking currentUser={user} users={allUsers} calendar={calendar} />}
-      {activeTab === 'admin' && user.isAdmin && <Admin gp={activeGP} calendar={calendar} onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} onSelectGp={() => {}} onCalculatePoints={() => {}} />}
+      {activeTab === 'admin' && user.isAdmin && (
+        <Admin 
+          gp={adminGP} 
+          calendar={calendar} 
+          onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
+          onSelectGp={(id) => setAdminEditingGpId(id)} 
+          onCalculatePoints={handleCalculatePoints} 
+        />
+      )}
     </Layout>
   );
 };
