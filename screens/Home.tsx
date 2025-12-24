@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle, HelpCircle } from 'lucide-react';
+import { ChevronRight, Zap, Flag, Timer, Trophy, LogOut, Smartphone, ShieldCheck, Share, PlusSquare, Trash2, UserCircle, HelpCircle, MoreVertical, X } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -21,6 +21,7 @@ const Home: React.FC<HomeProps> = ({
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [showManualInstallModal, setShowManualInstallModal] = useState(false);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
@@ -44,8 +45,74 @@ const Home: React.FC<HomeProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  const handleInstallClick = () => {
+    if (canInstall) {
+      onInstall();
+    } else {
+      setShowManualInstallModal(true);
+    }
+  };
+
   return (
     <div className="p-6">
+      {/* Modal de Instalação Manual */}
+      {showManualInstallModal && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+          <div className="bg-[#1a1a1e] w-full max-w-sm rounded-[32px] border border-white/10 p-6 shadow-2xl relative">
+            <button 
+              onClick={() => setShowManualInstallModal(false)}
+              className="absolute top-4 right-4 bg-white/10 p-2 rounded-full text-white/70 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-blue-600/20 p-3 rounded-2xl">
+                <Smartphone className="text-blue-500" size={24} />
+              </div>
+              <h3 className="text-xl font-black f1-font uppercase leading-none">Instalação Manual</h3>
+            </div>
+
+            <p className="text-xs text-gray-400 font-bold mb-6 leading-relaxed">
+              O navegador bloqueou a instalação automática. Siga os passos abaixo para instalar:
+            </p>
+
+            {isIOS ? (
+              <div className="space-y-4 bg-blue-900/10 p-4 rounded-2xl border border-blue-500/10">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><Share size={18} /></div>
+                  <p className="text-xs font-bold">1. Toque no botão <span className="text-blue-400">Compartilhar</span> na barra inferior.</p>
+                </div>
+                <div className="w-full h-px bg-white/5"></div>
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><PlusSquare size={18} /></div>
+                  <p className="text-xs font-bold">2. Role para baixo e toque em <span className="text-blue-400">Adicionar à Tela de Início</span>.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 bg-blue-900/10 p-4 rounded-2xl border border-blue-500/10">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><MoreVertical size={18} /></div>
+                  <p className="text-xs font-bold">1. Toque nos <span className="text-blue-400">Três Pontinhos</span> no topo direito.</p>
+                </div>
+                <div className="w-full h-px bg-white/5"></div>
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/10 p-2 rounded-lg shrink-0"><Smartphone size={18} /></div>
+                  <p className="text-xs font-bold">2. Selecione <span className="text-blue-400">Instalar aplicativo</span> ou <span className="text-blue-400">Adicionar à tela inicial</span>.</p>
+                </div>
+              </div>
+            )}
+
+            <button 
+              onClick={() => setShowManualInstallModal(false)}
+              className="w-full mt-6 bg-white text-black font-black py-4 rounded-2xl uppercase tracking-widest text-xs active:scale-95 transition-all"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#e10600] to-red-900 border-2 border-white/20 flex items-center justify-center shadow-lg relative">
@@ -65,7 +132,7 @@ const Home: React.FC<HomeProps> = ({
         </button>
       </div>
 
-      {/* Guia de Instalação (PWA) */}
+      {/* Guia de Instalação Inteligente */}
       {!isStandalone && (
         <div className="mb-6 bg-gradient-to-r from-blue-600/20 to-blue-900/20 border border-blue-600/30 p-5 rounded-[32px] animate-in slide-in-from-top duration-500 shadow-2xl shadow-blue-600/10">
            <div className="flex items-center gap-4 mb-4">
@@ -73,53 +140,26 @@ const Home: React.FC<HomeProps> = ({
                 <Smartphone className="text-white" size={24} />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Instalar no Telefone</p>
-                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Use como um app real e ganhe mais espaço na tela.</p>
+                <p className="text-[10px] font-black uppercase text-white tracking-widest mb-1">Instalar Aplicativo</p>
+                <p className="text-[9px] text-blue-200/60 font-bold uppercase leading-tight">Melhor experiência em tela cheia.</p>
               </div>
            </div>
            
-           {isIOS ? (
-             <div className="space-y-3 bg-blue-900/30 p-4 rounded-2xl border border-blue-500/20">
-               <p className="text-[10px] text-blue-100 font-bold uppercase tracking-tight text-center">No iPhone (Safari):</p>
-               <div className="flex items-center justify-center gap-4">
-                 <div className="flex flex-col items-center gap-1 text-center">
-                   <div className="bg-white/10 p-2 rounded-lg"><Share size={16} className="text-white" /></div>
-                   <span className="text-[8px] text-blue-200 font-black uppercase leading-none mt-1">Botão<br/>Compartilhar</span>
-                 </div>
-                 <ChevronRight size={14} className="text-blue-500" />
-                 <div className="flex flex-col items-center gap-1 text-center">
-                   <div className="bg-white/10 p-2 rounded-lg"><PlusSquare size={16} className="text-white" /></div>
-                   <span className="text-[8px] text-blue-200 font-black uppercase leading-none mt-1">Adicionar à<br/>Tela de Início</span>
-                 </div>
-               </div>
-             </div>
-           ) : (
-             <>
-               <button 
-                 onClick={onInstall}
-                 disabled={!canInstall}
-                 className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                   canInstall 
-                   ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 active:scale-95' 
-                   : 'bg-white/5 text-gray-500 border border-white/5 cursor-default'
-                 }`}
-               >
-                 {canInstall ? 'INSTALAR AGORA' : 'PREPARANDO INSTALAÇÃO...'}
-               </button>
-               
-               {!canInstall && (
-                 <div className="mt-3 p-3 bg-white/5 rounded-xl">
-                    <p className="text-[8px] text-gray-500 text-center uppercase font-bold px-2">
-                      Se o botão não ativar em 5s:
-                    </p>
-                    <div className="flex items-center justify-center gap-2 mt-1">
-                        <span className="text-[9px] text-white font-black bg-white/10 px-2 py-0.5 rounded">Menu (⋮)</span>
-                        <ChevronRight size={10} className="text-gray-600" />
-                        <span className="text-[9px] text-white font-black bg-white/10 px-2 py-0.5 rounded">Adicionar à Tela</span>
-                    </div>
-                 </div>
-               )}
-             </>
+           <button 
+             onClick={handleInstallClick}
+             className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+               canInstall 
+               ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 active:scale-95' 
+               : 'bg-white/10 text-blue-200 border border-white/5 hover:bg-white/20'
+             }`}
+           >
+             {canInstall ? 'INSTALAR AGORA' : 'COMO INSTALAR?'}
+           </button>
+           
+           {!canInstall && (
+             <p className="text-[8px] text-blue-300/50 mt-3 text-center uppercase font-bold px-2">
+               Toque acima para ver o guia manual
+             </p>
            )}
         </div>
       )}
@@ -210,16 +250,8 @@ const Home: React.FC<HomeProps> = ({
           </button>
         </div>
 
-        <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/5 flex items-start gap-4">
-            <HelpCircle size={20} className="text-gray-500 shrink-0" />
-            <div className="flex-1">
-                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Dúvidas sobre instalação?</p>
-                <p className="text-[9px] text-gray-600 font-bold leading-relaxed uppercase">O App utiliza tecnologia PWA. Se não conseguir baixar, verifique se está usando o Chrome (Android) ou Safari (iOS).</p>
-            </div>
-        </div>
-
         <p className="text-[8px] text-gray-700 font-black text-center mt-8 uppercase tracking-widest">
-          App Palpites F1 2026 • v1.3.0
+          App Palpites F1 2026 • v1.4.0
         </p>
       </div>
     </div>

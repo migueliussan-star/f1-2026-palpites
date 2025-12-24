@@ -1,4 +1,4 @@
-const CACHE_NAME = 'f1-2026-v3';
+const CACHE_NAME = 'f1-2026-v4';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -9,7 +9,6 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Resposta básica para cumprir requisito de PWA
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);

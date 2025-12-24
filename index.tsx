@@ -12,16 +12,16 @@ if (container) {
     </React.StrictMode>
   );
 
-  // Registro do Service Worker para permitir a instalação como App
+  // Registro do Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      // Usando caminho absoluto para garantir o registro na raiz
-      navigator.serviceWorker.register('/sw.js')
+      // Uso de caminho relativo './sw.js' é mais seguro para diferentes ambientes
+      navigator.serviceWorker.register('./sw.js')
         .then(registration => {
-          console.log('SW registrado com sucesso:', registration.scope);
+          console.log('SW registrado:', registration.scope);
         })
         .catch(err => {
-          console.log('Falha ao registrar SW:', err);
+          console.log('Erro SW:', err);
         });
     });
   }
