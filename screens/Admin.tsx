@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { RaceGP, SessionType, Driver } from '../types';
+import { RaceGP, SessionType } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, Calendar as CalIcon, CheckCircle, ShieldCheck, PlayCircle, Trophy, Edit2, Save } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
   calendar: RaceGP[];
   onUpdateCalendar: (newCalendar: RaceGP[]) => void;
   onSelectGp: (id: number) => void;
-  onCalculatePoints: (gp: RaceGP) => void;
+  onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
 }
 
 const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectGp, onCalculatePoints }) => {
@@ -17,7 +17,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
 
-  // Sincroniza o input de data quando o GP selecionado muda
   useEffect(() => {
     setEditingDate(gp.date);
   }, [gp.id, gp.date]);
@@ -33,7 +32,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
     alert(`Data do GP ${gp.name} atualizada para: ${editingDate}`);
   };
 
-  // Define o GP selecionado como o GP ATIVO no app
   const setActiveGP = () => {
     const newCalendar: RaceGP[] = calendar.map(c => ({
       ...c,
@@ -72,9 +70,9 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
     onUpdateCalendar(newCalendar);
   };
 
-  const sessions = gp.isSprint 
-    ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] as SessionType[]
-    : ['Qualy corrida', 'corrida principal'] as SessionType[];
+  const sessions: SessionType[] = gp.isSprint 
+    ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal']
+    : ['Qualy corrida', 'corrida principal'];
 
   return (
     <div className="p-6 relative">
@@ -92,7 +90,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
       </div>
 
       <div className="space-y-6 pb-24">
-        {/* SELEÇÃO E INFO DO GP */}
         <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
           <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 block">Gerenciar Grande Prêmio</label>
           <select 
@@ -134,7 +131,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
           </button>
         </div>
 
-        {/* RESULTADOS OFICIAIS */}
         <div className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-xl">
           <h3 className="text-xs font-black mb-6 uppercase tracking-widest text-green-500 flex items-center gap-2">
             <Trophy size={14} /> Inserir Resultados Oficiais
@@ -171,8 +167,8 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
           </div>
 
           <button 
-            onClick={() => {
-                onCalculatePoints(gp);
+            onClick={async () => {
+                await onCalculatePoints(gp);
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             }}
@@ -182,7 +178,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
           </button>
         </div>
 
-        {/* STATUS DAS SESSÕES */}
         <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
           <h3 className="text-xs font-black mb-6 uppercase tracking-widest text-[#e10600]">Travar/Liberar Votações</h3>
           <div className="space-y-3">
@@ -202,9 +197,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, onUpdateCalendar, onSelectG
               </div>
             ))}
           </div>
-          <p className="text-[8px] text-gray-600 mt-4 text-center font-bold uppercase tracking-widest">
-            * Bloqueie a sessão assim que o treino/corrida começar!
-          </p>
         </div>
       </div>
     </div>

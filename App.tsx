@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, RaceGP, SessionType, Prediction } from './types';
 import { INITIAL_CALENDAR } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
 import Palpitometro from './screens/Palpitometro';
 import Ranking from './screens/Ranking';
-import Stats from './screens/Stats';
 import Admin from './screens/Admin';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
@@ -109,35 +108,26 @@ const App: React.FC = () => {
 
   const handleCalculatePoints = async (gp: RaceGP) => {
     if (!gp.results) return;
-    
-    // Lógica simplificada: 5pts por acerto exato de posição
     const userPointsMap: Record<string, number> = {};
-    
     allUsers.forEach(u => {
       let totalGpPoints = 0;
       const userPreds = predictions.filter(p => p.gpId === gp.id && p.userId === u.id);
-      
       userPreds.forEach(pred => {
         const officialResult = gp.results?.[pred.session];
         if (officialResult) {
           pred.top5.forEach((driverId, idx) => {
-            if (driverId === officialResult[idx]) {
-              totalGpPoints += 5;
-            } else if (officialResult.includes(driverId)) {
-              totalGpPoints += 1; // 1pt se o piloto estiver no top 5 mas em posição errada
-            }
+            if (driverId === officialResult[idx]) totalGpPoints += 5;
+            else if (officialResult.includes(driverId)) totalGpPoints += 1;
           });
         }
       });
       userPointsMap[u.id] = (u.points || 0) + totalGpPoints;
     });
 
-    // Atualizar no banco
     for (const [uid, pts] of Object.entries(userPointsMap)) {
       await update(ref(db, `users/${uid}`), { points: pts });
     }
     
-    // Marcar GP como finalizado
     const newCalendar = calendar.map(c => c.id === gp.id ? { ...c, status: 'FINISHED' as const } : c);
     await set(ref(db, 'calendar'), newCalendar);
   };
@@ -155,7 +145,7 @@ const App: React.FC = () => {
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
-  const activeGP = calendar.find(gp => gp.status === 'OPEN') || calendar[0] || INITIAL_CALENDAR[0];
+  const activeGP = calendar.find(gp => gp.status === 'OPEN') || calendar.find(gp => gp.status === 'UPCOMING') || calendar[0] || INITIAL_CALENDAR[0];
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 
   return (
@@ -168,9 +158,8 @@ const App: React.FC = () => {
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           onDeleteAccount={async () => {
-            if (user) {
+            if (user && window.confirm("Excluir sua conta e todos os seus palpites?")) {
               await remove(ref(db, `users/${user.id}`));
-              await remove(ref(db, `predictions/${user.id}`));
               handleLogout();
             }
           }} 
