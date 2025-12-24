@@ -1,28 +1,35 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, Globe, Users, CreditCard } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Settings, Lock, Globe, ExternalLink, Smartphone } from 'lucide-react';
 import { auth, googleProvider, signInWithRedirect, getRedirectResult } from '../firebase';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showConfigGuide, setShowConfigGuide] = useState(false);
+  const [isAppEnv, setIsAppEnv] = useState(false);
 
-  // Captura o resultado do redirecionamento quando a página volta do Google
   useEffect(() => {
+    // Detecta se está rodando dentro de um app (Capacitor/WebView)
+    const isCapacitor = (window as any).Capacitor !== undefined;
+    const isWebView = /wv|Webview/i.test(navigator.userAgent);
+    setIsAppEnv(isCapacitor || isWebView);
+
     const checkRedirect = async () => {
       try {
         setLoading(true);
         const result = await getRedirectResult(auth);
         if (result) {
-          // Login bem sucedido via redirect
+          // Logado com sucesso
         }
       } catch (err: any) {
-        console.error("Erro no redirect:", err);
-        if (err.code === 'auth/disallowed-user-agent') {
-          setError('O Google bloqueou este app. Tente abrir pelo navegador Chrome.');
+        console.error("Erro no login:", err);
+        if (err.code === 'auth/disallowed-user-agent' || err.message?.includes('user-agent')) {
+          setError('O Google bloqueou o login neste formato de app.');
+        } else if (err.code === 'auth/popup-blocked') {
+          setError('O navegador bloqueou a janela de login.');
         } else {
-          setError('Erro ao processar login. Tente novamente.');
+          setError('Falha na conexão com o Google.');
         }
       } finally {
         setLoading(false);
@@ -35,61 +42,61 @@ const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      // Usar Redirect é muito mais estável para aplicativos convertidos (APK)
+      // Em Apps nativos, Redirect é obrigatório
       await signInWithRedirect(auth, googleProvider);
     } catch (err: any) {
       console.error(err);
-      setError('Erro ao iniciar login.');
+      setError('Erro ao abrir o Google.');
       setLoading(false);
     }
   };
 
-  const currentDomain = window.location.hostname;
+  const handleOpenInBrowser = () => {
+    // Tenta forçar a abertura no navegador padrão se estiver no app
+    const url = window.location.href;
+    window.open(url, '_system');
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#0a0a0c] relative overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-600/5 blur-[120px] rounded-full"></div>
-
+      
       {showConfigGuide && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font uppercase leading-tight">Solução de Login</h3>
+              <h3 className="text-xl font-black f1-font uppercase leading-tight">Problema de Login</h3>
             </div>
             
-            <div className="space-y-6">
-              <section className="bg-white/5 p-4 rounded-3xl border border-white/5">
+            <div className="space-y-4">
+              <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <ShieldCheck size={14} className="text-green-500" />
-                  <h4 className="text-[10px] font-black uppercase text-white tracking-widest">Erro: Disallowed User Agent</h4>
+                  <Smartphone size={14} className="text-blue-400" />
+                  <h4 className="text-[10px] font-black uppercase text-blue-400">Por que o erro 403?</h4>
                 </div>
-                <p className="text-gray-400 text-[11px] mb-3 leading-relaxed">Isso acontece porque o Google não confia em aplicativos "embrulhados".</p>
-                <div className="text-[10px] text-gray-500 space-y-2 font-bold uppercase">
-                  <p>1. No Google Cloud: mude o status do app para <span className="text-green-500">"PRODUÇÃO"</span>.</p>
-                  <p>2. Se for um APK: use um navegador real para o primeiro login.</p>
-                </div>
-              </section>
+                <p className="text-gray-400 text-[11px] leading-relaxed">
+                  O Google bloqueia login em APKs simples por segurança.
+                </p>
+              </div>
 
-              <section className="bg-white/5 p-4 rounded-3xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Globe size={14} className="text-blue-400" />
-                  <h4 className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Domínio Autorizado</h4>
-                </div>
-                <code className="block bg-black p-3 rounded-xl text-[#e10600] text-[10px] font-mono break-all border border-white/5 select-all">
-                  {currentDomain}
-                </code>
-              </section>
+              <div className="bg-blue-600/10 p-4 rounded-3xl border border-blue-600/20">
+                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Solução Definitiva:</p>
+                <ol className="text-[10px] text-gray-300 space-y-2 font-bold uppercase">
+                  <li>1. Abra o site no Chrome do celular</li>
+                  <li>2. Faça o login por lá</li>
+                  <li>3. O App reconhecerá seu acesso</li>
+                </ol>
+              </div>
             </div>
 
             <button 
               onClick={() => setShowConfigGuide(false)}
-              className="w-full mt-8 bg-[#e10600] text-white font-black py-5 rounded-3xl text-[10px] uppercase tracking-widest shadow-xl shadow-red-600/20 active:scale-95 transition-all"
+              className="w-full mt-8 bg-[#e10600] text-white font-black py-5 rounded-3xl text-[10px] uppercase tracking-widest active:scale-95"
             >
-              ENTENDI
+              FECHAR
             </button>
           </div>
         </div>
@@ -97,10 +104,9 @@ const Login: React.FC = () => {
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-block p-5 rounded-[40px] bg-red-600/10 mb-8 border border-red-600/20 shadow-[0_0_50px_rgba(225,6,0,0.1)]">
+          <div className="inline-block p-5 rounded-[40px] bg-red-600/10 mb-8 border border-red-600/20">
             <h1 className="text-5xl font-black f1-font text-[#e10600] tracking-tighter">F1 2026</h1>
           </div>
-          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tighter">Fantasy League</h2>
           <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Acesse sua conta de piloto</p>
         </div>
 
@@ -119,25 +125,34 @@ const Login: React.FC = () => {
           </button>
 
           {error && (
-            <div 
-              onClick={() => setShowConfigGuide(true)}
-              className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 mt-6 cursor-pointer"
-            >
-              <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
-              <div className="flex-1">
-                <p className="text-red-500 text-[10px] font-black uppercase tracking-widest mb-1">
-                    {error}
-                </p>
-                <p className="text-[9px] text-red-500/60 uppercase font-bold">Toque para ver como resolver</p>
+            <div className="space-y-3">
+              <div 
+                onClick={() => setShowConfigGuide(true)}
+                className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 cursor-pointer"
+              >
+                <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
+                <div className="flex-1">
+                  <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">{error}</p>
+                  <p className="text-[9px] text-red-500/60 uppercase font-bold mt-1">Clique para saber como resolver</p>
+                </div>
               </div>
+
+              {isAppEnv && (
+                <button 
+                  onClick={handleOpenInBrowser}
+                  className="w-full py-4 rounded-2xl border border-white/10 text-[10px] font-black uppercase text-gray-400 flex items-center justify-center gap-2"
+                >
+                  <ExternalLink size={14} /> Abrir no Navegador
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        <div className="mt-12 pt-10 border-t border-white/5 opacity-30 text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
+        <div className="mt-12 opacity-30 text-center">
+            <div className="flex items-center justify-center gap-3">
                 <Lock size={12} className="text-gray-400" />
-                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Google OAuth 2.0 Secure</span>
+                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Acesso Seguro</span>
             </div>
         </div>
       </div>

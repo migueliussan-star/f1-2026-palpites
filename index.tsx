@@ -15,11 +15,15 @@ if (container) {
   console.error("Elemento root não encontrado!");
 }
 
-// Força a remoção de qualquer Service Worker (PWA) residual no navegador do usuário
+// Registra o Service Worker para permitir instalação (PWA) e cache offline
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    for (const registration of registrations) {
-      registration.unregister();
-    }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('SW registrado com sucesso:', registration.scope);
+      })
+      .catch(err => {
+        console.log('Falha ao registrar SW:', err);
+      });
   });
 }

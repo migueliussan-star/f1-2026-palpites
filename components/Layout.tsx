@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Home, ClipboardList, BarChart3, Trophy, PieChart, ShieldAlert, Swords } from 'lucide-react';
 
@@ -10,48 +11,54 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin }) => {
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-[#0a0a0c] shadow-2xl overflow-hidden relative">
+    <div className="flex flex-col min-h-screen max-w-md mx-auto shadow-2xl overflow-hidden relative">
+      {/* Background effects */}
+      <div className="fixed top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-[#e10600]/10 to-transparent pointer-events-none z-0" />
+
       {/* Main Content */}
-      <main className="flex-1 pb-28 overflow-y-auto">
+      <main className="flex-1 pb-32 overflow-y-auto z-10 animate-enter">
         {children}
       </main>
 
       {/* Navigation Bar */}
-      <div className="fixed bottom-6 left-6 right-6 max-w-[calc(100%-48px)] mx-auto z-50">
-        <nav className="h-18 glass rounded-3xl border border-white/10 px-1 flex justify-around items-center shadow-2xl shadow-black overflow-x-auto scrollbar-hide">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-4 safe-area-bottom">
+        <nav className="h-20 glass rounded-[32px] px-2 flex justify-between items-center relative overflow-hidden">
+            {/* Glow effect behind active tab - simplified logic for visual enhancement */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+            
             <NavButton 
-            icon={<Home size={18} />} 
-            label="Início" 
+            icon={<Home size={22} />} 
+            label="Home" 
             active={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
             />
             <NavButton 
-            icon={<ClipboardList size={18} />} 
+            icon={<ClipboardList size={22} />} 
             label="Palpites" 
             active={activeTab === 'palpites'} 
             onClick={() => setActiveTab('palpites')} 
             />
              <NavButton 
-            icon={<Swords size={18} />} 
+            icon={<Swords size={22} />} 
             label="Grid" 
             active={activeTab === 'adversarios'} 
             onClick={() => setActiveTab('adversarios')} 
             />
             <NavButton 
-            icon={<PieChart size={18} />} 
-            label="Votos" 
+            icon={<PieChart size={22} />} 
+            label="Stats" 
             active={activeTab === 'palpitometro'} 
             onClick={() => setActiveTab('palpitometro')} 
             />
             <NavButton 
-            icon={<Trophy size={18} />} 
+            icon={<Trophy size={22} />} 
             label="Ranking" 
             active={activeTab === 'ranking'} 
             onClick={() => setActiveTab('ranking')} 
             />
             {isAdmin && (
                 <NavButton 
-                icon={<ShieldAlert size={18} />} 
+                icon={<ShieldAlert size={22} />} 
                 label="ADM" 
                 active={activeTab === 'admin'} 
                 onClick={() => setActiveTab('admin')} 
@@ -66,9 +73,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 const NavButton: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center p-2 min-w-[50px] rounded-2xl transition-all duration-300 ${active ? 'text-[#e10600] bg-red-600/5 scale-110' : 'text-gray-500'}`}
+    className="relative flex-1 flex flex-col items-center justify-center h-full transition-all duration-300 group"
   >
-    {icon}
-    <span className="text-[8px] font-black mt-1 uppercase tracking-tighter">{label}</span>
+    <div className={`
+      relative p-2.5 rounded-2xl transition-all duration-300
+      ${active 
+        ? 'text-white bg-[#e10600] shadow-[0_0_15px_rgba(225,6,0,0.5)] translate-y-[-4px]' 
+        : 'text-gray-500 hover:text-gray-300'}
+    `}>
+      {icon}
+    </div>
+    <span className={`
+      text-[9px] font-bold mt-1 uppercase tracking-wider transition-all duration-300
+      ${active ? 'text-white opacity-100 translate-y-[-2px]' : 'text-gray-600 opacity-0 scale-0 h-0'}
+    `}>
+      {label}
+    </span>
   </button>
 );
