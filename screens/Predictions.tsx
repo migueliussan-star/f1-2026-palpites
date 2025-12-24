@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, Prediction, Driver } from '../types';
 import { DRIVERS } from '../constants';
-import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3, Trash2, RotateCcw, Flag } from 'lucide-react';
+import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3, Trash2, RotateCcw, Flag, XCircle } from 'lucide-react';
 
 interface PredictionsProps {
   gp: RaceGP;
@@ -27,6 +27,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>(currentPrediction?.top5 || []);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorShake, setErrorShake] = useState(false);
 
   useEffect(() => {
     const pred = savedPredictions.find(p => p.session === activeSession);
@@ -36,10 +37,20 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
 
   const toggleDriver = (id: string) => {
     if (!isEditable) return;
+    
     if (selectedDrivers.includes(id)) {
+      if (navigator.vibrate) navigator.vibrate(20);
       setSelectedDrivers(prev => prev.filter(d => d !== id));
-    } else if (selectedDrivers.length < 5) {
-      setSelectedDrivers(prev => [...prev, id]);
+    } else {
+      if (selectedDrivers.length < 5) {
+        if (navigator.vibrate) navigator.vibrate(50);
+        setSelectedDrivers(prev => [...prev, id]);
+      } else {
+        // Grid full feedback
+        setErrorShake(true);
+        if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+        setTimeout(() => setErrorShake(false), 500);
+      }
     }
   };
 
@@ -130,7 +141,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       ) : null}
 
       {/* Selected Drivers Display */}
-      <div className="mb-10">
+      <div className={`mb-10 transition-transform ${errorShake ? 'translate-x-[-5px] rotate-[-1deg]' : ''}`} style={{ transitionDuration: '0.1s' }}>
         <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Seu Grid (Top 5)</h3>
             {isEditable && selectedDrivers.length > 0 && (
@@ -149,7 +160,13 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             return (
               <div key={pos} className="flex items-center gap-3">
                 <span className="w-6 text-center font-black f1-font text-gray-600 text-lg italic">{pos}</span>
-                <div className={`flex-1 h-16 rounded-2xl flex items-center px-4 gap-4 transition-all relative overflow-hidden ${driver ? 'glass border-white/20' : 'bg-white/5 border border-dashed border-white/10'}`}>
+                <div 
+                    onClick={() => driver && toggleDriver(driver.id)}
+                    className={`flex-1 h-16 rounded-2xl flex items-center px-4 gap-4 transition-all relative overflow-hidden 
+                    ${driver ? 'glass border-white/20' : 'bg-white/5 border border-dashed border-white/10'}
+                    ${isEditable && driver ? 'cursor-pointer hover:border-red-500/50 hover:bg-red-500/10 active:scale-[0.98]' : ''}
+                    `}
+                >
                   {driver ? (
                     <>
                       <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: driver.color }} />
@@ -162,11 +179,10 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                         </div>
                         <p className="text-[9px] text-gray-400 uppercase font-black tracking-wider mt-1">{driver.team}</p>
                       </div>
-                      <img 
-                        src={`https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${driver.name.split(' ')[0]}-${driver.name.split(' ')[1]}/${driver.name.split(' ')[0].toLowerCase()}_${driver.name.split(' ')[1].toLowerCase()}.png.transform/2col/image.png`} // Fallback visual trick - in real app use real assets
-                        className="h-14 opacity-0" // Hidden in this code challenge as we don't have real images, but kept for layout logic
-                        alt=""
-                      />
+                      
+                      {isEditable && (
+                        <XCircle size={18} className="text-white/20" />
+                      )}
                     </>
                   ) : (
                     <span className="text-[10px] text-gray-600 uppercase font-bold tracking-widest w-full text-center">Selecionar piloto</span>
@@ -180,7 +196,11 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
 
       {/* Drivers List */}
       <div className={`transition-all duration-500 pb-24 ${!isEditable ? 'opacity-30 pointer-events-none grayscale' : 'opacity-100'}`}>
-        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Pilotos Disponíveis</p>
+        <div className="flex justify-between items-center mb-4 px-1">
+             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pilotos Disponíveis</p>
+             {errorShake && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest animate-pulse">Grid Completo!</p>}
+        </div>
+       
         <div className="grid grid-cols-2 gap-3">
           {DRIVERS.map(driver => {
             const isSelected = selectedDrivers.includes(driver.id);
@@ -189,12 +209,12 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             return (
               <button
                 key={driver.id}
-                disabled={isSelected || !isEditable}
+                disabled={!isEditable} // Allow clicking even if selected to deselect
                 onClick={() => toggleDriver(driver.id)}
                 className={`
                     relative p-3 rounded-2xl border text-left transition-all overflow-hidden group active:scale-95
                     ${isSelected 
-                        ? 'border-[#e10600]/50 bg-[#e10600]/10' 
+                        ? 'border-[#e10600]/50 bg-[#e10600]/10 ring-1 ring-[#e10600]/20' 
                         : 'glass border-white/5 hover:bg-white/10'}
                 `}
               >
@@ -207,10 +227,14 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                         <p className="text-xs font-bold leading-tight uppercase text-white truncate">{driver.name.split(' ').pop()}</p>
                         <p className="text-[8px] text-gray-500 uppercase font-black mt-0.5">{driver.team.split(' ')[0]}</p>
                     </div>
-                    {isSelected && (
-                       <div className="w-6 h-6 rounded-full bg-[#e10600] flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-red-600/40">
+                    {isSelected ? (
+                       <div className="w-6 h-6 rounded-full bg-[#e10600] flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-red-600/40 scale-110">
                            {selectionIndex}
                        </div>
+                    ) : (
+                        <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center text-white/20 group-hover:bg-white/10 group-hover:text-white/50 transition-colors">
+                            +
+                        </div>
                     )}
                 </div>
               </button>

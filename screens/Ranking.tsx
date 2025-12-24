@@ -16,6 +16,10 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
   // Ordena os usuários reais por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
 
+  // Preparar dados para o gráfico (Top 5)
+  const top5Users = sortedUsers.slice(0, 5);
+  const chartColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#3b82f6', '#8b5cf6']; // Gold, Silver, Bronze, Blue, Purple
+
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -59,7 +63,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
             const pointsDiff = idx === 0 ? 0 : (sortedUsers[idx-1].points || 0) - (item.points || 0);
             
             // Cálculo de Posições Ganhas (Mock se não tiver histórico real)
-            const prevRank = item.previousRank || (item.points ? idx + 2 : idx + 1); // Mock leve para demo
+            const prevRank = item.previousRank || (item.points ? idx + 2 : idx + 1); 
             const rankChange = prevRank - (idx + 1);
 
             return (
@@ -108,46 +112,87 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
         )}
       </div>
 
-      {/* Área de Dominância (Gráfico de Permanência) */}
+      {/* Performance Chart Area */}
       <div className="mb-24">
          <div className="flex items-center gap-3 mb-6">
             <div className="bg-blue-600/20 p-2 rounded-xl">
-                <Clock className="text-blue-500" size={20} />
+                <TrendingUp className="text-blue-500" size={20} />
             </div>
             <div>
                 <h3 className="text-lg font-black f1-font uppercase leading-none">Dominância</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Semanas no Ranking</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Top 5 - Últimas Corridas</p>
             </div>
          </div>
 
-         <div className="bg-white/5 rounded-[32px] p-6 border border-white/10 space-y-6">
-            {sortedUsers.slice(0, 5).map((u, i) => {
-                // Simulação de dados para o gráfico se não existir
-                const weeksAtPosition = u.positionHistory 
-                    ? u.positionHistory.filter(r => r === (i + 1)).length 
-                    : Math.max(1, Math.floor(Math.random() * 5)); // Mock para visualização
+         <div className="bg-white/5 rounded-[32px] p-6 border border-white/10 overflow-hidden relative">
+            {/* Chart Container */}
+            <div className="h-48 w-full relative">
+                {/* SVG Chart */}
+                <svg className="w-full h-full" viewBox="0 0 300 150" preserveAspectRatio="none">
+                    {/* Grid Lines */}
+                    {[1, 2, 3, 4, 5].map(i => {
+                         const y = 20 + (i - 1) * 30; // Scale 1-5 roughly to 150px height
+                         return (
+                            <line key={i} x1="0" y1={y} x2="300" y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                         );
+                    })}
+                    
+                    {/* Data Lines */}
+                    {top5Users.map((u, idx) => {
+                        const history = u.positionHistory || [];
+                        if (history.length < 2) return null; // Need at least 2 points for a line
+                        
+                        // Create path string
+                        const points = history.map((rank, hIdx) => {
+                            const x = (hIdx / (history.length - 1)) * 300;
+                            // Map rank 1 to top (y=20), rank 10 to bottom (y=140)
+                            // Formula: y = 20 + (rank - 1) * (120 / 9) roughly
+                            const y = 20 + Math.min(rank - 1, 10) * 15;
+                            return `${x},${y}`;
+                        }).join(' ');
 
-                return (
-                    <div key={u.id}>
-                        <div className="flex justify-between items-end mb-2">
-                            <span className="text-xs font-bold text-gray-300 flex items-center gap-2">
-                                <span className="text-[10px] bg-white/10 px-1.5 rounded text-gray-500">#{i+1}</span>
-                                {u.name}
-                            </span>
-                            <span className="text-[10px] font-black text-blue-400 uppercase">{weeksAtPosition} Rounds</span>
-                        </div>
-                        {/* Visualização de Barra Segmentada (Gráfico) */}
-                        <div className="flex gap-1 h-2">
-                            {Array.from({ length: 10 }).map((_, segmentIdx) => (
-                                <div 
-                                    key={segmentIdx} 
-                                    className={`flex-1 rounded-full ${segmentIdx < weeksAtPosition ? 'bg-blue-500' : 'bg-white/5'}`}
+                        return (
+                            <g key={u.id}>
+                                <polyline 
+                                    points={points} 
+                                    fill="none" 
+                                    stroke={chartColors[idx % chartColors.length]} 
+                                    strokeWidth="3" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                    className="drop-shadow-lg"
                                 />
-                            ))}
-                        </div>
+                                {/* Dots for points */}
+                                {history.map((rank, hIdx) => {
+                                     const x = (hIdx / (history.length - 1)) * 300;
+                                     const y = 20 + Math.min(rank - 1, 10) * 15;
+                                     return (
+                                         <circle key={hIdx} cx={x} cy={y} r="3" fill="#0a0a0c" stroke={chartColors[idx % chartColors.length]} strokeWidth="2" />
+                                     )
+                                })}
+                            </g>
+                        );
+                    })}
+                </svg>
+
+                {/* Y Axis Labels (Positions) */}
+                <div className="absolute top-0 left-0 h-full flex flex-col justify-between text-[8px] font-bold text-gray-600 pointer-events-none pb-2">
+                    <span>P1</span>
+                    <span>P3</span>
+                    <span>P5</span>
+                    <span>P8+</span>
+                </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 mt-6 justify-center">
+                {top5Users.map((u, idx) => (
+                    <div key={u.id} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[idx % chartColors.length] }} />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">{u.name.split(' ').pop()}</span>
                     </div>
-                )
-            })}
+                ))}
+            </div>
          </div>
       </div>
     </div>
