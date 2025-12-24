@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP, SessionType, Prediction } from './types';
 import { INITIAL_CALENDAR } from './constants';
@@ -7,6 +6,7 @@ import Predictions from './screens/Predictions';
 import Palpitometro from './screens/Palpitometro';
 import Ranking from './screens/Ranking';
 import Admin from './screens/Admin';
+import Adversarios from './screens/Adversarios';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
@@ -22,7 +22,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -187,6 +187,16 @@ const App: React.FC = () => {
         />
       )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={predictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
+      
+      {activeTab === 'adversarios' && (
+        <Adversarios 
+          gp={activeGP}
+          users={allUsers}
+          predictions={predictions}
+          currentUser={user}
+        />
+      )}
+
       {activeTab === 'palpitometro' && (
         <Palpitometro 
           gp={activeGP} 

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Home, ClipboardList, BarChart3, Trophy, PieChart, ShieldAlert } from 'lucide-react';
+import { Home, ClipboardList, BarChart3, Trophy, PieChart, ShieldAlert, Swords } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,7 +18,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
       {/* Navigation Bar */}
       <div className="fixed bottom-6 left-6 right-6 max-w-[calc(100%-48px)] mx-auto z-50">
-        <nav className="h-18 glass rounded-3xl border border-white/10 px-2 flex justify-around items-center shadow-2xl shadow-black">
+        <nav className="h-18 glass rounded-3xl border border-white/10 px-1 flex justify-around items-center shadow-2xl shadow-black overflow-x-auto scrollbar-hide">
             <NavButton 
             icon={<Home size={18} />} 
             label="Início" 
@@ -31,6 +30,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             label="Palpites" 
             active={activeTab === 'palpites'} 
             onClick={() => setActiveTab('palpites')} 
+            />
+             <NavButton 
+            icon={<Swords size={18} />} 
+            label="Grid" 
+            active={activeTab === 'adversarios'} 
+            onClick={() => setActiveTab('adversarios')} 
             />
             <NavButton 
             icon={<PieChart size={18} />} 
@@ -61,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 const NavButton: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${active ? 'text-[#e10600] bg-red-600/5 scale-110' : 'text-gray-500'}`}
+    className={`flex flex-col items-center justify-center p-2 min-w-[50px] rounded-2xl transition-all duration-300 ${active ? 'text-[#e10600] bg-red-600/5 scale-110' : 'text-gray-500'}`}
   >
     {icon}
     <span className="text-[8px] font-black mt-1 uppercase tracking-tighter">{label}</span>

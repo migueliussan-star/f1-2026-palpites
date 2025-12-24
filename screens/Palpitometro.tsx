@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DRIVERS } from '../constants';
 import { RaceGP } from '../types';
@@ -39,11 +38,11 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
         <div className="space-y-8 mb-24">
           {sessions.map(session => {
             const sessionData = stats[session] || {};
-            const topDrivers = Object.entries(sessionData)
-              .sort(([, a], [, b]) => (b as number) - (a as number))
-              .slice(0, 5);
+            // Removido o .slice(0, 5) para mostrar TODOS os pilotos votados
+            const rankedDrivers = Object.entries(sessionData)
+              .sort(([, a], [, b]) => (b as number) - (a as number));
 
-            if (topDrivers.length === 0) return null;
+            if (rankedDrivers.length === 0) return null;
 
             return (
               <div key={session} className="bg-white/5 rounded-3xl p-6 border border-white/5">
@@ -53,7 +52,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                 </h3>
 
                 <div className="space-y-4">
-                  {topDrivers.map(([driverId, votes], idx) => {
+                  {rankedDrivers.map(([driverId, votes], idx) => {
                     const driver = DRIVERS.find(d => d.id === driverId);
                     const percent = Math.min(100, Math.round(((votes as number) / totalUsers) * 100));
                     
@@ -64,7 +63,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                             <span className="text-[10px] font-black f1-font text-gray-600">#{idx + 1}</span>
                             <p className="text-sm font-bold">{driver?.name}</p>
                           </div>
-                          <span className="text-xs font-black text-white">{percent}%</span>
+                          <span className="text-xs font-black text-white">{percent}% <span className="text-[8px] text-gray-500 font-normal">({votes} votos)</span></span>
                         </div>
                         <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                           <div 
