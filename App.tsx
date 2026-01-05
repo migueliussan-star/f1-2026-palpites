@@ -16,16 +16,17 @@ import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, s
 // Helper para converter string de data "06-08 Mar" em objeto Date
 const getGpDates = (dateStr: string) => {
   const months: { [key: string]: number } = {
-    'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5,
-    'Jul': 6, 'Ago': 7, 'Set': 8, 'Out': 9, 'Nov': 10, 'Dez': 11
+    'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
+    'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
   };
 
   try {
-    const parts = dateStr.split(' ');
+    const parts = dateStr.trim().split(' ');
     if (parts.length < 2) return { startDate: new Date(), endDate: new Date() };
 
     const daysPart = parts[0];
-    const monthPart = parts[1];
+    // Normaliza para lowercase e pega as 3 primeiras letras para garantir match (ex: MAR -> mar)
+    const monthPart = parts[1].toLowerCase().substring(0, 3);
     const monthIndex = months[monthPart] ?? 0;
 
     let endDay = 1;
@@ -37,7 +38,7 @@ const getGpDates = (dateStr: string) => {
       endDay = parseInt(daysPart);
     }
 
-    // Assume ano 2026
+    // Assume ano 2026 e define o final do dia (23:59:59)
     const endDate = new Date(2026, monthIndex, endDay, 23, 59, 59);
     
     return { endDate };
@@ -246,8 +247,7 @@ const App: React.FC = () => {
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
   // LÓGICA DE SELEÇÃO AUTOMÁTICA DE GP
-  // Encontra o primeiro GP que ainda não "passou do prazo" (Data final + 1 dia)
-  // Se o status for 'OPEN' manualmente definido pelo Admin, ele tem prioridade.
+  // Encontra o primeiro GP cuja data de término ainda NÃO passou (ou seja, HOJE <= DATA_FIM)
   const now = new Date();
   
   let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
@@ -255,9 +255,9 @@ const App: React.FC = () => {
   if (!activeGP) {
       activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
-          const switchDate = new Date(endDate);
-          switchDate.setDate(switchDate.getDate() + 1); // +1 dia de tolerância após o fim do GP
-          return now < switchDate;
+          // Se hoje for dia 5 e o GP acaba dia 4 (endDate), now > endDate, então retorna false.
+          // O find vai continuar até achar um GP onde now <= endDate.
+          return now <= endDate;
       });
   }
 

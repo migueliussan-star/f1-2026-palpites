@@ -48,16 +48,17 @@ const Home: React.FC<HomeProps> = ({
     // Parser da data do GP para o Timer
     const getGpStartDate = (dateStr: string) => {
       const months: { [key: string]: number } = {
-        'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5,
-        'Jul': 6, 'Ago': 7, 'Set': 8, 'Out': 9, 'Nov': 10, 'Dez': 11
+        'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
+        'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
       };
       
       try {
-        const parts = dateStr.split(' ');
+        const parts = dateStr.trim().split(' ');
         if (parts.length < 2) return new Date(); // Fallback
 
         const daysPart = parts[0]; // ex: "06-08" ou "06"
-        const monthPart = parts[1]; // ex: "Mar"
+        // Normaliza para lowercase para evitar erro com "MAR" vs "Mar"
+        const monthPart = parts[1].toLowerCase().substring(0, 3);
         const monthIndex = months[monthPart] ?? 0;
 
         let startDay = 1;
