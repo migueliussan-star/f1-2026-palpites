@@ -49,6 +49,21 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
 
   const maxWeeks = leadershipStats[0]?.weeksAtOne || 1;
 
+  // Configurações do Gráfico
+  const TOTAL_POSITIONS = 15;
+  const VIEWBOX_HEIGHT = 200; // Altura interna do SVG aumentada
+  const VIEWBOX_WIDTH = 300;
+  const PADDING_TOP = 20;
+  const PADDING_BOTTOM = 20;
+  const CHART_HEIGHT = VIEWBOX_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
+
+  const getYForRank = (rank: number) => {
+      // Clamp rank entre 1 e 15
+      const clampedRank = Math.max(1, Math.min(rank, TOTAL_POSITIONS));
+      // Interpolação linear
+      return PADDING_TOP + ((clampedRank - 1) / (TOTAL_POSITIONS - 1)) * CHART_HEIGHT;
+  };
+
   return (
     <div className="p-6 pb-32">
       <div className="flex items-center gap-4 mb-8">
@@ -63,23 +78,37 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
 
       {/* Gráfico de Tendência (TODOS) - Visual Dark Card */}
       <div className="bg-[#0f0f11] rounded-[32px] p-6 border border-white/5 overflow-hidden relative mb-10 shadow-2xl">
-        {/* Grid Lines Labels */}
-        <div className="absolute left-4 top-6 bottom-16 flex flex-col justify-between text-[9px] font-bold text-gray-600 f1-font">
-            <span>P1</span>
-            <span>P5</span>
-            <span>P10</span>
-        </div>
-
-        {/* Chart Container */}
-        <div className="h-48 w-full relative pl-10 pr-2 pt-2">
+        
+        {/* Chart Container - Aumentado altura para acomodar 15 linhas */}
+        <div className="h-80 w-full relative">
             {/* SVG Chart */}
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 300 150" preserveAspectRatio="none">
-                {/* Grid Lines Horizontal (Dotted) */}
-                {[1, 5, 10].map((pos, i) => {
-                        const y = 10 + ((pos - 1) / 10) * 130; 
+            <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`} preserveAspectRatio="none">
+                {/* Grid Lines & Labels (1 to 15) */}
+                {Array.from({ length: TOTAL_POSITIONS }, (_, i) => i + 1).map((pos) => {
+                        const y = getYForRank(pos);
                         return (
-                        <g key={i}>
-                            <line x1="0" y1={y} x2="300" y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="6 6" />
+                        <g key={pos}>
+                            {/* Label */}
+                            <text 
+                                x="0" 
+                                y={y + 3} 
+                                fill="#666" 
+                                fontSize="8" 
+                                fontWeight="900" 
+                                className="f1-font select-none"
+                            >
+                                P{pos}
+                            </text>
+                            {/* Line */}
+                            <line 
+                                x1="25" 
+                                y1={y} 
+                                x2={VIEWBOX_WIDTH} 
+                                y2={y} 
+                                stroke="rgba(255,255,255,0.08)" 
+                                strokeWidth="1" 
+                                strokeDasharray="6 6" 
+                            />
                         </g>
                         );
                 })}
@@ -90,10 +119,10 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     if (history.length === 0) return null;
                     
                     const points = history.map((rank, hIdx) => {
-                        const totalPoints = Math.max(history.length, 2); 
-                        const x = (hIdx / (totalPoints - 1)) * 300;
-                        const visualRank = Math.min(rank, 12); // Clamp visual
-                        const y = 10 + ((visualRank - 1) / 10) * 130;
+                        const totalPoints = Math.max(history.length, 2); // Evita div by zero
+                        // X space starts from 25 (padding for labels) to 300
+                        const x = 25 + (hIdx / (totalPoints - 1)) * (VIEWBOX_WIDTH - 25);
+                        const y = getYForRank(rank);
                         return { x, y };
                     });
 
@@ -105,7 +134,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     const isCurrentUser = u.id === currentUser.id;
 
                     return (
-                        <g key={u.id} style={{ opacity: isCurrentUser ? 1 : 0.7 }}>
+                        <g key={u.id} style={{ opacity: isCurrentUser ? 1 : 0.6 }}>
                             <path 
                                 d={pathD} 
                                 fill="none" 
@@ -113,7 +142,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                 strokeWidth={isCurrentUser ? "3" : "1.5"} 
                                 strokeLinecap="round" 
                                 strokeLinejoin="round"
-                                className="drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]"
+                                className="drop-shadow-[0_0_8px_rgba(0,0,0,0.8)] transition-all duration-300"
                             />
                             {/* Dot only on last point */}
                              <circle 
