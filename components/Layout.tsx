@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, ClipboardList, BarChart3, Trophy, PieChart, ShieldAlert, Swords } from 'lucide-react';
+import { Home, ClipboardList, Trophy, PieChart, ShieldAlert, Swords, TrendingUp } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -28,38 +28,39 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             
             <NavButton 
-            icon={<Home size={22} />} 
+            icon={<Home size={20} />} 
             label="Home" 
             active={activeTab === 'home'} 
             onClick={() => setActiveTab('home')} 
             />
             <NavButton 
-            icon={<ClipboardList size={22} />} 
+            icon={<ClipboardList size={20} />} 
             label="Palpites" 
             active={activeTab === 'palpites'} 
             onClick={() => setActiveTab('palpites')} 
             />
-             <NavButton 
-            icon={<Swords size={22} />} 
-            label="Grid" 
-            active={activeTab === 'adversarios'} 
-            onClick={() => setActiveTab('adversarios')} 
-            />
             <NavButton 
-            icon={<PieChart size={22} />} 
-            label="Stats" 
-            active={activeTab === 'palpitometro'} 
-            onClick={() => setActiveTab('palpitometro')} 
-            />
-            <NavButton 
-            icon={<Trophy size={22} />} 
+            icon={<Trophy size={20} />} 
             label="Ranking" 
             active={activeTab === 'ranking'} 
             onClick={() => setActiveTab('ranking')} 
             />
+             <NavButton 
+            icon={<TrendingUp size={20} />} 
+            label="Dominância" 
+            active={activeTab === 'stats'} 
+            onClick={() => setActiveTab('stats')} 
+            />
+             <NavButton 
+            icon={<Swords size={20} />} 
+            label="Grid" 
+            active={activeTab === 'adversarios'} 
+            onClick={() => setActiveTab('adversarios')} 
+            />
+            
             {isAdmin && (
                 <NavButton 
-                icon={<ShieldAlert size={22} />} 
+                icon={<ShieldAlert size={20} />} 
                 label="ADM" 
                 active={activeTab === 'admin'} 
                 onClick={() => setActiveTab('admin')} 
@@ -85,7 +86,7 @@ const NavButton: React.FC<{ icon: React.ReactNode, label: string, active: boolea
       {icon}
     </div>
     <span className={`
-      text-[9px] font-bold mt-1 uppercase tracking-wider transition-all duration-300
+      text-[8px] font-bold mt-1 uppercase tracking-wider transition-all duration-300
       ${active ? 'text-white opacity-100 translate-y-[-2px]' : 'text-gray-600 opacity-0 scale-0 h-0'}
     `}>
       {label}

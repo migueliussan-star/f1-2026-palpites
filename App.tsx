@@ -249,7 +249,7 @@ const App: React.FC = () => {
         />
       )}
       {activeTab === 'ranking' && <Ranking currentUser={user} users={allUsers} calendar={calendar} />}
-      {activeTab === 'stats' && <Stats user={user} />}
+      {activeTab === 'stats' && <Stats currentUser={user} users={allUsers} />}
       {activeTab === 'admin' && user.isAdmin && (
         <Admin 
           gp={adminGP} 
