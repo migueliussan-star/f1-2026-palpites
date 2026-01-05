@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, User } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, AlertTriangle, Users } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -12,11 +12,10 @@ interface AdminProps {
   onUpdateCalendar: (newCalendar: RaceGP[]) => void;
   onSelectGp: (id: number) => void;
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
-  onResetHistory: () => void;
   onDeleteUser: (userId: string) => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onResetHistory, onDeleteUser }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -203,29 +202,38 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
           </div>
         </div>
 
-        {/* GESTÃO DE PILOTOS (DELETE) */}
-        <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-            <h3 className="text-xs font-black mb-6 uppercase tracking-widest text-blue-400 flex items-center gap-2">
-                <Users size={14} /> Gestão de Pilotos ({users.length})
-            </h3>
+        {/* ZONA DE PERIGO - GESTÃO DE PILOTOS */}
+        <div className="mt-8 bg-red-900/5 p-6 rounded-3xl border border-red-500/20">
+            <div className="flex items-center gap-2 mb-4 text-red-500">
+                <ShieldAlert size={18} />
+                <h3 className="text-xs font-black uppercase tracking-widest">Zona de Perigo</h3>
+            </div>
+            
+            <p className="text-[10px] text-gray-400 mb-6 font-medium leading-relaxed">
+                Ações aqui são irreversíveis. Ao remover um piloto, todos os palpites e pontos associados serão excluídos permanentemente.
+            </p>
+
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+                <Users size={12} /> Pilotos Cadastrados ({users.length})
+            </h4>
             
             <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                 {users.map((u) => {
                     if (u.id === currentUser.id) return null; // Não mostra o próprio admin
                     return (
-                        <div key={u.id} className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5">
+                        <div key={u.id} className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-red-500/10 hover:border-red-500/30 transition-all">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">
                                     {u.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 overflow-hidden">
-                                    <p className="text-xs font-bold truncate text-white">{u.name}</p>
-                                    <p className="text-[8px] text-gray-500 truncate">{u.email}</p>
+                                    <p className="text-xs font-bold truncate text-gray-200">{u.name}</p>
+                                    {/* E-mail removido */}
                                 </div>
                             </div>
                             <button 
                                 onClick={() => onDeleteUser(u.id)}
-                                className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white p-2 rounded-lg transition-colors"
+                                className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-lg transition-all"
                                 title="Excluir Usuário"
                             >
                                 <Trash2 size={14} />
@@ -234,22 +242,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                     );
                 })}
             </div>
-        </div>
-
-        {/* ZONA DE PERIGO */}
-        <div className="bg-red-900/10 p-6 rounded-3xl border border-red-500/20">
-            <h3 className="text-xs font-black mb-4 uppercase tracking-widest text-red-500 flex items-center gap-2">
-                <AlertTriangle size={14} /> Zona de Perigo
-            </h3>
-            <p className="text-[10px] text-gray-500 mb-4 leading-relaxed">
-                Ações aqui são irreversíveis e afetam todos os usuários. Use com cautela.
-            </p>
-            <button 
-                onClick={onResetHistory}
-                className="w-full bg-red-600/10 border border-red-600/50 text-red-500 hover:bg-red-600 hover:text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
-            >
-                <Trash2 size={16} /> RESETAR GRÁFICO DE DOMINÂNCIA
-            </button>
         </div>
       </div>
     </div>

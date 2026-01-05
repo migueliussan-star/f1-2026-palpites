@@ -158,24 +158,6 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
-  const handleResetHistory = async () => {
-    if (!window.confirm("ATENÇÃO: Isso apagará o GRÁFICO DE DOMINÂNCIA e histórico de posições de TODOS os usuários. Os pontos totais serão mantidos. Continuar?")) return;
-
-    const updates: any = {};
-    allUsers.forEach(u => {
-        updates[`users/${u.id}/positionHistory`] = null; 
-        updates[`users/${u.id}/previousRank`] = u.rank; 
-    });
-
-    try {
-        await update(ref(db), updates);
-        alert("Histórico do gráfico apagado com sucesso.");
-    } catch (error) {
-        console.error("Erro ao resetar histórico:", error);
-        alert("Erro ao resetar histórico.");
-    }
-  };
-
   // Função para Admin excluir usuários
   const handleDeleteUser = async (targetUserId: string) => {
     if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
@@ -259,7 +241,6 @@ const App: React.FC = () => {
           onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
           onSelectGp={(id) => setAdminEditingGpId(id)} 
           onCalculatePoints={handleCalculatePoints} 
-          onResetHistory={handleResetHistory}
           onDeleteUser={handleDeleteUser}
         />
       )}
