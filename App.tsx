@@ -13,6 +13,39 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
+// Helper para converter string de data "06-08 Mar" em objeto Date
+const getGpDates = (dateStr: string) => {
+  const months: { [key: string]: number } = {
+    'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5,
+    'Jul': 6, 'Ago': 7, 'Set': 8, 'Out': 9, 'Nov': 10, 'Dez': 11
+  };
+
+  try {
+    const parts = dateStr.split(' ');
+    if (parts.length < 2) return { startDate: new Date(), endDate: new Date() };
+
+    const daysPart = parts[0];
+    const monthPart = parts[1];
+    const monthIndex = months[monthPart] ?? 0;
+
+    let endDay = 1;
+
+    if (daysPart.includes('-')) {
+      const dayParts = daysPart.split('-');
+      endDay = parseInt(dayParts[1]);
+    } else {
+      endDay = parseInt(daysPart);
+    }
+
+    // Assume ano 2026
+    const endDate = new Date(2026, monthIndex, endDay, 23, 59, 59);
+    
+    return { endDate };
+  } catch (e) {
+    return { startDate: new Date(), endDate: new Date() };
+  }
+};
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios'>('home');
   const [user, setUser] = useState<User | null>(null);
@@ -158,15 +191,12 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
-  // Função para limpar TODOS os palpites E PONTOS (Reset da Temporada)
   const handleClearAllPredictions = async () => {
     if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites e ZERARÁ os pontos de TODOS os usuários. Ação irreversível. Tem certeza?")) return;
     
     try {
-        // 1. Remove palpites
         await remove(ref(db, 'predictions'));
 
-        // 2. Zera pontos e histórico de todos os usuários
         const updates: Record<string, any> = {};
         allUsers.forEach(u => {
             updates[`${u.id}/points`] = 0;
@@ -186,7 +216,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Função para Admin excluir usuários
   const handleDeleteUser = async (targetUserId: string) => {
     if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
     
@@ -215,9 +244,25 @@ const App: React.FC = () => {
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
   
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
-  const activeGP = currentCalendar.find(gp => gp.status === 'OPEN') || 
-                   currentCalendar.find(gp => gp.status === 'UPCOMING') || 
-                   currentCalendar[0];
+  
+  // LÓGICA DE SELEÇÃO AUTOMÁTICA DE GP
+  // Encontra o primeiro GP que ainda não "passou do prazo" (Data final + 1 dia)
+  // Se o status for 'OPEN' manualmente definido pelo Admin, ele tem prioridade.
+  const now = new Date();
+  
+  let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
+
+  if (!activeGP) {
+      activeGP = currentCalendar.find(gp => {
+          const { endDate } = getGpDates(gp.date);
+          const switchDate = new Date(endDate);
+          switchDate.setDate(switchDate.getDate() + 1); // +1 dia de tolerância após o fim do GP
+          return now < switchDate;
+      });
+  }
+
+  // Fallback para o último se todos já passaram, ou o primeiro se der erro
+  if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
 

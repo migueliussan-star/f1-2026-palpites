@@ -45,10 +45,41 @@ const Home: React.FC<HomeProps> = ({
   }
 
   useEffect(() => {
-    // Timer do Countdown - Ajustado para 06 de Março (Início do GP)
+    // Parser da data do GP para o Timer
+    const getGpStartDate = (dateStr: string) => {
+      const months: { [key: string]: number } = {
+        'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5,
+        'Jul': 6, 'Ago': 7, 'Set': 8, 'Out': 9, 'Nov': 10, 'Dez': 11
+      };
+      
+      try {
+        const parts = dateStr.split(' ');
+        if (parts.length < 2) return new Date(); // Fallback
+
+        const daysPart = parts[0]; // ex: "06-08" ou "06"
+        const monthPart = parts[1]; // ex: "Mar"
+        const monthIndex = months[monthPart] ?? 0;
+
+        let startDay = 1;
+        if (daysPart.includes('-')) {
+           startDay = parseInt(daysPart.split('-')[0]);
+        } else {
+           startDay = parseInt(daysPart);
+        }
+
+        // Define a data de INÍCIO do GP (00:00) para o timer
+        return new Date(2026, monthIndex, startDay, 0, 0, 0);
+      } catch (e) {
+        return new Date();
+      }
+    };
+
+    const targetDate = getGpStartDate(nextGP.date);
+
+    // Timer do Countdown
     const interval = setInterval(() => {
-      const target = new Date('2026-03-06T00:00:00'); 
-      const diff = target.getTime() - Date.now();
+      const diff = targetDate.getTime() - Date.now();
+      
       if (diff > 0) {
         setTimeLeft({
           d: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -56,6 +87,9 @@ const Home: React.FC<HomeProps> = ({
           m: Math.floor((diff / 1000 / 60) % 60),
           s: Math.floor((diff / 1000) % 60)
         });
+      } else {
+        // Se já passou do início, zera ou mostra mensagem (opcional)
+        setTimeLeft({ d: 0, h: 0, m: 0, s: 0 });
       }
     }, 1000);
 
@@ -75,7 +109,7 @@ const Home: React.FC<HomeProps> = ({
       clearInterval(interval);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [nextGP.date]); // Re-executa se a data do GP mudar
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
