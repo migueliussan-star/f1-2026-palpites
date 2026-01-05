@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, User } from '../types';
 import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, Eraser } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -13,9 +13,10 @@ interface AdminProps {
   onSelectGp: (id: number) => void;
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
   onDeleteUser: (userId: string) => void;
+  onClearAllPredictions: () => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -202,7 +203,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
           </div>
         </div>
 
-        {/* ZONA DE PERIGO - GESTÃO DE PILOTOS */}
+        {/* ZONA DE PERIGO - GESTÃO DE PILOTOS E DADOS */}
         <div className="mt-8 bg-red-900/5 p-6 rounded-3xl border border-red-500/20">
             <div className="flex items-center gap-2 mb-4 text-red-500">
                 <ShieldAlert size={18} />
@@ -210,8 +211,15 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
             </div>
             
             <p className="text-[10px] text-gray-400 mb-6 font-medium leading-relaxed">
-                Ações aqui são irreversíveis. Ao remover um piloto, todos os palpites e pontos associados serão excluídos permanentemente.
+                Ações aqui são irreversíveis. Tenha cuidado.
             </p>
+
+            <button
+                onClick={onClearAllPredictions}
+                className="w-full bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/30 p-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-[10px] uppercase tracking-widest mb-6 active:scale-95"
+            >
+                <Eraser size={16} /> Zerar Todos os Palpites
+            </button>
 
             <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
                 <Users size={12} /> Pilotos Cadastrados ({users.length})
@@ -228,7 +236,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                 </div>
                                 <div className="flex-1 overflow-hidden">
                                     <p className="text-xs font-bold truncate text-gray-200">{u.name}</p>
-                                    {/* E-mail removido */}
                                 </div>
                             </div>
                             <button 

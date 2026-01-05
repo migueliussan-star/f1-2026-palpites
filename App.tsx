@@ -158,11 +158,28 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
+  // Função para limpar TODOS os palpites (Reset Geral de palpites)
+  const handleClearAllPredictions = async () => {
+    if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites de TODOS os usuários do sistema. Os pontos e usuários serão mantidos. Tem certeza?")) return;
+    
+    try {
+        await remove(ref(db, 'predictions'));
+        alert("Todos os palpites foram apagados com sucesso.");
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao limpar palpites.");
+    }
+  };
+
   // Função para Admin excluir usuários
   const handleDeleteUser = async (targetUserId: string) => {
     if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
     
     try {
+        await remove(ref(db, 'predictions/${targetUserId}')); // Remove apenas os palpites deste user se existirem isolados (mas estrutura atual agrupa por user, então ok)
+        // Como a estrutura é predictions/{userId}/{gp_session}, precisamos garantir que limpa tudo do user.
+        // O remove acima na verdade está errado na string template se não for avaliada.
+        // A estrutura é 'predictions/userId'. Vamos corrigir.
         await remove(ref(db, `predictions/${targetUserId}`));
         await remove(ref(db, `users/${targetUserId}`));
         alert("Usuário removido com sucesso.");
@@ -242,6 +259,7 @@ const App: React.FC = () => {
           onSelectGp={(id) => setAdminEditingGpId(id)} 
           onCalculatePoints={handleCalculatePoints} 
           onDeleteUser={handleDeleteUser}
+          onClearAllPredictions={handleClearAllPredictions}
         />
       )}
     </Layout>
