@@ -158,16 +158,31 @@ const App: React.FC = () => {
     await set(ref(db, 'calendar'), newCalendar);
   };
 
-  // Função para limpar TODOS os palpites (Reset Geral de palpites)
+  // Função para limpar TODOS os palpites E PONTOS (Reset da Temporada)
   const handleClearAllPredictions = async () => {
-    if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites de TODOS os usuários do sistema. Os pontos e usuários serão mantidos. Tem certeza?")) return;
+    if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites e ZERARÁ os pontos de TODOS os usuários. Ação irreversível. Tem certeza?")) return;
     
     try {
+        // 1. Remove palpites
         await remove(ref(db, 'predictions'));
-        alert("Todos os palpites foram apagados com sucesso.");
+
+        // 2. Zera pontos e histórico de todos os usuários
+        const updates: Record<string, any> = {};
+        allUsers.forEach(u => {
+            updates[`${u.id}/points`] = 0;
+            updates[`${u.id}/rank`] = 0;
+            updates[`${u.id}/previousRank`] = 0;
+            updates[`${u.id}/positionHistory`] = [];
+        });
+
+        if (Object.keys(updates).length > 0) {
+            await update(ref(db, 'users'), updates);
+        }
+
+        alert("Temporada resetada! Palpites e pontos foram apagados.");
     } catch (e) {
         console.error(e);
-        alert("Erro ao limpar palpites.");
+        alert("Erro ao resetar sistema.");
     }
   };
 
@@ -176,10 +191,6 @@ const App: React.FC = () => {
     if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
     
     try {
-        await remove(ref(db, 'predictions/${targetUserId}')); // Remove apenas os palpites deste user se existirem isolados (mas estrutura atual agrupa por user, então ok)
-        // Como a estrutura é predictions/{userId}/{gp_session}, precisamos garantir que limpa tudo do user.
-        // O remove acima na verdade está errado na string template se não for avaliada.
-        // A estrutura é 'predictions/userId'. Vamos corrigir.
         await remove(ref(db, `predictions/${targetUserId}`));
         await remove(ref(db, `users/${targetUserId}`));
         alert("Usuário removido com sucesso.");

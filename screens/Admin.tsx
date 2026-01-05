@@ -218,7 +218,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                 onClick={onClearAllPredictions}
                 className="w-full bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/30 p-4 rounded-xl flex items-center justify-center gap-2 transition-all font-black text-[10px] uppercase tracking-widest mb-6 active:scale-95"
             >
-                <Eraser size={16} /> Zerar Todos os Palpites
+                <Eraser size={16} /> Zerar Palpites e Pontos
             </button>
 
             <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
