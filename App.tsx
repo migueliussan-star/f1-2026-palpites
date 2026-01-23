@@ -80,10 +80,11 @@ const App: React.FC = () => {
       setLoginError('');
       setIsAuthButNoDb(false);
       
-      const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
+      // MUDANÇA IMPORTANTE: Usando UID como chave primária em vez de email sanitizado
+      const userKey = firebaseUser.uid; 
           
       if (!userKey) {
-        setLoginError("Email não identificado na conta Google.");
+        setLoginError("UID não identificado.");
         await signOut(auth);
         setUser(null);
         return;
@@ -115,22 +116,17 @@ const App: React.FC = () => {
       } catch (dbError: any) {
          console.error("Error fetching user data from DB:", dbError);
          
-         // MENSAGEM DE ERRO DETALHADA
          let errorMsg = `Erro no Banco (${dbError.code || 'Desconhecido'}): ${dbError.message}`;
          
          if (dbError?.code === 'PERMISSION_DENIED') {
-             errorMsg = "Permissão negada (PERMISSION_DENIED). Verifique as Regras no Firebase Console.";
+             errorMsg = "Permissão negada. Verifique as Regras no Firebase Console.";
          } else if (dbError?.code === 'NETWORK_ERROR') {
              errorMsg = "Sem conexão. Verifique sua internet.";
          } else if (dbError?.code === 'CLIENT_OFFLINE') {
              errorMsg = "Cliente offline. Tentando reconectar...";
-         } else if (dbError?.code === 'unavailable') {
-             errorMsg = "Serviço indisponível temporariamente.";
          }
          
          setLoginError(errorMsg);
-         // IMPORTANTE: NÃO DESLOGAR AQUI. 
-         // Mantemos a auth válida para permitir retry.
          setIsAuthButNoDb(true);
          setUser(null);
       }
@@ -141,7 +137,6 @@ const App: React.FC = () => {
     const safetyTimeout = setTimeout(() => {
         setIsInitialLoading((prev) => {
             if (prev) {
-                console.warn("Loading safety timeout triggered");
                 return false;
             }
             return prev;
@@ -154,21 +149,19 @@ const App: React.FC = () => {
       if (data) {
         setCalendar(data);
       } else {
-        // Inicializa APENAS se não houver dados
-        // set(calendarRef, INITIAL_CALENDAR).catch(e => console.warn("Erro init calendar (provavelmente permissão):", e));
-        // Melhor usar o local se falhar a leitura
         setCalendar(INITIAL_CALENDAR);
       }
     }, (error) => {
         console.warn("Erro ao ler calendário:", error);
-        setCalendar(INITIAL_CALENDAR); // Fallback local
+        setCalendar(INITIAL_CALENDAR);
     });
 
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const userList = (Object.values(data) as User[]).filter(u => u.id && !u.id.startsWith('guest_') && u.email);
+        // Filtra convidados ou dados inválidos
+        const userList = (Object.values(data) as User[]).filter(u => u.id && u.email);
         const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
         const processedList = sortedList.map((u, index) => {
@@ -194,6 +187,7 @@ const App: React.FC = () => {
       const data = snapshot.val();
       const predList: Prediction[] = [];
       if (data) {
+        // Predictions estão agrupadas por UID: predictions/UID/gpId_session
         Object.values(data).forEach((userPreds: any) => {
           Object.values(userPreds).forEach((p: any) => predList.push(p));
         });
@@ -205,7 +199,6 @@ const App: React.FC = () => {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(safetyTimeout);
-      
       try {
         if (firebaseUser) {
            await loadUserProfile(firebaseUser);
@@ -324,12 +317,12 @@ const App: React.FC = () => {
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!user) return;
     const sessionKey = session.replace(/\s/g, '_');
+    // Estrutura: predictions/UID/gp_session
     set(ref(db, `predictions/${user.id}/${gpId}_${sessionKey}`), { userId: user.id, gpId, session, top5 });
   };
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   
-  // Renderiza Login se não tiver usuário carregado
   if (!user) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
