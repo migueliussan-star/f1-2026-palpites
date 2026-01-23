@@ -221,8 +221,8 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 {/* Team Color Accent - Pointer Events None */}
                 <div className="absolute top-0 right-0 w-full h-1 opacity-50 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
 
-                {/* Content - Pointer Events None to force click on button */}
-                <div className="flex items-center justify-between relative z-10 mt-1 pointer-events-none">
+                {/* Content - Removing pointer-events-none from here to ensure clicks work on the text area too */}
+                <div className="flex items-center justify-between relative z-10 mt-1">
                     <div>
                         <p className={`text-[10px] font-bold f1-font mb-1 ${isSelected ? 'text-[#e10600]' : 'text-gray-500'}`}>#{driver.number}</p>
                         <p className="text-xs font-bold leading-tight uppercase text-white truncate">{driver.name.split(' ').pop()}</p>
