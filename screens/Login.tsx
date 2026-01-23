@@ -16,22 +16,18 @@ const Login: React.FC = () => {
     const isWebView = /wv|Webview/i.test(navigator.userAgent);
     setIsAppEnv(isCapacitor || isWebView);
 
-    // Verifica se voltou de um redirecionamento com timeout de segurança
+    // Verificação de redirecionamento SILENCIOSA
+    // Não ativamos o loading(true) aqui para não travar a UI enquanto o Firebase inicializa
     const checkRedirect = async () => {
       try {
-        setLoading(true);
+        // Sem setLoading(true) preventivo.
+        // Se houver um resultado, o onAuthStateChanged no App.tsx cuidará do redirecionamento para a Home.
+        // Se quisermos tratar erro de redirect, fazemos aqui, mas sem bloquear o botão inicialmente.
+        const result = await getRedirectResult(auth);
         
-        // Timeout para não travar a tela se o Firebase demorar
-        const result = await Promise.race([
-            getRedirectResult(auth),
-            new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
-        ]);
-
         if (result) {
-          console.log("Login via redirect sucesso");
-          // Não precisamos setar loading false aqui pois o App.tsx vai detectar o user e mudar a tela
-        } else {
-            setLoading(false);
+          console.log("Login via redirect detectado com sucesso");
+          setLoading(true); // Agora sim bloqueamos, pois sabemos que deu certo e vai transicionar
         }
       } catch (err: any) {
         console.error("Erro no login redirect:", err);
@@ -66,11 +62,11 @@ const Login: React.FC = () => {
     setError('');
     setDetailedError('');
     
-    // Timeout de segurança para o clique do botão também
+    // Timeout de segurança
     const loginTimeout = setTimeout(() => {
         setLoading(false);
         setError('O login demorou muito. Tente novamente.');
-    }, 15000); // 15 segundos para dar tempo do popup ou redirect
+    }, 15000); 
 
     try {
       await signInWithPopup(auth, googleProvider);
@@ -78,11 +74,9 @@ const Login: React.FC = () => {
     } catch (err: any) {
         console.log("Popup falhou, tentando redirect...", err.code);
         
-        // Se falhar popup, tenta redirect
         if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request' || isAppEnv) {
             try {
                 await signInWithRedirect(auth, googleProvider);
-                // Redirect inicia a navegação, o timeout vai limpar se não navegar a tempo (raro)
             } catch (redirectErr: any) {
                 clearTimeout(loginTimeout);
                 handleAuthError(redirectErr);
@@ -134,6 +128,18 @@ const Login: React.FC = () => {
                   </>
                 )}
               </button>
+              
+              {/* Botão de Destravamento Manual */}
+              {loading && (
+                  <button 
+                    onClick={() => setLoading(false)}
+                    className="w-full text-center py-2"
+                  >
+                    <span className="text-[10px] text-gray-500 underline decoration-gray-700 underline-offset-4 hover:text-white transition-colors cursor-pointer">
+                        Demorando muito? Toque para cancelar
+                    </span>
+                  </button>
+              )}
 
               {error && (
                 <div className="space-y-3">
