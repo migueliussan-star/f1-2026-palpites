@@ -3,13 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, Settings, Lock, LogIn } from 'lucide-react';
 import { auth, googleProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from '../firebase';
 
-const Login: React.FC = () => {
+interface LoginProps {
+    authError?: string;
+}
+
+const Login: React.FC<LoginProps> = ({ authError }) => {
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('Iniciando...');
   const [error, setError] = useState('');
   const [detailedError, setDetailedError] = useState('');
   const [showConfigGuide, setShowConfigGuide] = useState(false);
   const [showRedirectFallback, setShowRedirectFallback] = useState(false);
+
+  // Monitora erros vindos do App.tsx (ex: falha no DB)
+  useEffect(() => {
+    if (authError) {
+        setLoading(false);
+        setError(authError);
+    }
+  }, [authError]);
 
   useEffect(() => {
     // Verificação de redirecionamento silenciosa
@@ -18,6 +30,8 @@ const Login: React.FC = () => {
         const result = await getRedirectResult(auth);
         if (result) {
           console.log("Login via redirect sucesso");
+          setLoading(true);
+          setLoadingMsg("Validando acesso...");
         }
       } catch (err: any) {
         console.error("Erro redirect:", err);
@@ -60,7 +74,23 @@ const Login: React.FC = () => {
 
     try {
       await signInWithPopup(auth, googleProvider);
-      // Se der certo, o App.tsx vai detectar o user e mudar a tela
+      
+      // Se chegou aqui, login deu certo.
+      // Se o App.tsx demorar muito ou falhar sem setar authError, liberamos o botão.
+      clearTimeout(fallbackTimer);
+      setLoadingMsg("Carregando perfil...");
+      
+      setTimeout(() => {
+          // Se ainda estiver montado após 10s, algo deu errado no fluxo do App
+          setLoading((prev) => {
+              if (prev) {
+                  setError("Login autorizado, mas o app não iniciou. Tente recarregar.");
+                  return false;
+              }
+              return prev;
+          });
+      }, 10000);
+
     } catch (err: any) {
       clearTimeout(fallbackTimer);
       // Se o popup foi bloqueado ou fechado, sugerimos redirect

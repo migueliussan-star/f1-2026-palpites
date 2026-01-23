@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loginError, setLoginError] = useState<string>('');
 
   useEffect(() => {
     // Timeout de segurança: se o Firebase demorar mais de 6s, libera a tela
@@ -119,10 +120,15 @@ const App: React.FC = () => {
       
       try {
         if (firebaseUser) {
+          // Limpa erro anterior ao tentar novo login
+          setLoginError('');
+          
           const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
           
           if (!userKey) {
             console.error("User authenticated but no email found");
+            setLoginError("Email não identificado na conta Google.");
+            await signOut(auth);
             setUser(null);
             return;
           }
@@ -149,8 +155,13 @@ const App: React.FC = () => {
               await set(userRef, userData);
               setUser(userData);
             }
-          } catch (dbError) {
+          } catch (dbError: any) {
              console.error("Error fetching user data from DB:", dbError);
+             const errorMsg = dbError?.code === 'PERMISSION_DENIED' 
+                ? "Acesso negado ao banco de dados." 
+                : "Erro de conexão com o banco de dados.";
+             
+             setLoginError(errorMsg);
              // Em caso de erro no DB, desloga para garantir estado limpo
              await signOut(auth);
              setUser(null);
@@ -276,7 +287,7 @@ const App: React.FC = () => {
   };
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
-  if (!user) return <Login />;
+  if (!user) return <Login authError={loginError} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
@@ -284,21 +295,15 @@ const App: React.FC = () => {
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
   // LÓGICA DE SELEÇÃO AUTOMÁTICA DE GP
-  // Encontra o primeiro GP cuja data de término ainda NÃO passou (ou seja, HOJE <= DATA_FIM)
   const now = new Date();
-  
   let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
 
   if (!activeGP) {
       activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
-          // Se hoje for dia 5 e o GP acaba dia 4 (endDate), now > endDate, então retorna false.
-          // O find vai continuar até achar um GP onde now <= endDate.
           return now <= endDate;
       });
   }
-
-  // Fallback para o último se todos já passaram, ou o primeiro se der erro
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
