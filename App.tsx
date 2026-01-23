@@ -151,8 +151,8 @@ const App: React.FC = () => {
             }
           } catch (dbError) {
              console.error("Error fetching user data from DB:", dbError);
-             // Em caso de erro no DB, tenta manter o usuário logado com dados básicos ou desloga
-             // Aqui optamos por deslogar para forçar retry limpo, ou poderíamos setar um user temporário
+             // Em caso de erro no DB, desloga para garantir estado limpo
+             await signOut(auth);
              setUser(null);
           }
         } else {

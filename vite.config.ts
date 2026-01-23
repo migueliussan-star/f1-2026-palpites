@@ -7,6 +7,22 @@ export default defineConfig({
   base: '/',
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('react')) {
+              return 'vendor';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
   }
 });

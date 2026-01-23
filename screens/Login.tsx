@@ -20,14 +20,13 @@ const Login: React.FC = () => {
     // Não ativamos o loading(true) aqui para não travar a UI enquanto o Firebase inicializa
     const checkRedirect = async () => {
       try {
-        // Sem setLoading(true) preventivo.
-        // Se houver um resultado, o onAuthStateChanged no App.tsx cuidará do redirecionamento para a Home.
-        // Se quisermos tratar erro de redirect, fazemos aqui, mas sem bloquear o botão inicialmente.
         const result = await getRedirectResult(auth);
         
         if (result) {
           console.log("Login via redirect detectado com sucesso");
-          setLoading(true); // Agora sim bloqueamos, pois sabemos que deu certo e vai transicionar
+          // NÃO ativamos setLoading(true) aqui. 
+          // Deixamos o onAuthStateChanged no App.tsx lidar com a transição.
+          // Se travar, o usuário ainda verá o botão de login para tentar novamente.
         }
       } catch (err: any) {
         console.error("Erro no login redirect:", err);
