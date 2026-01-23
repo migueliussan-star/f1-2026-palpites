@@ -141,7 +141,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       ) : null}
 
       {/* Selected Drivers Display */}
-      <div className={`mb-10 transition-transform ${errorShake ? 'translate-x-[-5px] rotate-[-1deg]' : ''}`} style={{ transitionDuration: '0.1s' }}>
+      <div className={`mb-8 transition-transform ${errorShake ? 'translate-x-[-5px] rotate-[-1deg]' : ''}`} style={{ transitionDuration: '0.1s' }}>
         <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Seu Grid (Top 5)</h3>
             {isEditable && selectedDrivers.length > 0 && (
@@ -194,6 +194,29 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
           })}
         </div>
       </div>
+
+      {/* Action Button - Static Position between Selected and List */}
+      {isEditable && (
+          <div className="mb-10 animate-enter">
+            <button 
+              onClick={handleSave}
+              disabled={selectedDrivers.length < 5}
+              className={`
+                w-full py-4 rounded-xl flex items-center justify-center gap-3 font-black transition-all shadow-xl uppercase tracking-widest text-xs border
+                ${selectedDrivers.length === 5
+                  ? 'bg-[#e10600] text-white border-[#e10600] shadow-[#e10600]/20 active:scale-95 cursor-pointer' 
+                  : 'bg-white/5 text-gray-500 border-white/5 cursor-not-allowed opacity-50'}
+              `}
+            >
+              CONFIRMAR PALPITE <Save size={18} />
+            </button>
+            {selectedDrivers.length < 5 && (
+                <p className="text-[9px] text-center text-gray-500 font-bold uppercase mt-2 tracking-wide">
+                    Selecione 5 pilotos para salvar
+                </p>
+            )}
+          </div>
+      )}
 
       {/* Drivers List */}
       <div className={`transition-all duration-500 pb-24 ${!isEditable ? 'opacity-30 pointer-events-none grayscale' : 'opacity-100'}`}>
@@ -258,22 +281,6 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             );
           })}
         </div>
-      </div>
-
-      {/* Floating Action Button for Save */}
-      <div className="fixed bottom-24 left-0 right-0 max-w-md mx-auto px-6 z-40 pointer-events-none">
-        <button 
-          onClick={handleSave}
-          disabled={!isEditable || selectedDrivers.length < 5}
-          className={`
-            pointer-events-auto w-full py-4 rounded-full flex items-center justify-center gap-3 font-black transition-all shadow-2xl uppercase tracking-widest text-xs border border-white/10 backdrop-blur-xl
-            ${isEditable && selectedDrivers.length === 5
-              ? 'bg-[#e10600] text-white shadow-[#e10600]/40 translate-y-0 opacity-100 active:scale-95' 
-              : 'bg-black/80 text-gray-600 translate-y-10 opacity-0'}
-          `}
-        >
-          CONFIRMAR PALPITE <Save size={18} />
-        </button>
       </div>
     </div>
   );
