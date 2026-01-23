@@ -83,31 +83,10 @@ const App: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Listeners de Dados - SÓ ATIVAM APÓS LOGIN para evitar erro de permissão
-  useEffect(() => {
-    if (!user) {
-        setAllUsers([]);
-        setPredictions([]);
-        return;
-    }
-
-    console.log("Iniciando listeners de dados...");
-
-    const calendarRef = ref(db, 'calendar');
-    const unsubCalendar = onValue(calendarRef, (snapshot) => {
-      const data = snapshot.val();
+  // Processamento de dados de usuários extraído para reutilização
+  const processUsersData = useCallback((data: any) => {
       if (data) {
-        setCalendar(data);
-      } else {
-        setCalendar(INITIAL_CALENDAR);
-      }
-    });
-
-    const usersRef = ref(db, 'users');
-    const unsubUsers = onValue(usersRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // CORREÇÃO: Mapeia Object.entries para garantir que temos o ID
+        // Mapeia Object.entries para garantir que temos o ID
         let rawList = Object.entries(data).map(([key, value]: [string, any]) => ({
             ...value,
             id: value.id || key 
@@ -143,11 +122,51 @@ const App: React.FC = () => {
       } else {
         setAllUsers([]);
       }
+  }, []);
+
+  // Listeners de Dados - HÍBRIDO (GET inicial + Listener)
+  useEffect(() => {
+    if (!user) {
+        setAllUsers([]);
+        setPredictions([]);
+        return;
+    }
+
+    console.log("Iniciando sincronização de dados...");
+
+    const calendarRef = ref(db, 'calendar');
+    const usersRef = ref(db, 'users');
+    const predictionsRef = ref(db, 'predictions');
+
+    // 1. Fetch Inicial Rápido (garante dados sem esperar o handshake do socket)
+    get(calendarRef).then(snap => snap.exists() && setCalendar(snap.val()));
+    get(usersRef).then(snap => snap.exists() && processUsersData(snap.val()));
+    get(predictionsRef).then(snap => {
+        if (snap.exists()) {
+             const predList: Prediction[] = [];
+             Object.values(snap.val()).forEach((userPreds: any) => {
+                Object.values(userPreds).forEach((p: any) => predList.push(p));
+             });
+             setPredictions(predList);
+        }
+    });
+
+    // 2. Listeners para Real-time Updates
+    const unsubCalendar = onValue(calendarRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setCalendar(data);
+      } else {
+        setCalendar(INITIAL_CALENDAR);
+      }
+    });
+
+    const unsubUsers = onValue(usersRef, (snapshot) => {
+        processUsersData(snapshot.val());
     }, (error) => {
         console.error("Erro listener users:", error);
     });
 
-    const predictionsRef = ref(db, 'predictions');
     const unsubPredictions = onValue(predictionsRef, (snapshot) => {
       const data = snapshot.val();
       const predList: Prediction[] = [];
@@ -166,7 +185,7 @@ const App: React.FC = () => {
         unsubUsers();
         unsubPredictions();
     };
-  }, [user?.id]); // Recria apenas se o ID do usuário mudar (login/logout)
+  }, [user?.id, processUsersData]);
 
   // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
@@ -403,7 +422,8 @@ const App: React.FC = () => {
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
-  const realTimeRank = allUsers.findIndex(u => u.id === liveUser.id) + 1 || liveUser.rank || allUsers.length;
+  // Usa liveUser.rank se disponível, senão fallback para índice
+  const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
   const now = new Date();
@@ -417,6 +437,8 @@ const App: React.FC = () => {
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
+  
+  // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
 
   return (
