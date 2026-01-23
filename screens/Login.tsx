@@ -85,7 +85,7 @@ const Login: React.FC = () => {
     <div className="h-full w-full flex flex-col relative bg-[#0a0a0c] overflow-hidden">
       
       {/* Background Decorativo (Absoluto para não interferir no fluxo) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
       
       {/* Container de Rolagem (Flex-1 força ocupar o espaço restante e scrollar se passar) */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden w-full relative z-10 scroll-smooth">
@@ -94,11 +94,10 @@ const Login: React.FC = () => {
         <div className="min-h-full w-full flex flex-col items-center justify-center p-6">
           
           <div className="w-full max-w-sm py-10">
-            <div className="text-center mb-12">
-              <div className="inline-block p-5 rounded-[40px] bg-red-600/10 mb-8 border border-red-600/20">
-                <h1 className="text-5xl font-black f1-font text-[#e10600] tracking-tighter">F1 2026</h1>
-              </div>
-              <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">Acesse sua conta de piloto</p>
+            <div className="text-center mb-24 flex flex-col items-center">
+              <h1 className="text-6xl font-black f1-font text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
+              <div className="h-1.5 w-24 bg-[#e10600] mb-6 rounded-full shadow-[0_0_10px_#e10600]"></div>
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em]">Fantasy League</p>
             </div>
 
             <div className="space-y-4">
