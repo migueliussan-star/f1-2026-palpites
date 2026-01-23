@@ -334,50 +334,87 @@ const App: React.FC = () => {
     // O listener vai atualizar o liveUser automaticamente
   };
 
-  const handleCalculatePoints = async (gp: RaceGP) => {
-    if (!gp.results) return;
-    const userPointsMap: Record<string, number> = {};
+  // Lógica de Cálculo de Pontos REESCRITA (Recalcula TOTALMENTE do zero)
+  // Isso previne duplicação de pontos e corrige pontuações de quem apostou tarde
+  const handleCalculatePoints = async (currentGp: RaceGP) => {
+    // Usa a versão mais recente do GP atual (caso tenha sido editado na UI antes do save no DB)
+    const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
     
+    const userPointsMap: Record<string, number> = {};
+
+    // 1. Recalcula pontos de TODOS os usuários baseado em TODO o calendário
     allUsers.forEach(u => {
-      let totalGpPoints = 0;
-      const userPreds = predictions.filter(p => p.gpId === gp.id && p.userId === u.id);
-      userPreds.forEach(pred => {
-        const officialResult = gp.results?.[pred.session];
-        if (officialResult) {
-          pred.top5.forEach((driverId, idx) => {
-            if (driverId === officialResult[idx]) totalGpPoints += 5;
-            else if (officialResult.includes(driverId)) totalGpPoints += 1;
+      let userTotalPoints = 0;
+
+      updatedCalendar.forEach(calGp => {
+          // Só calcula se tiver resultados oficiais
+          if (!calGp.results) return;
+
+          const sessions: SessionType[] = calGp.isSprint 
+            ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
+            : ['Qualy corrida', 'corrida principal'];
+          
+          sessions.forEach(session => {
+             const officialResult = calGp.results?.[session];
+             if (!officialResult) return;
+
+             // Busca palpite do usuário para essa sessão específica
+             const pred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === session);
+             
+             if (pred) {
+                pred.top5.forEach((driverId, idx) => {
+                   if (driverId === officialResult[idx]) userTotalPoints += 5; // Posição Exata
+                   else if (officialResult.includes(driverId)) userTotalPoints += 1; // Está no Top 5
+                });
+             }
           });
-        }
       });
-      userPointsMap[u.id] = (u.points || 0) + totalGpPoints;
+
+      userPointsMap[u.id] = userTotalPoints;
     });
 
-    const sortedByNewPoints = [...allUsers].sort((a, b) => {
-        const pointsA = userPointsMap[a.id] || 0;
-        const pointsB = userPointsMap[b.id] || 0;
-        return pointsB - pointsA;
-    });
+    // 2. Ordena para definir novo Ranking
+    const rankedUsers = allUsers.map(u => ({
+        ...u,
+        newPoints: userPointsMap[u.id] || 0
+    })).sort((a, b) => b.newPoints - a.newPoints);
 
-    for (let i = 0; i < sortedByNewPoints.length; i++) {
-        const u = sortedByNewPoints[i];
-        const newRank = i + 1;
-        const newPoints = userPointsMap[u.id];
+    // 3. Prepara o Update em Batch
+    const updates: Record<string, any> = {};
+
+    rankedUsers.forEach((u, index) => {
+        const newRank = index + 1;
         
-        const history = u.positionHistory || [];
-        history.push(newRank);
-        if (history.length > 5) history.shift();
+        // Histórico: Adiciona o novo rank ao array existente (mantendo últimos 5)
+        let history = [...(u.positionHistory || [])];
+        // Para evitar flood no histórico, idealmente só adicionamos se for uma nova corrida,
+        // mas como não temos controle de "rodada", vamos apenas atualizar o rank atual e pontos.
+        // O gráfico de Stats usa o positionHistory.
+        
+        // Se o rank mudou ou é um novo cálculo de "fechamento", poderíamos dar push.
+        // Simplificação: Atualiza apenas pontos e rank atual.
+        // O histórico será mantido como está, ou podemos dar push apenas se o status do GP mudar para FINISHED.
+        
+        updates[`users/${u.id}/points`] = u.newPoints;
+        updates[`users/${u.id}/rank`] = newRank;
+        updates[`users/${u.id}/previousRank`] = u.rank; // Salva o rank anterior antes do update
+    });
 
-        await update(ref(db, `users/${u.id}`), { 
-            points: newPoints,
-            rank: newRank,
-            previousRank: u.rank,
-            positionHistory: history
-        });
+    // Se o GP estava ABERTO, marca como FINALIZADO no calendário
+    if (currentGp.status === 'OPEN') {
+        const newCalendar = updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c);
+        await set(ref(db, 'calendar'), newCalendar);
+    } else {
+        // Se só estamos recalculando (já estava finished), atualizamos o calendário com possíveis correções de resultados
+        await set(ref(db, 'calendar'), updatedCalendar);
     }
     
-    const newCalendar = calendar.map(c => c.id === gp.id ? { ...c, status: 'FINISHED' as const } : c);
-    await set(ref(db, 'calendar'), newCalendar);
+    // Executa updates dos usuários
+    if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+    }
+    
+    alert("Pontos recalculados com sucesso (Baseado em todo o histórico)!");
   };
 
   const handleClearAllPredictions = async () => {
