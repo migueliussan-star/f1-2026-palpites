@@ -16,13 +16,20 @@ const Login: React.FC = () => {
     const isWebView = /wv|Webview/i.test(navigator.userAgent);
     setIsAppEnv(isCapacitor || isWebView);
 
-    // Verifica se voltou de um redirecionamento
+    // Verifica se voltou de um redirecionamento com timeout de segurança
     const checkRedirect = async () => {
       try {
         setLoading(true);
-        const result = await getRedirectResult(auth);
+        
+        // Timeout para não travar a tela se o Firebase demorar
+        const result = await Promise.race([
+            getRedirectResult(auth),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
+        ]);
+
         if (result) {
           console.log("Login via redirect sucesso");
+          // Não precisamos setar loading false aqui pois o App.tsx vai detectar o user e mudar a tela
         } else {
             setLoading(false);
         }
@@ -32,6 +39,7 @@ const Login: React.FC = () => {
         setLoading(false);
       }
     };
+    
     checkRedirect();
   }, []);
 
@@ -53,22 +61,35 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
+    if (loading) return;
     setLoading(true);
     setError('');
     setDetailedError('');
     
+    // Timeout de segurança para o clique do botão também
+    const loginTimeout = setTimeout(() => {
+        setLoading(false);
+        setError('O login demorou muito. Tente novamente.');
+    }, 15000); // 15 segundos para dar tempo do popup ou redirect
+
     try {
       await signInWithPopup(auth, googleProvider);
+      clearTimeout(loginTimeout);
     } catch (err: any) {
         console.log("Popup falhou, tentando redirect...", err.code);
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || isAppEnv) {
+        
+        // Se falhar popup, tenta redirect
+        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request' || isAppEnv) {
             try {
                 await signInWithRedirect(auth, googleProvider);
+                // Redirect inicia a navegação, o timeout vai limpar se não navegar a tempo (raro)
             } catch (redirectErr: any) {
+                clearTimeout(loginTimeout);
                 handleAuthError(redirectErr);
                 setLoading(false);
             }
         } else {
+            clearTimeout(loginTimeout);
             handleAuthError(err);
             setLoading(false);
         }
