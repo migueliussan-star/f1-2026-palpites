@@ -75,12 +75,11 @@ const App: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Função isolada para carregar perfil
+  // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');
       setIsAuthButNoDb(false);
       
-      // MUDANÇA IMPORTANTE: Usando UID como chave primária em vez de email sanitizado
       const userKey = firebaseUser.uid; 
           
       if (!userKey) {
@@ -96,22 +95,74 @@ const App: React.FC = () => {
         const snapshot = await get(userRef);
         
         if (snapshot.exists()) {
+          // Usuário já existe no padrão novo (UID)
           setUser(snapshot.val());
         } else {
-          // Cria novo usuário
-          const userData: User = {
-            id: userKey,
-            name: firebaseUser.displayName || 'Piloto',
-            email: firebaseUser.email || '',
-            points: 0,
-            rank: 0,
-            level: 'Bronze',
-            isAdmin: false,
-            previousRank: 0,
-            positionHistory: []
-          };
-          await set(userRef, userData);
-          setUser(userData);
+          // --- LÓGICA DE MIGRAÇÃO ---
+          // Verifica se existe um usuário antigo com este email
+          const usersRef = ref(db, 'users');
+          const usersSnap = await get(usersRef);
+          let oldUserData: any = null;
+          let oldUserKey: string | null = null;
+
+          if (usersSnap.exists()) {
+            usersSnap.forEach((child) => {
+                const u = child.val();
+                // Procura por email igual, mas chave diferente do UID atual
+                if (u.email === firebaseUser.email && child.key !== userKey) {
+                    oldUserData = u;
+                    oldUserKey = child.key;
+                }
+            });
+          }
+
+          if (oldUserData && oldUserKey) {
+             console.log("Migrando usuário antigo:", oldUserKey, "para UID:", userKey);
+             
+             // 1. Cria o novo usuário com os DADOS ANTIGOS (Preserva pontos e Admin)
+             const newUserData: User = {
+                 ...oldUserData,
+                 id: userKey, // Atualiza ID
+                 email: firebaseUser.email, // Garante email certo
+                 name: firebaseUser.displayName || oldUserData.name || 'Piloto'
+             };
+
+             await set(userRef, newUserData);
+
+             // 2. Tenta migrar palpites antigos se existirem
+             if (oldUserKey) {
+                 const oldPredsRef = ref(db, `predictions/${oldUserKey}`);
+                 const oldPredsSnap = await get(oldPredsRef);
+                 if (oldPredsSnap.exists()) {
+                     // Salva no novo local
+                     await set(ref(db, `predictions/${userKey}`), oldPredsSnap.val());
+                     // Remove do local antigo
+                     await remove(oldPredsRef);
+                 }
+
+                 // 3. Remove o usuário antigo para evitar duplicatas
+                 await remove(ref(db, `users/${oldUserKey}`));
+             }
+
+             setUser(newUserData);
+             alert("Conta migrada com sucesso! Seus pontos e status de Admin foram recuperados.");
+
+          } else {
+            // --- CRIAÇÃO DE USUÁRIO NOVO (SEM DADOS ANTIGOS) ---
+            const userData: User = {
+                id: userKey,
+                name: firebaseUser.displayName || 'Piloto',
+                email: firebaseUser.email || '',
+                points: 0,
+                rank: 0,
+                level: 'Bronze',
+                isAdmin: false,
+                previousRank: 0,
+                positionHistory: []
+            };
+            await set(userRef, userData);
+            setUser(userData);
+          }
         }
       } catch (dbError: any) {
          console.error("Error fetching user data from DB:", dbError);
@@ -122,8 +173,6 @@ const App: React.FC = () => {
              errorMsg = "Permissão negada. Verifique as Regras no Firebase Console.";
          } else if (dbError?.code === 'NETWORK_ERROR') {
              errorMsg = "Sem conexão. Verifique sua internet.";
-         } else if (dbError?.code === 'CLIENT_OFFLINE') {
-             errorMsg = "Cliente offline. Tentando reconectar...";
          }
          
          setLoginError(errorMsg);
@@ -161,8 +210,32 @@ const App: React.FC = () => {
       const data = snapshot.val();
       if (data) {
         // Filtra convidados ou dados inválidos
-        const userList = (Object.values(data) as User[]).filter(u => u.id && u.email);
-        const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
+        let rawList = (Object.values(data) as User[]).filter(u => u.id && u.email);
+        
+        // --- DEDUPLICAÇÃO VISUAL (Para o Ranking ficar limpo) ---
+        // Se houver contas duplicadas (migração pendente de outros), agrupa por email
+        const uniqueUsersMap = new Map<string, User>();
+        
+        rawList.forEach(u => {
+            if (!uniqueUsersMap.has(u.email)) {
+                uniqueUsersMap.set(u.email, u);
+            } else {
+                // Se já existe, mantemos o que tem mais pontos ou o que tem formato UID
+                const existing = uniqueUsersMap.get(u.email)!;
+                // Lógica simples: Prefere o que tem mais pontos. Se igual, prefere o UID (geralmente mais longo que chaves antigas se forem simples)
+                if ((u.points || 0) > (existing.points || 0)) {
+                    uniqueUsersMap.set(u.email, u);
+                } else if ((u.points || 0) === (existing.points || 0)) {
+                    // Se o ID atual for o do Auth (28 chars), prefere ele
+                    if (u.id.length > 20 && existing.id.length < 20) {
+                         uniqueUsersMap.set(u.email, u);
+                    }
+                }
+            }
+        });
+        
+        const deduplicatedList = Array.from(uniqueUsersMap.values());
+        const sortedList = deduplicatedList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
