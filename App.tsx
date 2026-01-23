@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, RaceGP, SessionType, Prediction } from './types';
 import { INITIAL_CALENDAR } from './constants';
 import Home from './screens/Home';
@@ -62,6 +62,14 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
 
+  // Deriva o usuário "vivo" (combinando Auth + Dados do DB em tempo real)
+  const liveUser = useMemo(() => {
+    if (!user) return null;
+    const dbUser = allUsers.find(u => u.id === user.id);
+    // Prioriza dados do DB (que tem pontos atualizados), mas mantém isAdmin/email do auth inicial se necessário
+    return dbUser ? { ...user, ...dbUser } : user;
+  }, [user, allUsers]);
+
   // Monitora estado da conexão com Firebase
   useEffect(() => {
     const connectedRef = ref(db, ".info/connected");
@@ -75,121 +83,18 @@ const App: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS
-  const loadUserProfile = useCallback(async (firebaseUser: any) => {
-      setLoginError('');
-      setIsAuthButNoDb(false);
-      
-      const userKey = firebaseUser.uid; 
-          
-      if (!userKey) {
-        setLoginError("UID não identificado.");
-        await signOut(auth);
-        setUser(null);
-        return;
-      }
-
-      const userRef = ref(db, `users/${userKey}`);
-      
-      try {
-        const snapshot = await get(userRef);
-        
-        if (snapshot.exists()) {
-          // Usuário já existe no padrão novo (UID)
-          setUser(snapshot.val());
-        } else {
-          // --- LÓGICA DE MIGRAÇÃO ---
-          const usersRef = ref(db, 'users');
-          const usersSnap = await get(usersRef);
-          let oldUserData: any = null;
-          let oldUserKey: string | null = null;
-          let userCount = 0;
-
-          if (usersSnap.exists()) {
-            userCount = usersSnap.size; // Conta quantos usuários existem
-            usersSnap.forEach((child) => {
-                const u = child.val();
-                if (u.email === firebaseUser.email && child.key !== userKey) {
-                    oldUserData = u;
-                    oldUserKey = child.key;
-                }
-            });
-          }
-
-          // Se for o PRIMEIRO usuário do sistema (count 0), vira Admin automaticamente
-          const shouldBeAdmin = userCount === 0;
-
-          if (oldUserData && oldUserKey) {
-             console.log("Migrando usuário antigo:", oldUserKey, "para UID:", userKey);
-             
-             // 1. Cria o novo usuário com os DADOS ANTIGOS
-             const newUserData: User = {
-                 ...oldUserData,
-                 id: userKey,
-                 email: firebaseUser.email,
-                 name: firebaseUser.displayName || oldUserData.name || 'Piloto',
-                 isAdmin: oldUserData.isAdmin || shouldBeAdmin // Mantém admin antigo ou define se for o primeiro
-             };
-
-             await set(userRef, newUserData);
-
-             if (oldUserKey) {
-                 const oldPredsRef = ref(db, `predictions/${oldUserKey}`);
-                 const oldPredsSnap = await get(oldPredsRef);
-                 if (oldPredsSnap.exists()) {
-                     await set(ref(db, `predictions/${userKey}`), oldPredsSnap.val());
-                     await remove(oldPredsRef);
-                 }
-                 await remove(ref(db, `users/${oldUserKey}`));
-             }
-
-             setUser(newUserData);
-             alert("Conta recuperada com sucesso!");
-
-          } else {
-            // --- CRIAÇÃO DE USUÁRIO NOVO ---
-            const userData: User = {
-                id: userKey,
-                name: firebaseUser.displayName || 'Piloto',
-                email: firebaseUser.email || '',
-                points: 0,
-                rank: 0,
-                level: 'Bronze',
-                isAdmin: shouldBeAdmin, // Se for o primeiro, é Admin
-                previousRank: 0,
-                positionHistory: []
-            };
-            await set(userRef, userData);
-            setUser(userData);
-          }
-        }
-      } catch (dbError: any) {
-         console.error("Error fetching user data from DB:", dbError);
-         
-         let errorMsg = `Erro no Banco (${dbError.code || 'Desconhecido'}): ${dbError.message}`;
-         
-         if (dbError?.code === 'PERMISSION_DENIED') {
-             errorMsg = "Permissão negada. Verifique as Regras no Firebase Console.";
-         } else if (dbError?.code === 'NETWORK_ERROR') {
-             errorMsg = "Sem conexão. Verifique sua internet.";
-         }
-         
-         setLoginError(errorMsg);
-         setIsAuthButNoDb(true);
-         setUser(null);
-      }
-  }, []);
-
+  // Listeners de Dados - SÓ ATIVAM APÓS LOGIN para evitar erro de permissão
   useEffect(() => {
-    const safetyTimeout = setTimeout(() => {
-        setIsInitialLoading((prev) => {
-            if (prev) return false;
-            return prev;
-        });
-    }, 6000);
+    if (!user) {
+        setAllUsers([]);
+        setPredictions([]);
+        return;
+    }
+
+    console.log("Iniciando listeners de dados...");
 
     const calendarRef = ref(db, 'calendar');
-    onValue(calendarRef, (snapshot) => {
+    const unsubCalendar = onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         setCalendar(data);
@@ -199,18 +104,17 @@ const App: React.FC = () => {
     });
 
     const usersRef = ref(db, 'users');
-    onValue(usersRef, (snapshot) => {
+    const unsubUsers = onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // CORREÇÃO: Mapeia Object.entries para garantir que temos o ID, mesmo que falte no objeto value
+        // CORREÇÃO: Mapeia Object.entries para garantir que temos o ID
         let rawList = Object.entries(data).map(([key, value]: [string, any]) => ({
             ...value,
-            id: value.id || key // Fallback crucial: usa a chave do Firebase como ID se o campo id estiver vazio
-        })).filter(u => u.email); // Filtra lixo sem email
+            id: value.id || key 
+        })).filter(u => u.email); 
         
         // --- DEDUPLICAÇÃO VISUAL ---
         const uniqueUsersMap = new Map<string, User>();
-        
         rawList.forEach(u => {
             if (!uniqueUsersMap.has(u.email)) {
                 uniqueUsersMap.set(u.email, u);
@@ -218,11 +122,6 @@ const App: React.FC = () => {
                 const existing = uniqueUsersMap.get(u.email)!;
                 if ((u.points || 0) > (existing.points || 0)) {
                     uniqueUsersMap.set(u.email, u);
-                } else if ((u.points || 0) === (existing.points || 0)) {
-                    // Prefere o UID do Auth (mais longo)
-                    if (u.id.length > 20 && existing.id.length < 20) {
-                         uniqueUsersMap.set(u.email, u);
-                    }
                 }
             }
         });
@@ -244,10 +143,12 @@ const App: React.FC = () => {
       } else {
         setAllUsers([]);
       }
+    }, (error) => {
+        console.error("Erro listener users:", error);
     });
 
     const predictionsRef = ref(db, 'predictions');
-    onValue(predictionsRef, (snapshot) => {
+    const unsubPredictions = onValue(predictionsRef, (snapshot) => {
       const data = snapshot.val();
       const predList: Prediction[] = [];
       if (data) {
@@ -256,7 +157,122 @@ const App: React.FC = () => {
         });
       }
       setPredictions(predList);
+    }, (error) => {
+        console.error("Erro listener predictions:", error);
     });
+
+    return () => {
+        unsubCalendar();
+        unsubUsers();
+        unsubPredictions();
+    };
+  }, [user?.id]); // Recria apenas se o ID do usuário mudar (login/logout)
+
+  // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS
+  const loadUserProfile = useCallback(async (firebaseUser: any) => {
+      setLoginError('');
+      setIsAuthButNoDb(false);
+      
+      const userKey = firebaseUser.uid; 
+          
+      if (!userKey) {
+        setLoginError("UID não identificado.");
+        await signOut(auth);
+        setUser(null);
+        return;
+      }
+
+      const userRef = ref(db, `users/${userKey}`);
+      
+      try {
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          setUser(snapshot.val());
+        } else {
+          // --- LÓGICA DE MIGRAÇÃO ---
+          const usersRef = ref(db, 'users');
+          const usersSnap = await get(usersRef);
+          let oldUserData: any = null;
+          let oldUserKey: string | null = null;
+          let userCount = 0;
+
+          if (usersSnap.exists()) {
+            userCount = usersSnap.size;
+            usersSnap.forEach((child) => {
+                const u = child.val();
+                if (u.email === firebaseUser.email && child.key !== userKey) {
+                    oldUserData = u;
+                    oldUserKey = child.key;
+                }
+            });
+          }
+
+          const shouldBeAdmin = userCount === 0;
+
+          if (oldUserData && oldUserKey) {
+             console.log("Migrando usuário antigo:", oldUserKey, "para UID:", userKey);
+             
+             const newUserData: User = {
+                 ...oldUserData,
+                 id: userKey,
+                 email: firebaseUser.email,
+                 name: firebaseUser.displayName || oldUserData.name || 'Piloto',
+                 isAdmin: oldUserData.isAdmin || shouldBeAdmin
+             };
+
+             await set(userRef, newUserData);
+
+             if (oldUserKey) {
+                 const oldPredsRef = ref(db, `predictions/${oldUserKey}`);
+                 const oldPredsSnap = await get(oldPredsRef);
+                 if (oldPredsSnap.exists()) {
+                     await set(ref(db, `predictions/${userKey}`), oldPredsSnap.val());
+                     await remove(oldPredsRef);
+                 }
+                 await remove(ref(db, `users/${oldUserKey}`));
+             }
+
+             setUser(newUserData);
+             alert("Conta recuperada com sucesso!");
+
+          } else {
+            const userData: User = {
+                id: userKey,
+                name: firebaseUser.displayName || 'Piloto',
+                email: firebaseUser.email || '',
+                points: 0,
+                rank: 0,
+                level: 'Bronze',
+                isAdmin: shouldBeAdmin,
+                previousRank: 0,
+                positionHistory: []
+            };
+            await set(userRef, userData);
+            setUser(userData);
+          }
+        }
+      } catch (dbError: any) {
+         console.error("Error fetching user data from DB:", dbError);
+         let errorMsg = `Erro no Banco (${dbError.code || 'Desconhecido'}): ${dbError.message}`;
+         if (dbError?.code === 'PERMISSION_DENIED') {
+             errorMsg = "Permissão negada. Verifique as Regras no Firebase Console.";
+         } else if (dbError?.code === 'NETWORK_ERROR') {
+             errorMsg = "Sem conexão. Verifique sua internet.";
+         }
+         setLoginError(errorMsg);
+         setIsAuthButNoDb(true);
+         setUser(null);
+      }
+  }, []);
+
+  useEffect(() => {
+    const safetyTimeout = setTimeout(() => {
+        setIsInitialLoading((prev) => {
+            if (prev) return false;
+            return prev;
+        });
+    }, 6000);
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(safetyTimeout);
@@ -293,10 +309,10 @@ const App: React.FC = () => {
   };
 
   const handlePromoteSelfToAdmin = async () => {
-    if (!user) return;
-    const userRef = ref(db, `users/${user.id}`);
+    if (!liveUser) return;
+    const userRef = ref(db, `users/${liveUser.id}`);
     await update(userRef, { isAdmin: true });
-    setUser({ ...user, isAdmin: true });
+    // O listener vai atualizar o liveUser automaticamente
   };
 
   const handleCalculatePoints = async (gp: RaceGP) => {
@@ -376,17 +392,18 @@ const App: React.FC = () => {
   const handleLogout = () => { signOut(auth); setUser(null); setActiveTab('home'); };
 
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
-    if (!user) return;
+    if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
-    set(ref(db, `predictions/${user.id}/${gpId}_${sessionKey}`), { userId: user.id, gpId, session, top5 });
+    set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), { userId: liveUser.id, gpId, session, top5 });
   };
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   
-  if (!user) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
+  // Login usa props de estado para feedback
+  if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
-  const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
+  const realTimeRank = allUsers.findIndex(u => u.id === liveUser.id) + 1 || liveUser.rank || allUsers.length;
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
   const now = new Date();
@@ -403,26 +420,26 @@ const App: React.FC = () => {
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={user.isAdmin}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
       {activeTab === 'home' && (
         <Home 
-          user={{...user, rank: realTimeRank}} 
+          user={{...liveUser, rank: realTimeRank}} 
           nextGP={activeGP} 
-          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id).map(p => p.session)).size} 
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
         />
       )}
-      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === user.id)} />}
+      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id)} />}
       
       {activeTab === 'adversarios' && (
         <Adversarios 
           gp={activeGP}
           users={allUsers}
           predictions={activePredictions}
-          currentUser={user}
+          currentUser={liveUser}
         />
       )}
 
@@ -437,14 +454,14 @@ const App: React.FC = () => {
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'ranking' && <Ranking currentUser={user} users={allUsers} calendar={calendar} />}
-      {activeTab === 'stats' && <Stats currentUser={user} users={allUsers} />}
-      {activeTab === 'admin' && user.isAdmin && (
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers} calendar={calendar} />}
+      {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers} />}
+      {activeTab === 'admin' && liveUser.isAdmin && (
         <Admin 
           gp={adminGP} 
           calendar={calendar} 
           users={allUsers}
-          currentUser={user}
+          currentUser={liveUser}
           onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
           onSelectGp={(id) => setAdminEditingGpId(id)} 
           onCalculatePoints={handleCalculatePoints} 
