@@ -1,40 +1,29 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, Settings, Lock, Smartphone, ExternalLink } from 'lucide-react';
+import { Loader2, AlertCircle, Settings, Lock, LogIn } from 'lucide-react';
 import { auth, googleProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from '../firebase';
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('Iniciando...');
   const [error, setError] = useState('');
   const [detailedError, setDetailedError] = useState('');
   const [showConfigGuide, setShowConfigGuide] = useState(false);
-  const [isAppEnv, setIsAppEnv] = useState(false);
+  const [showRedirectFallback, setShowRedirectFallback] = useState(false);
 
   useEffect(() => {
-    // Detecta se está rodando dentro de um app (Capacitor/WebView)
-    const isCapacitor = (window as any).Capacitor !== undefined;
-    const isWebView = /wv|Webview/i.test(navigator.userAgent);
-    setIsAppEnv(isCapacitor || isWebView);
-
-    // Verificação de redirecionamento SILENCIOSA
-    // Não ativamos o loading(true) aqui para não travar a UI enquanto o Firebase inicializa
+    // Verificação de redirecionamento silenciosa
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
-        
         if (result) {
-          console.log("Login via redirect detectado com sucesso");
-          // NÃO ativamos setLoading(true) aqui. 
-          // Deixamos o onAuthStateChanged no App.tsx lidar com a transição.
-          // Se travar, o usuário ainda verá o botão de login para tentar novamente.
+          console.log("Login via redirect sucesso");
         }
       } catch (err: any) {
-        console.error("Erro no login redirect:", err);
-        handleAuthError(err);
-        setLoading(false);
+        console.error("Erro redirect:", err);
+        // Não mostramos erro visualmente aqui para não assustar no load
       }
     };
-    
     checkRedirect();
   }, []);
 
@@ -43,68 +32,66 @@ const Login: React.FC = () => {
     setDetailedError(err.message || JSON.stringify(err));
 
     if (err.code === 'auth/unauthorized-domain') {
-        setError('Domínio não autorizado no Firebase.');
+        setError('Domínio não autorizado. Adicione ao Firebase Console.');
     } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Login cancelado pelo usuário.');
+        setError('Janela fechada antes do login.');
     } else if (err.code === 'auth/popup-blocked') {
-        setError('Pop-up bloqueado pelo navegador.');
+        setError('Pop-up bloqueado. Use o botão de Redirecionamento.');
+        setShowRedirectFallback(true);
     } else if (err.code === 'auth/network-request-failed') {
-        setError('Erro de conexão. Verifique sua internet.');
+        setError('Erro de conexão. Verifique a internet.');
     } else {
         setError('Falha ao autenticar.');
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const loginWithPopup = async () => {
     if (loading) return;
     setLoading(true);
+    setLoadingMsg('Abrindo janela...');
     setError('');
-    setDetailedError('');
+    setShowRedirectFallback(false);
     
-    // Timeout de segurança
-    const loginTimeout = setTimeout(() => {
-        setLoading(false);
-        setError('O login demorou muito. Tente novamente.');
-    }, 15000); 
+    // Timer para sugerir redirecionamento se o popup demorar/não abrir
+    const fallbackTimer = setTimeout(() => {
+        setLoadingMsg('Aguardando você...');
+        setShowRedirectFallback(true);
+    }, 4000);
 
     try {
       await signInWithPopup(auth, googleProvider);
-      clearTimeout(loginTimeout);
+      // Se der certo, o App.tsx vai detectar o user e mudar a tela
     } catch (err: any) {
-        console.log("Popup falhou, tentando redirect...", err.code);
-        
-        if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request' || isAppEnv) {
-            try {
-                await signInWithRedirect(auth, googleProvider);
-            } catch (redirectErr: any) {
-                clearTimeout(loginTimeout);
-                handleAuthError(redirectErr);
-                setLoading(false);
-            }
-        } else {
-            clearTimeout(loginTimeout);
-            handleAuthError(err);
-            setLoading(false);
-        }
+      clearTimeout(fallbackTimer);
+      // Se o popup foi bloqueado ou fechado, sugerimos redirect
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+         setShowRedirectFallback(true);
+         setLoading(false);
+         if(err.code === 'auth/popup-blocked') setError('Pop-up bloqueado.');
+      } else {
+         handleAuthError(err);
+         setLoading(false);
+      }
     }
   };
 
-  const handleOpenInBrowser = () => {
-    const url = window.location.href;
-    window.open(url, '_system');
+  const loginWithRedirect = async () => {
+      setLoading(true);
+      setLoadingMsg('Redirecionando...');
+      setError('');
+      try {
+          await signInWithRedirect(auth, googleProvider);
+      } catch (err: any) {
+          handleAuthError(err);
+          setLoading(false);
+      }
   };
 
   return (
-    // Estrutura Flex Padrão (ocupa 100% do pai #root)
     <div className="h-full w-full flex flex-col relative bg-[#0a0a0c] overflow-hidden">
-      
-      {/* Background Decorativo (Absoluto para não interferir no fluxo) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
       
-      {/* Container de Rolagem (Flex-1 força ocupar o espaço restante e scrollar se passar) */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full relative z-10 scroll-smooth">
-        
-        {/* Wrapper de Conteúdo (Min-h-full garante que centralize se for pequeno, mas cresça se for grande) */}
+      <div className="flex-1 overflow-y-auto w-full relative z-10 scroll-smooth">
         <div className="min-h-full w-full flex flex-col items-center justify-center p-6">
           
           <div className="w-full max-w-sm py-10">
@@ -115,33 +102,54 @@ const Login: React.FC = () => {
             </div>
 
             <div className="space-y-4">
+              {/* Botão Principal */}
               <button 
-                onClick={handleGoogleLogin}
+                onClick={loading ? undefined : loginWithPopup}
                 disabled={loading}
-                className="w-full bg-white text-black font-black py-6 rounded-3xl flex items-center justify-center gap-4 active:scale-95 transition-all shadow-2xl disabled:opacity-50 text-xs tracking-widest"
+                className={`w-full font-black py-6 rounded-3xl flex items-center justify-center gap-4 transition-all shadow-2xl text-xs tracking-widest
+                    ${loading ? 'bg-gray-800 text-gray-400 cursor-not-allowed' : 'bg-white text-black active:scale-95 hover:bg-gray-100'}
+                `}
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : (
+                {loading ? (
+                    <div className="flex items-center gap-3">
+                        <Loader2 className="animate-spin" size={20} />
+                        <span>{loadingMsg}</span>
+                    </div>
+                ) : (
                   <>
                     <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
-                    LOGAR COM GOOGLE
+                    ENTRAR COM GOOGLE
                   </>
                 )}
               </button>
-              
-              {/* Botão de Destravamento Manual */}
-              {loading && (
-                  <button 
-                    onClick={() => setLoading(false)}
-                    className="w-full text-center py-2"
-                  >
-                    <span className="text-[10px] text-gray-500 underline decoration-gray-700 underline-offset-4 hover:text-white transition-colors cursor-pointer">
-                        Demorando muito? Toque para cancelar
-                    </span>
-                  </button>
+
+              {/* Opção de Redirecionamento (Aparece se demorar ou falhar) */}
+              {(showRedirectFallback || loading) && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-500 space-y-3">
+                     {!loading ? (
+                         <button 
+                            onClick={loginWithRedirect}
+                            className="w-full bg-[#e10600]/10 border border-[#e10600]/30 text-white py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-2"
+                         >
+                            <LogIn size={16} className="text-[#e10600]" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Usar Modo Redirecionamento</span>
+                         </button>
+                     ) : (
+                         // Se estiver carregando há muito tempo, permite cancelar
+                         <button 
+                            onClick={() => setLoading(false)}
+                            className="w-full text-center py-2 opacity-50 hover:opacity-100 transition-opacity"
+                         >
+                            <span className="text-[10px] text-gray-400 underline decoration-gray-600 underline-offset-4">
+                                Cancelar e tentar novamente
+                            </span>
+                         </button>
+                     )}
+                  </div>
               )}
 
               {error && (
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in shake duration-300">
                   <div 
                     onClick={() => setShowConfigGuide(true)}
                     className="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-start gap-4 cursor-pointer hover:bg-red-500/20 transition-all"
@@ -149,18 +157,9 @@ const Login: React.FC = () => {
                     <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
                     <div className="flex-1">
                       <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">{error}</p>
-                      <p className="text-[9px] text-red-500/60 uppercase font-bold mt-1">Toque para ver detalhes técnicos</p>
+                      <p className="text-[9px] text-red-500/60 uppercase font-bold mt-1">Toque para ver detalhes</p>
                     </div>
                   </div>
-
-                  {isAppEnv && (
-                    <button 
-                      onClick={handleOpenInBrowser}
-                      className="w-full py-4 rounded-2xl border border-white/10 text-[10px] font-black uppercase text-gray-400 flex items-center justify-center gap-2"
-                    >
-                      <ExternalLink size={14} /> Tentar no Navegador
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -172,11 +171,9 @@ const Login: React.FC = () => {
                 </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* Modal de Ajuda (Fixo no topo da tela, independente do scroll) */}
       {showConfigGuide && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
@@ -184,24 +181,21 @@ const Login: React.FC = () => {
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font uppercase leading-tight">Ajuda de Login</h3>
+              <h3 className="text-xl font-black f1-font uppercase leading-tight">Ajuda</h3>
             </div>
             
             <div className="space-y-4">
-              <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
-                 <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Erro Técnico:</h4>
+              <div className="bg-white/5 p-4 rounded-3xl">
+                 <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Detalhe Técnico:</h4>
                  <p className="text-[10px] text-red-300 font-mono break-all bg-black/30 p-2 rounded-lg">
-                    {detailedError || "Nenhum detalhe disponível."}
+                    {detailedError || "Erro desconhecido"}
                  </p>
               </div>
-
               <div className="bg-blue-600/10 p-4 rounded-3xl border border-blue-600/20">
-                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Possíveis Soluções:</p>
-                <ul className="text-[10px] text-gray-300 space-y-2 list-disc list-inside">
-                  <li>Se o erro for "Unauthorized domain", adicione este domínio no Firebase Console.</li>
-                  <li>Verifique sua conexão com a internet.</li>
-                  <li>Tente abrir no Chrome (se estiver em outro app).</li>
-                </ul>
+                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Dica:</p>
+                <p className="text-[10px] text-gray-300">
+                    Se o botão "Entrar com Google" não funcionar ou travar, use o botão "Modo Redirecionamento" que aparecerá automaticamente.
+                </p>
               </div>
             </div>
 
@@ -209,7 +203,7 @@ const Login: React.FC = () => {
               onClick={() => setShowConfigGuide(false)}
               className="w-full mt-8 bg-[#e10600] text-white font-black py-5 rounded-3xl text-[10px] uppercase tracking-widest active:scale-95"
             >
-              ENTENDI
+              FECHAR
             </button>
           </div>
         </div>
