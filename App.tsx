@@ -57,6 +57,17 @@ const App: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
+    // Timeout de segurança: se o Firebase demorar mais de 6s, libera a tela
+    const safetyTimeout = setTimeout(() => {
+        setIsInitialLoading((prev) => {
+            if (prev) {
+                console.warn("Loading safety timeout triggered");
+                return false;
+            }
+            return prev;
+        });
+    }, 6000);
+
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -104,35 +115,61 @@ const App: React.FC = () => {
     });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
-        const userRef = ref(db, `users/${userKey}`);
-        const snapshot = await get(userRef);
-        
-        if (snapshot.exists()) {
-          setUser(snapshot.val());
+      clearTimeout(safetyTimeout); // Limpa o timeout se o auth responder a tempo
+      
+      try {
+        if (firebaseUser) {
+          const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
+          
+          if (!userKey) {
+            console.error("User authenticated but no email found");
+            setUser(null);
+            return;
+          }
+
+          const userRef = ref(db, `users/${userKey}`);
+          
+          try {
+            const snapshot = await get(userRef);
+            
+            if (snapshot.exists()) {
+              setUser(snapshot.val());
+            } else {
+              const userData: User = {
+                id: userKey,
+                name: firebaseUser.displayName || 'Piloto',
+                email: firebaseUser.email || '',
+                points: 0,
+                rank: 0,
+                level: 'Bronze',
+                isAdmin: false,
+                previousRank: 0,
+                positionHistory: []
+              };
+              await set(userRef, userData);
+              setUser(userData);
+            }
+          } catch (dbError) {
+             console.error("Error fetching user data from DB:", dbError);
+             // Em caso de erro no DB, tenta manter o usuário logado com dados básicos ou desloga
+             // Aqui optamos por deslogar para forçar retry limpo, ou poderíamos setar um user temporário
+             setUser(null);
+          }
         } else {
-          const userData: User = {
-            id: userKey,
-            name: firebaseUser.displayName || 'Piloto',
-            email: firebaseUser.email || '',
-            points: 0,
-            rank: 0,
-            level: 'Bronze',
-            isAdmin: false,
-            previousRank: 0,
-            positionHistory: []
-          };
-          await set(userRef, userData);
-          setUser(userData);
+          setUser(null);
         }
-      } else {
+      } catch (error) {
+        console.error("Auth state change error:", error);
         setUser(null);
+      } finally {
+        setIsInitialLoading(false);
       }
-      setIsInitialLoading(false);
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+        clearTimeout(safetyTimeout);
+        unsubscribeAuth();
+    };
   }, []);
 
   const handlePromoteSelfToAdmin = async () => {
