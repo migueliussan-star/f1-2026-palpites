@@ -162,9 +162,10 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 <span className="w-6 text-center font-black f1-font text-gray-600 text-lg italic">{pos}</span>
                 <div 
                     onClick={() => driver && toggleDriver(driver.id)}
-                    className={`flex-1 h-16 rounded-2xl flex items-center px-4 gap-4 transition-all relative overflow-hidden 
-                    ${driver ? 'glass border-white/20 cursor-pointer' : 'bg-white/5 border border-dashed border-white/10'}
-                    ${isEditable && driver ? 'hover:border-red-500/50 hover:bg-red-500/10 active:scale-[0.98]' : ''}
+                    style={driver ? { borderColor: `${driver.color}60`, boxShadow: `0 4px 20px -5px ${driver.color}20` } : {}}
+                    className={`flex-1 h-16 rounded-2xl flex items-center px-4 gap-4 transition-all relative overflow-hidden border
+                    ${driver ? 'glass cursor-pointer' : 'bg-white/5 border-dashed border-white/10'}
+                    ${isEditable && driver ? 'active:scale-[0.98]' : ''}
                     `}
                 >
                   {driver ? (
@@ -174,7 +175,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                       
                       <div className="flex-1 z-10 pointer-events-none">
                         <div className="flex items-baseline gap-2">
-                            <span className="text-xs font-black f1-font text-white/40">#{driver.number}</span>
+                            <span className="text-xs font-black f1-font" style={{ color: driver.color }}>#{driver.number}</span>
                             <p className="text-sm font-bold text-white leading-none uppercase">{driver.name}</p>
                         </div>
                         <p className="text-[9px] text-gray-400 uppercase font-black tracking-wider mt-1">{driver.team}</p>
@@ -206,30 +207,45 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             const isSelected = selectedDrivers.includes(driver.id);
             const selectionIndex = selectedDrivers.indexOf(driver.id) + 1;
             
+            // Estilo dinâmico baseado na cor da equipe
+            const activeStyle = isSelected ? {
+                borderColor: driver.color,
+                backgroundColor: `${driver.color}15`, // 15% opacidade
+                boxShadow: `inset 0 0 20px ${driver.color}10`
+            } : {};
+
             return (
               <button
                 key={driver.id}
-                disabled={!isEditable} // Allow clicking even if selected to deselect
+                disabled={!isEditable}
                 onClick={() => toggleDriver(driver.id)}
+                style={activeStyle}
                 className={`
                     relative p-3 rounded-2xl border text-left transition-all overflow-hidden group active:scale-95 cursor-pointer
                     ${isSelected 
-                        ? 'border-[#e10600]/50 bg-[#e10600]/10 ring-1 ring-[#e10600]/20' 
+                        ? 'ring-1' 
                         : 'glass border-white/5 hover:bg-white/10'}
                 `}
               >
-                {/* Team Color Accent - Pointer Events None */}
-                <div className="absolute top-0 right-0 w-full h-1 opacity-50 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
+                {/* Team Color Accent Top Bar */}
+                <div className="absolute top-0 right-0 w-full h-1 opacity-60 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
 
-                {/* Content - Removing pointer-events-none from here to ensure clicks work on the text area too */}
-                <div className="flex items-center justify-between relative z-10 mt-1">
+                <div className="flex items-center justify-between relative z-10 mt-1 pointer-events-none">
                     <div>
-                        <p className={`text-[10px] font-bold f1-font mb-1 ${isSelected ? 'text-[#e10600]' : 'text-gray-500'}`}>#{driver.number}</p>
+                        <p 
+                            className="text-[10px] font-bold f1-font mb-1 transition-colors" 
+                            style={{ color: isSelected ? driver.color : '#6b7280' }}
+                        >
+                            #{driver.number}
+                        </p>
                         <p className="text-xs font-bold leading-tight uppercase text-white truncate">{driver.name.split(' ').pop()}</p>
                         <p className="text-[8px] text-gray-500 uppercase font-black mt-0.5">{driver.team.split(' ')[0]}</p>
                     </div>
                     {isSelected ? (
-                       <div className="w-6 h-6 rounded-full bg-[#e10600] flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-red-600/40 scale-110">
+                       <div 
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg scale-110"
+                            style={{ backgroundColor: driver.color, color: '#000', boxShadow: `0 4px 10px ${driver.color}40` }}
+                       >
                            {selectionIndex}
                        </div>
                     ) : (
