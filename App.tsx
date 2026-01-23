@@ -99,16 +99,16 @@ const App: React.FC = () => {
           setUser(snapshot.val());
         } else {
           // --- LÓGICA DE MIGRAÇÃO ---
-          // Verifica se existe um usuário antigo com este email
           const usersRef = ref(db, 'users');
           const usersSnap = await get(usersRef);
           let oldUserData: any = null;
           let oldUserKey: string | null = null;
+          let userCount = 0;
 
           if (usersSnap.exists()) {
+            userCount = usersSnap.size; // Conta quantos usuários existem
             usersSnap.forEach((child) => {
                 const u = child.val();
-                // Procura por email igual, mas chave diferente do UID atual
                 if (u.email === firebaseUser.email && child.key !== userKey) {
                     oldUserData = u;
                     oldUserKey = child.key;
@@ -116,39 +116,38 @@ const App: React.FC = () => {
             });
           }
 
+          // Se for o PRIMEIRO usuário do sistema (count 0), vira Admin automaticamente
+          const shouldBeAdmin = userCount === 0;
+
           if (oldUserData && oldUserKey) {
              console.log("Migrando usuário antigo:", oldUserKey, "para UID:", userKey);
              
-             // 1. Cria o novo usuário com os DADOS ANTIGOS (Preserva pontos e Admin)
+             // 1. Cria o novo usuário com os DADOS ANTIGOS
              const newUserData: User = {
                  ...oldUserData,
-                 id: userKey, // Atualiza ID
-                 email: firebaseUser.email, // Garante email certo
-                 name: firebaseUser.displayName || oldUserData.name || 'Piloto'
+                 id: userKey,
+                 email: firebaseUser.email,
+                 name: firebaseUser.displayName || oldUserData.name || 'Piloto',
+                 isAdmin: oldUserData.isAdmin || shouldBeAdmin // Mantém admin antigo ou define se for o primeiro
              };
 
              await set(userRef, newUserData);
 
-             // 2. Tenta migrar palpites antigos se existirem
              if (oldUserKey) {
                  const oldPredsRef = ref(db, `predictions/${oldUserKey}`);
                  const oldPredsSnap = await get(oldPredsRef);
                  if (oldPredsSnap.exists()) {
-                     // Salva no novo local
                      await set(ref(db, `predictions/${userKey}`), oldPredsSnap.val());
-                     // Remove do local antigo
                      await remove(oldPredsRef);
                  }
-
-                 // 3. Remove o usuário antigo para evitar duplicatas
                  await remove(ref(db, `users/${oldUserKey}`));
              }
 
              setUser(newUserData);
-             alert("Conta migrada com sucesso! Seus pontos e status de Admin foram recuperados.");
+             alert("Conta recuperada com sucesso!");
 
           } else {
-            // --- CRIAÇÃO DE USUÁRIO NOVO (SEM DADOS ANTIGOS) ---
+            // --- CRIAÇÃO DE USUÁRIO NOVO ---
             const userData: User = {
                 id: userKey,
                 name: firebaseUser.displayName || 'Piloto',
@@ -156,7 +155,7 @@ const App: React.FC = () => {
                 points: 0,
                 rank: 0,
                 level: 'Bronze',
-                isAdmin: false,
+                isAdmin: shouldBeAdmin, // Se for o primeiro, é Admin
                 previousRank: 0,
                 positionHistory: []
             };
@@ -182,12 +181,9 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Timeout de segurança
     const safetyTimeout = setTimeout(() => {
         setIsInitialLoading((prev) => {
-            if (prev) {
-                return false;
-            }
+            if (prev) return false;
             return prev;
         });
     }, 6000);
@@ -200,33 +196,30 @@ const App: React.FC = () => {
       } else {
         setCalendar(INITIAL_CALENDAR);
       }
-    }, (error) => {
-        console.warn("Erro ao ler calendário:", error);
-        setCalendar(INITIAL_CALENDAR);
     });
 
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Filtra convidados ou dados inválidos
-        let rawList = (Object.values(data) as User[]).filter(u => u.id && u.email);
+        // CORREÇÃO: Mapeia Object.entries para garantir que temos o ID, mesmo que falte no objeto value
+        let rawList = Object.entries(data).map(([key, value]: [string, any]) => ({
+            ...value,
+            id: value.id || key // Fallback crucial: usa a chave do Firebase como ID se o campo id estiver vazio
+        })).filter(u => u.email); // Filtra lixo sem email
         
-        // --- DEDUPLICAÇÃO VISUAL (Para o Ranking ficar limpo) ---
-        // Se houver contas duplicadas (migração pendente de outros), agrupa por email
+        // --- DEDUPLICAÇÃO VISUAL ---
         const uniqueUsersMap = new Map<string, User>();
         
         rawList.forEach(u => {
             if (!uniqueUsersMap.has(u.email)) {
                 uniqueUsersMap.set(u.email, u);
             } else {
-                // Se já existe, mantemos o que tem mais pontos ou o que tem formato UID
                 const existing = uniqueUsersMap.get(u.email)!;
-                // Lógica simples: Prefere o que tem mais pontos. Se igual, prefere o UID (geralmente mais longo que chaves antigas se forem simples)
                 if ((u.points || 0) > (existing.points || 0)) {
                     uniqueUsersMap.set(u.email, u);
                 } else if ((u.points || 0) === (existing.points || 0)) {
-                    // Se o ID atual for o do Auth (28 chars), prefere ele
+                    // Prefere o UID do Auth (mais longo)
                     if (u.id.length > 20 && existing.id.length < 20) {
                          uniqueUsersMap.set(u.email, u);
                     }
@@ -251,8 +244,6 @@ const App: React.FC = () => {
       } else {
         setAllUsers([]);
       }
-    }, (error) => {
-        console.warn("Erro ao ler usuários:", error);
     });
 
     const predictionsRef = ref(db, 'predictions');
@@ -260,14 +251,11 @@ const App: React.FC = () => {
       const data = snapshot.val();
       const predList: Prediction[] = [];
       if (data) {
-        // Predictions estão agrupadas por UID: predictions/UID/gpId_session
         Object.values(data).forEach((userPreds: any) => {
           Object.values(userPreds).forEach((p: any) => predList.push(p));
         });
       }
       setPredictions(predList);
-    }, (error) => {
-         console.warn("Erro ao ler palpites:", error);
     });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -390,7 +378,6 @@ const App: React.FC = () => {
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!user) return;
     const sessionKey = session.replace(/\s/g, '_');
-    // Estrutura: predictions/UID/gp_session
     set(ref(db, `predictions/${user.id}/${gpId}_${sessionKey}`), { userId: user.id, gpId, session, top5 });
   };
 
