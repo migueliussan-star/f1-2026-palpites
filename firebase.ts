@@ -8,7 +8,9 @@ import {
   signInWithRedirect, 
   getRedirectResult, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -22,9 +24,17 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+
+// Inicializa o DB com a URL explícita para garantir conexão correta
+const db = getDatabase(app, firebaseConfig.databaseURL);
+
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Configura persistência para evitar deslogar ao recarregar
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Erro na persistência auth:", error);
+});
 
 // Força a seleção de conta para evitar logins automáticos indesejados
 googleProvider.setCustomParameters({

@@ -27,7 +27,6 @@ const getGpDates = (dateStr: string) => {
     if (parts.length < 2) return { startDate: new Date(), endDate: new Date() };
 
     const daysPart = parts[0];
-    // Proteção contra undefined
     const monthStr = parts[1];
     if (!monthStr) return { startDate: new Date(), endDate: new Date() };
 
@@ -43,7 +42,6 @@ const getGpDates = (dateStr: string) => {
       endDay = parseInt(daysPart) || 1;
     }
 
-    // Assume ano 2026 e define o final do dia (23:59:59)
     const endDate = new Date(2026, monthIndex, endDay, 23, 59, 59);
     
     return { endDate };
@@ -63,6 +61,19 @@ const App: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
+
+  // Monitora estado da conexão com Firebase
+  useEffect(() => {
+    const connectedRef = ref(db, ".info/connected");
+    const unsub = onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        console.log("Firebase: Conectado");
+      } else {
+        console.log("Firebase: Desconectado");
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Função isolada para carregar perfil
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
@@ -86,6 +97,7 @@ const App: React.FC = () => {
         if (snapshot.exists()) {
           setUser(snapshot.val());
         } else {
+          // Cria novo usuário
           const userData: User = {
             id: userKey,
             name: firebaseUser.displayName || 'Piloto',
@@ -103,12 +115,17 @@ const App: React.FC = () => {
       } catch (dbError: any) {
          console.error("Error fetching user data from DB:", dbError);
          
-         let errorMsg = "Erro de conexão com o banco de dados.";
+         // MENSAGEM DE ERRO DETALHADA
+         let errorMsg = `Erro no Banco (${dbError.code || 'Desconhecido'}): ${dbError.message}`;
          
          if (dbError?.code === 'PERMISSION_DENIED') {
              errorMsg = "Permissão negada (PERMISSION_DENIED). Verifique as Regras no Firebase Console.";
          } else if (dbError?.code === 'NETWORK_ERROR') {
-             errorMsg = "Sem conexão com a internet.";
+             errorMsg = "Sem conexão. Verifique sua internet.";
+         } else if (dbError?.code === 'CLIENT_OFFLINE') {
+             errorMsg = "Cliente offline. Tentando reconectar...";
+         } else if (dbError?.code === 'unavailable') {
+             errorMsg = "Serviço indisponível temporariamente.";
          }
          
          setLoginError(errorMsg);
@@ -134,8 +151,17 @@ const App: React.FC = () => {
     const calendarRef = ref(db, 'calendar');
     onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) setCalendar(data);
-      else set(calendarRef, INITIAL_CALENDAR);
+      if (data) {
+        setCalendar(data);
+      } else {
+        // Inicializa APENAS se não houver dados
+        // set(calendarRef, INITIAL_CALENDAR).catch(e => console.warn("Erro init calendar (provavelmente permissão):", e));
+        // Melhor usar o local se falhar a leitura
+        setCalendar(INITIAL_CALENDAR);
+      }
+    }, (error) => {
+        console.warn("Erro ao ler calendário:", error);
+        setCalendar(INITIAL_CALENDAR); // Fallback local
     });
 
     const usersRef = ref(db, 'users');
@@ -159,6 +185,8 @@ const App: React.FC = () => {
       } else {
         setAllUsers([]);
       }
+    }, (error) => {
+        console.warn("Erro ao ler usuários:", error);
     });
 
     const predictionsRef = ref(db, 'predictions');
@@ -171,6 +199,8 @@ const App: React.FC = () => {
         });
       }
       setPredictions(predList);
+    }, (error) => {
+         console.warn("Erro ao ler palpites:", error);
     });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -199,7 +229,7 @@ const App: React.FC = () => {
 
   const handleRetryProfileLoad = async () => {
       if (auth.currentUser) {
-          setIsInitialLoading(true); // Mostra loading visual
+          setIsInitialLoading(true); 
           await loadUserProfile(auth.currentUser);
           setIsInitialLoading(false);
       } else {
