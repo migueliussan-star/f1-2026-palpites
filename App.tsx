@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, RaceGP, SessionType, Prediction } from './types';
 import { INITIAL_CALENDAR } from './constants';
 import Home from './screens/Home';
@@ -13,7 +13,7 @@ import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
-// Helper para converter string de data "06-08 Mar" em objeto Date
+// Helper ROBUSTO para datas
 const getGpDates = (dateStr: string) => {
   const months: { [key: string]: number } = {
     'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
@@ -21,21 +21,26 @@ const getGpDates = (dateStr: string) => {
   };
 
   try {
+    if (!dateStr) return { startDate: new Date(), endDate: new Date() };
+    
     const parts = dateStr.trim().split(' ');
     if (parts.length < 2) return { startDate: new Date(), endDate: new Date() };
 
     const daysPart = parts[0];
-    // Normaliza para lowercase e pega as 3 primeiras letras para garantir match (ex: MAR -> mar)
-    const monthPart = parts[1].toLowerCase().substring(0, 3);
+    // Proteção contra undefined
+    const monthStr = parts[1];
+    if (!monthStr) return { startDate: new Date(), endDate: new Date() };
+
+    const monthPart = monthStr.toLowerCase().substring(0, 3);
     const monthIndex = months[monthPart] ?? 0;
 
     let endDay = 1;
 
     if (daysPart.includes('-')) {
       const dayParts = daysPart.split('-');
-      endDay = parseInt(dayParts[1]);
+      endDay = parseInt(dayParts[1]) || 1;
     } else {
-      endDay = parseInt(daysPart);
+      endDay = parseInt(daysPart) || 1;
     }
 
     // Assume ano 2026 e define o final do dia (23:59:59)
@@ -43,6 +48,7 @@ const getGpDates = (dateStr: string) => {
     
     return { endDate };
   } catch (e) {
+    console.warn("Erro ao processar data:", dateStr, e);
     return { startDate: new Date(), endDate: new Date() };
   }
 };
@@ -56,9 +62,65 @@ const App: React.FC = () => {
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
+  const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
+
+  // Função isolada para carregar perfil
+  const loadUserProfile = useCallback(async (firebaseUser: any) => {
+      setLoginError('');
+      setIsAuthButNoDb(false);
+      
+      const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
+          
+      if (!userKey) {
+        setLoginError("Email não identificado na conta Google.");
+        await signOut(auth);
+        setUser(null);
+        return;
+      }
+
+      const userRef = ref(db, `users/${userKey}`);
+      
+      try {
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          setUser(snapshot.val());
+        } else {
+          const userData: User = {
+            id: userKey,
+            name: firebaseUser.displayName || 'Piloto',
+            email: firebaseUser.email || '',
+            points: 0,
+            rank: 0,
+            level: 'Bronze',
+            isAdmin: false,
+            previousRank: 0,
+            positionHistory: []
+          };
+          await set(userRef, userData);
+          setUser(userData);
+        }
+      } catch (dbError: any) {
+         console.error("Error fetching user data from DB:", dbError);
+         
+         let errorMsg = "Erro de conexão com o banco de dados.";
+         
+         if (dbError?.code === 'PERMISSION_DENIED') {
+             errorMsg = "Permissão negada (PERMISSION_DENIED). Verifique as Regras no Firebase Console.";
+         } else if (dbError?.code === 'NETWORK_ERROR') {
+             errorMsg = "Sem conexão com a internet.";
+         }
+         
+         setLoginError(errorMsg);
+         // IMPORTANTE: NÃO DESLOGAR AQUI. 
+         // Mantemos a auth válida para permitir retry.
+         setIsAuthButNoDb(true);
+         setUser(null);
+      }
+  }, []);
 
   useEffect(() => {
-    // Timeout de segurança: se o Firebase demorar mais de 6s, libera a tela
+    // Timeout de segurança
     const safetyTimeout = setTimeout(() => {
         setIsInitialLoading((prev) => {
             if (prev) {
@@ -81,17 +143,13 @@ const App: React.FC = () => {
       const data = snapshot.val();
       if (data) {
         const userList = (Object.values(data) as User[]).filter(u => u.id && !u.id.startsWith('guest_') && u.email);
-        
-        // Ordena para garantir ranking correto
         const sortedList = userList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
-        // Processa lista (sem dados mockados agora, apenas dados reais)
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
             return {
                 ...u,
                 rank: currentRank,
-                // Se não tiver histórico, inicia com array vazio para o gráfico não quebrar, mas não inventa dados
                 positionHistory: u.positionHistory || [],
                 previousRank: u.previousRank || currentRank
             };
@@ -116,58 +174,14 @@ const App: React.FC = () => {
     });
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      clearTimeout(safetyTimeout); // Limpa o timeout se o auth responder a tempo
+      clearTimeout(safetyTimeout);
       
       try {
         if (firebaseUser) {
-          // Limpa erro anterior ao tentar novo login
-          setLoginError('');
-          
-          const userKey = firebaseUser.email?.replace(/\./g, '_') || '';
-          
-          if (!userKey) {
-            console.error("User authenticated but no email found");
-            setLoginError("Email não identificado na conta Google.");
-            await signOut(auth);
-            setUser(null);
-            return;
-          }
-
-          const userRef = ref(db, `users/${userKey}`);
-          
-          try {
-            const snapshot = await get(userRef);
-            
-            if (snapshot.exists()) {
-              setUser(snapshot.val());
-            } else {
-              const userData: User = {
-                id: userKey,
-                name: firebaseUser.displayName || 'Piloto',
-                email: firebaseUser.email || '',
-                points: 0,
-                rank: 0,
-                level: 'Bronze',
-                isAdmin: false,
-                previousRank: 0,
-                positionHistory: []
-              };
-              await set(userRef, userData);
-              setUser(userData);
-            }
-          } catch (dbError: any) {
-             console.error("Error fetching user data from DB:", dbError);
-             const errorMsg = dbError?.code === 'PERMISSION_DENIED' 
-                ? "Acesso negado ao banco de dados." 
-                : "Erro de conexão com o banco de dados.";
-             
-             setLoginError(errorMsg);
-             // Em caso de erro no DB, desloga para garantir estado limpo
-             await signOut(auth);
-             setUser(null);
-          }
+           await loadUserProfile(firebaseUser);
         } else {
           setUser(null);
+          setIsAuthButNoDb(false);
         }
       } catch (error) {
         console.error("Auth state change error:", error);
@@ -181,7 +195,18 @@ const App: React.FC = () => {
         clearTimeout(safetyTimeout);
         unsubscribeAuth();
     };
-  }, []);
+  }, [loadUserProfile]);
+
+  const handleRetryProfileLoad = async () => {
+      if (auth.currentUser) {
+          setIsInitialLoading(true); // Mostra loading visual
+          await loadUserProfile(auth.currentUser);
+          setIsInitialLoading(false);
+      } else {
+          setLoginError("Sessão expirou. Faça login novamente.");
+          setIsAuthButNoDb(false);
+      }
+  };
 
   const handlePromoteSelfToAdmin = async () => {
     if (!user) return;
@@ -194,7 +219,6 @@ const App: React.FC = () => {
     if (!gp.results) return;
     const userPointsMap: Record<string, number> = {};
     
-    // Calcula pontos
     allUsers.forEach(u => {
       let totalGpPoints = 0;
       const userPreds = predictions.filter(p => p.gpId === gp.id && p.userId === u.id);
@@ -210,8 +234,6 @@ const App: React.FC = () => {
       userPointsMap[u.id] = (u.points || 0) + totalGpPoints;
     });
 
-    // Atualiza BD com lógica de histórico
-    // Precisamos reordenar com os NOVOS pontos para saber o novo rank
     const sortedByNewPoints = [...allUsers].sort((a, b) => {
         const pointsA = userPointsMap[a.id] || 0;
         const pointsB = userPointsMap[b.id] || 0;
@@ -223,15 +245,14 @@ const App: React.FC = () => {
         const newRank = i + 1;
         const newPoints = userPointsMap[u.id];
         
-        // Mantém histórico
         const history = u.positionHistory || [];
         history.push(newRank);
-        if (history.length > 5) history.shift(); // Mantém apenas os últimos 5
+        if (history.length > 5) history.shift();
 
         await update(ref(db, `users/${u.id}`), { 
             points: newPoints,
             rank: newRank,
-            previousRank: u.rank, // O rank atual vira o previous
+            previousRank: u.rank,
             positionHistory: history
         });
     }
@@ -241,11 +262,9 @@ const App: React.FC = () => {
   };
 
   const handleClearAllPredictions = async () => {
-    if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites e ZERARÁ os pontos de TODOS os usuários. Ação irreversível. Tem certeza?")) return;
-    
+    if (!window.confirm("ATENÇÃO: Isso apagará TODOS os palpites e ZERARÁ os pontos. Confirmar?")) return;
     try {
         await remove(ref(db, 'predictions'));
-
         const updates: Record<string, any> = {};
         allUsers.forEach(u => {
             updates[`${u.id}/points`] = 0;
@@ -253,29 +272,21 @@ const App: React.FC = () => {
             updates[`${u.id}/previousRank`] = 0;
             updates[`${u.id}/positionHistory`] = [];
         });
-
-        if (Object.keys(updates).length > 0) {
-            await update(ref(db, 'users'), updates);
-        }
-
-        alert("Temporada resetada! Palpites e pontos foram apagados.");
+        if (Object.keys(updates).length > 0) await update(ref(db, 'users'), updates);
+        alert("Resetado com sucesso.");
     } catch (e) {
         console.error(e);
-        alert("Erro ao resetar sistema.");
+        alert("Erro ao resetar.");
     }
   };
 
   const handleDeleteUser = async (targetUserId: string) => {
-    if (!window.confirm("CUIDADO: Isso apagará permanentemente este usuário e todos os seus palpites. Confirmar exclusão?")) return;
-    
+    if (!window.confirm("Excluir usuário permanentemente?")) return;
     try {
         await remove(ref(db, `predictions/${targetUserId}`));
         await remove(ref(db, `users/${targetUserId}`));
-        alert("Usuário removido com sucesso.");
-    } catch (e) {
-        console.error(e);
-        alert("Erro ao remover usuário.");
-    }
+        alert("Usuário removido.");
+    } catch (e) { console.error(e); alert("Erro ao remover."); }
   };
 
   const handleLogout = () => { signOut(auth); setUser(null); setActiveTab('home'); };
@@ -287,17 +298,16 @@ const App: React.FC = () => {
   };
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
-  if (!user) return <Login authError={loginError} />;
+  
+  // Renderiza Login se não tiver usuário carregado
+  if (!user) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   const realTimeRank = allUsers.findIndex(u => u.id === user.id) + 1 || user.rank || allUsers.length;
-  
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
-  // LÓGICA DE SELEÇÃO AUTOMÁTICA DE GP
   const now = new Date();
   let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
-
   if (!activeGP) {
       activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
@@ -307,7 +317,6 @@ const App: React.FC = () => {
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
-
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
 
   return (

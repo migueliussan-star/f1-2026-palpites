@@ -1,13 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, Settings, Lock, LogIn } from 'lucide-react';
+import { Loader2, AlertCircle, Settings, Lock, LogIn, RefreshCw, LogOut } from 'lucide-react';
 import { auth, googleProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from '../firebase';
 
 interface LoginProps {
     authError?: string;
+    onRetry?: (user: any) => void;
+    isAuthButNoDb?: boolean;
+    onLogout?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ authError }) => {
+const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('Iniciando...');
   const [error, setError] = useState('');
@@ -15,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
   const [showConfigGuide, setShowConfigGuide] = useState(false);
   const [showRedirectFallback, setShowRedirectFallback] = useState(false);
 
-  // Monitora erros vindos do App.tsx (ex: falha no DB)
+  // Monitora erros vindos do App.tsx
   useEffect(() => {
     if (authError) {
         setLoading(false);
@@ -24,18 +27,15 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
   }, [authError]);
 
   useEffect(() => {
-    // Verificação de redirecionamento silenciosa
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          console.log("Login via redirect sucesso");
           setLoading(true);
           setLoadingMsg("Validando acesso...");
         }
       } catch (err: any) {
         console.error("Erro redirect:", err);
-        // Não mostramos erro visualmente aqui para não assustar no load
       }
     };
     checkRedirect();
@@ -61,12 +61,20 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
 
   const loginWithPopup = async () => {
     if (loading) return;
+    
+    // SE JÁ ESTAMOS AUTENTICADOS MAS O DB FALHOU, TENTAMOS RETRY
+    if (isAuthButNoDb && onRetry && auth.currentUser) {
+        setLoading(true);
+        setLoadingMsg("Reconectando ao banco...");
+        onRetry(auth.currentUser);
+        return;
+    }
+
     setLoading(true);
     setLoadingMsg('Abrindo janela...');
     setError('');
     setShowRedirectFallback(false);
     
-    // Timer para sugerir redirecionamento se o popup demorar/não abrir
     const fallbackTimer = setTimeout(() => {
         setLoadingMsg('Aguardando você...');
         setShowRedirectFallback(true);
@@ -74,14 +82,10 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
 
     try {
       await signInWithPopup(auth, googleProvider);
-      
-      // Se chegou aqui, login deu certo.
-      // Se o App.tsx demorar muito ou falhar sem setar authError, liberamos o botão.
       clearTimeout(fallbackTimer);
       setLoadingMsg("Carregando perfil...");
       
       setTimeout(() => {
-          // Se ainda estiver montado após 10s, algo deu errado no fluxo do App
           setLoading((prev) => {
               if (prev) {
                   setError("Login autorizado, mas o app não iniciou. Tente recarregar.");
@@ -93,7 +97,6 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
 
     } catch (err: any) {
       clearTimeout(fallbackTimer);
-      // Se o popup foi bloqueado ou fechado, sugerimos redirect
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
          setShowRedirectFallback(true);
          setLoading(false);
@@ -138,6 +141,7 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
                 disabled={loading}
                 className={`w-full font-black py-6 rounded-3xl flex items-center justify-center gap-4 transition-all shadow-2xl text-xs tracking-widest
                     ${loading ? 'bg-gray-800 text-gray-400 cursor-not-allowed' : 'bg-white text-black active:scale-95 hover:bg-gray-100'}
+                    ${isAuthButNoDb ? 'border-2 border-[#e10600] text-[#e10600] bg-transparent hover:bg-[#e10600] hover:text-white' : ''}
                 `}
               >
                 {loading ? (
@@ -145,6 +149,11 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
                         <Loader2 className="animate-spin" size={20} />
                         <span>{loadingMsg}</span>
                     </div>
+                ) : isAuthButNoDb ? (
+                    <>
+                        <RefreshCw size={18} />
+                        TENTAR CONECTAR NOVAMENTE
+                    </>
                 ) : (
                   <>
                     <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
@@ -153,8 +162,18 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
                 )}
               </button>
 
+              {/* Botão de Logout se estiver travado */}
+              {isAuthButNoDb && onLogout && (
+                  <button 
+                    onClick={onLogout}
+                    className="w-full py-3 text-gray-500 text-[10px] font-bold uppercase hover:text-white transition-colors flex items-center justify-center gap-2"
+                  >
+                      <LogOut size={12} /> Sair da conta atual
+                  </button>
+              )}
+
               {/* Opção de Redirecionamento (Aparece se demorar ou falhar) */}
-              {(showRedirectFallback || loading) && (
+              {(showRedirectFallback || loading) && !isAuthButNoDb && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-500 space-y-3">
                      {!loading ? (
                          <button 
@@ -165,7 +184,6 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
                             <span className="text-[10px] font-black uppercase tracking-widest">Usar Modo Redirecionamento</span>
                          </button>
                      ) : (
-                         // Se estiver carregando há muito tempo, permite cancelar
                          <button 
                             onClick={() => setLoading(false)}
                             className="w-full text-center py-2 opacity-50 hover:opacity-100 transition-opacity"
@@ -224,7 +242,7 @@ const Login: React.FC<LoginProps> = ({ authError }) => {
               <div className="bg-blue-600/10 p-4 rounded-3xl border border-blue-600/20">
                 <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Dica:</p>
                 <p className="text-[10px] text-gray-300">
-                    Se o botão "Entrar com Google" não funcionar ou travar, use o botão "Modo Redirecionamento" que aparecerá automaticamente.
+                    Se este erro persistir e você for o administrador, verifique as REGRAS (Rules) do Realtime Database no Firebase Console. Elas podem estar bloqueando leitura/gravação.
                 </p>
               </div>
             </div>
