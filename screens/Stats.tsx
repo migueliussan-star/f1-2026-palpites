@@ -211,9 +211,6 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                         {u.name} {currentUser.id === u.id && '(Você)'}
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">
-                                            {u.level}
-                                        </p>
                                         {hasLed && (
                                             <span className="text-[8px] text-yellow-500/80 font-bold uppercase">
                                                 ★ Liderou

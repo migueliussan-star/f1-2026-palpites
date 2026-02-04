@@ -86,9 +86,11 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
                   
                   <div className="flex flex-col">
                     <span className="font-bold text-sm tracking-tight truncate max-w-[120px]">{item.name}</span>
-                    <span className={`text-[9px] font-black uppercase tracking-tighter ${item.isAdmin ? 'text-red-500' : 'text-gray-500'}`}>
-                      {item.isAdmin ? 'Admin' : `Nível ${item.level}`}
-                    </span>
+                    {item.isAdmin && (
+                        <span className="text-[9px] font-black uppercase tracking-tighter text-red-500">
+                          Admin
+                        </span>
+                    )}
                   </div>
                 </div>
                 

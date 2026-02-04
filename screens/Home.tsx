@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP } from '../types';
-import { ChevronRight, Zap, Flag, Trophy, LogOut, MapPin, Download, Share, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, Share, CheckCircle2 } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -11,10 +11,11 @@ interface HomeProps {
   onLogout: () => void;
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
+  onTimerFinished?: () => void;
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, onTimerFinished
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -45,8 +46,8 @@ const Home: React.FC<HomeProps> = ({
   }
 
   useEffect(() => {
-    // Parser da data do GP para o Timer
-    const getGpStartDate = (dateStr: string) => {
+    // Parser da data do GP para o Timer (FOCA NA DATA FINAL)
+    const getGpEndDate = (dateStr: string) => {
       const months: { [key: string]: number } = {
         'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
         'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
@@ -61,21 +62,24 @@ const Home: React.FC<HomeProps> = ({
         const monthPart = parts[1].toLowerCase().substring(0, 3);
         const monthIndex = months[monthPart] ?? 0;
 
-        let startDay = 1;
+        let endDay = 1;
+        // Pega sempre o SEGUNDO dia (final) se houver hífen, senão pega o único dia
         if (daysPart.includes('-')) {
-           startDay = parseInt(daysPart.split('-')[0]);
+           const range = daysPart.split('-');
+           endDay = parseInt(range[1]); // Pega o dia final
         } else {
-           startDay = parseInt(daysPart);
+           endDay = parseInt(daysPart);
         }
 
-        // Define a data de INÍCIO do GP (00:00) para o timer
-        return new Date(2026, monthIndex, startDay, 0, 0, 0);
+        // Define a data de TÉRMINO do GP (23:59:59)
+        return new Date(2026, monthIndex, endDay, 23, 59, 59);
       } catch (e) {
         return new Date();
       }
     };
 
-    const targetDate = getGpStartDate(nextGP.date);
+    const targetDate = getGpEndDate(nextGP.date);
+    let hasFinished = false;
 
     // Timer do Countdown
     const interval = setInterval(() => {
@@ -89,8 +93,12 @@ const Home: React.FC<HomeProps> = ({
           s: Math.floor((diff / 1000) % 60)
         });
       } else {
-        // Se já passou do início, zera ou mostra mensagem (opcional)
+        // Se o tempo acabou
         setTimeLeft({ d: 0, h: 0, m: 0, s: 0 });
+        if (!hasFinished) {
+            hasFinished = true;
+            if (onTimerFinished) onTimerFinished();
+        }
       }
     }, 1000);
 
@@ -110,7 +118,7 @@ const Home: React.FC<HomeProps> = ({
       clearInterval(interval);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [nextGP.date]); // Re-executa se a data do GP mudar
+  }, [nextGP.date, onTimerFinished]); // Re-executa se a data do GP mudar
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -181,12 +189,17 @@ const Home: React.FC<HomeProps> = ({
                     <p className="text-sm font-medium text-gray-300 mt-2">{nextGP.date}</p>
                 </div>
 
-                {/* Countdown styling */}
-                <div className="flex gap-3">
-                    <CountdownUnit value={timeLeft.d} label="Dias" />
-                    <CountdownUnit value={timeLeft.h} label="Hrs" />
-                    <CountdownUnit value={timeLeft.m} label="Min" />
-                    <CountdownUnit value={timeLeft.s} label="Seg" />
+                {/* Countdown styling - Agora conta até o FIM do evento */}
+                <div>
+                     <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-2 flex items-center gap-1">
+                         Termina em
+                     </p>
+                     <div className="flex gap-3">
+                        <CountdownUnit value={timeLeft.d} label="Dias" />
+                        <CountdownUnit value={timeLeft.h} label="Hrs" />
+                        <CountdownUnit value={timeLeft.m} label="Min" />
+                        <CountdownUnit value={timeLeft.s} label="Seg" />
+                     </div>
                 </div>
 
                 <button 

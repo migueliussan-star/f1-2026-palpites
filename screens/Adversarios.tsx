@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User, RaceGP, Prediction, SessionType } from '../types';
 import { DRIVERS } from '../constants';
@@ -88,7 +89,9 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                 </div>
                                 <div>
                                     <p className={`text-xs font-bold ${isMe ? 'text-purple-400' : 'text-gray-200'}`}>{user.name} {isMe && '(Você)'}</p>
-                                    <p className="text-[8px] text-gray-500 uppercase font-black">{user.points || 0} pts • {user.rank}º lugar</p>
+                                    <p className="text-[8px] text-gray-500 uppercase font-black">
+                                        {user.points || 0} pts
+                                    </p>
                                 </div>
                             </div>
                             {!userPred && <span className="text-[8px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase">Não apostou</span>}

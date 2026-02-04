@@ -42,6 +42,7 @@ const getGpDates = (dateStr: string) => {
       endDay = parseInt(daysPart) || 1;
     }
 
+    // O GP termina às 23:59:59 do último dia
     const endDate = new Date(2026, monthIndex, endDay, 23, 59, 59);
     
     return { endDate };
@@ -61,6 +62,7 @@ const App: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
+  const [timeTick, setTimeTick] = useState(0); // Estado auxiliar para forçar atualização do GP ativo
 
   // Deriva o usuário "vivo" (combinando Auth + Dados do DB em tempo real)
   const liveUser = useMemo(() => {
@@ -335,7 +337,7 @@ const App: React.FC = () => {
   };
 
   // Lógica de Cálculo de Pontos REESCRITA (Recalcula TOTALMENTE do zero)
-  // Isso previne duplicação de pontos e corrige pontuações de quem apostou tarde
+  // Agora calcula também o NÍVEL do usuário
   const handleCalculatePoints = async (currentGp: RaceGP) => {
     // Usa a versão mais recente do GP atual (caso tenha sido editado na UI antes do save no DB)
     const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
@@ -385,19 +387,15 @@ const App: React.FC = () => {
     rankedUsers.forEach((u, index) => {
         const newRank = index + 1;
         
-        // Histórico: Adiciona o novo rank ao array existente (mantendo últimos 5)
-        let history = [...(u.positionHistory || [])];
-        // Para evitar flood no histórico, idealmente só adicionamos se for uma nova corrida,
-        // mas como não temos controle de "rodada", vamos apenas atualizar o rank atual e pontos.
-        // O gráfico de Stats usa o positionHistory.
-        
-        // Se o rank mudou ou é um novo cálculo de "fechamento", poderíamos dar push.
-        // Simplificação: Atualiza apenas pontos e rank atual.
-        // O histórico será mantido como está, ou podemos dar push apenas se o status do GP mudar para FINISHED.
+        // Lógica de Nível
+        let newLevel = 'Bronze';
+        if (u.newPoints >= 150) newLevel = 'Ouro';
+        else if (u.newPoints >= 50) newLevel = 'Prata';
         
         updates[`users/${u.id}/points`] = u.newPoints;
         updates[`users/${u.id}/rank`] = newRank;
-        updates[`users/${u.id}/previousRank`] = u.rank; // Salva o rank anterior antes do update
+        updates[`users/${u.id}/level`] = newLevel; // Atualiza o nível
+        updates[`users/${u.id}/previousRank`] = u.rank;
     });
 
     // Se o GP estava ABERTO, marca como FINALIZADO no calendário
@@ -414,7 +412,7 @@ const App: React.FC = () => {
         await update(ref(db), updates);
     }
     
-    alert("Pontos recalculados com sucesso (Baseado em todo o histórico)!");
+    alert("Pontos e Níveis recalculados com sucesso!");
   };
 
   const handleClearAllPredictions = async () => {
@@ -425,6 +423,7 @@ const App: React.FC = () => {
         allUsers.forEach(u => {
             updates[`${u.id}/points`] = 0;
             updates[`${u.id}/rank`] = 0;
+            updates[`${u.id}/level`] = 'Bronze'; // Reseta para Bronze
             updates[`${u.id}/previousRank`] = 0;
             updates[`${u.id}/positionHistory`] = [];
         });
@@ -452,6 +451,12 @@ const App: React.FC = () => {
     const sessionKey = session.replace(/\s/g, '_');
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), { userId: liveUser.id, gpId, session, top5 });
   };
+  
+  // Callback chamado pelo Home.tsx quando o tempo do GP acaba
+  const handleGpTimerFinished = useCallback(() => {
+    console.log("Tempo do GP esgotou! Atualizando para o próximo...");
+    setTimeTick(prev => prev + 1); // Força re-render para recalcular activeGP
+  }, []);
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   
@@ -464,13 +469,20 @@ const App: React.FC = () => {
   const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
   
   const now = new Date();
+  
+  // Lógica de Seleção do GP Ativo (Baseada em Data e Status)
+  // Prioridade: GP Aberto manualmente -> Próximo GP baseado em Data (agora <= endDate) -> Último GP se tudo acabou
   let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
+  
   if (!activeGP) {
       activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
+          // O GP é ativo enquanto AGORA for menor que a data de TÉRMINO
           return now <= endDate;
       });
   }
+  
+  // Se não achou nenhum (todos acabaram), pega o último do calendário ou o primeiro (fallback)
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
   const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
@@ -489,6 +501,7 @@ const App: React.FC = () => {
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
+          onTimerFinished={handleGpTimerFinished}
         />
       )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id)} />}
