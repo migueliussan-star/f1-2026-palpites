@@ -391,7 +391,8 @@ const App: React.FC = () => {
              const pred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === session);
              
              if (pred) {
-                pred.top5.forEach((driverId, idx) => {
+                // FIX: Garante que top5 exista
+                (pred.top5 || []).forEach((driverId, idx) => {
                    if (driverId === officialResult[idx]) userTotalPoints += 5; // Posição Exata
                    else if (officialResult.includes(driverId)) userTotalPoints += 1; // Está no Top 5
                 });
@@ -553,7 +554,8 @@ const App: React.FC = () => {
         <Home 
           user={{...liveUser, rank: realTimeRank}} 
           nextGP={activeGP} 
-          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id).map(p => p.session)).size} 
+          // FIX: Contagem segura de previsões
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
@@ -577,7 +579,8 @@ const App: React.FC = () => {
           gp={activeGP} 
           stats={activePredictions.filter(p => p.gpId === activeGP.id).reduce((acc, p) => {
             if (!acc[p.session]) acc[p.session] = {};
-            p.top5.forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
+            // FIX: Ensure top5 exists before forEach
+            (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
             return acc;
           }, {} as any)} 
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 

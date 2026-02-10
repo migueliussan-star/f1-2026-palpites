@@ -80,6 +80,8 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                 {sortedUsers.map((user) => {
                     const userPred = predictions.find(p => p.gpId === gp.id && p.session === activeSession && p.userId === user.id);
                     const isMe = user.id === currentUser.id;
+                    // FIX: Verifica se top5 existe e tem itens
+                    const hasValidPrediction = userPred && userPred.top5 && userPred.top5.length > 0;
 
                     return (
                         <div key={user.id} className={`rounded-2xl border p-5 transition-all hover:scale-[1.01] ${isMe ? 'bg-purple-600/10 border-purple-600/50' : 'bg-white/5 border-white/5'}`}>
@@ -95,10 +97,10 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                         </p>
                                     </div>
                                 </div>
-                                {!userPred && <span className="text-[8px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase">Não apostou</span>}
+                                {!hasValidPrediction && <span className="text-[8px] bg-red-500/10 text-red-500 px-2 py-1 rounded-full font-black uppercase">Não apostou</span>}
                             </div>
 
-                            {userPred ? (
+                            {hasValidPrediction ? (
                                 <div className="grid grid-cols-5 gap-2">
                                     {userPred.top5.map((driverId, idx) => {
                                         const driver = DRIVERS.find(d => d.id === driverId);

@@ -19,7 +19,8 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   const activeSession = sessions[activeSessionIdx];
   
   const currentPrediction = savedPredictions.find(p => p.session === activeSession);
-  const isAlreadyPredicted = !!currentPrediction && currentPrediction.top5.length > 0;
+  // FIX: Adicionado verificação segura para top5 (Firebase pode remover a chave se array vazio)
+  const isAlreadyPredicted = !!currentPrediction && (currentPrediction.top5?.length || 0) > 0;
   const isSessionOpen = gp.sessionStatus[activeSession] !== false;
   
   const [manualEditMode, setManualEditMode] = useState(false);
@@ -33,10 +34,12 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   useEffect(() => {
     const pred = savedPredictions.find(p => p.session === activeSession);
     
-    // Mapeia o array salvo para os 5 slots
-    if (pred && pred.top5 && pred.top5.length > 0) {
+    // FIX: Garante que top5 seja tratado como array mesmo se undefined
+    const top5 = pred?.top5 || [];
+
+    if (top5.length > 0) {
       const newSelection = [null, null, null, null, null] as (string | null)[];
-      pred.top5.forEach((d, i) => {
+      top5.forEach((d, i) => {
         if (i < 5) newSelection[i] = d;
       });
       setSelectedDrivers(newSelection);
@@ -122,7 +125,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       <div className="flex gap-3 mb-8 overflow-x-auto pb-4 scrollbar-hide px-1">
         {sessions.map((s, idx) => {
           // Verifica se tem palpite VÁLIDO (com itens)
-          const isCompleted = savedPredictions.some(p => p.session === s && p.top5.length > 0);
+          const isCompleted = savedPredictions.some(p => p.session === s && (p.top5?.length || 0) > 0);
           const isOpen = gp.sessionStatus[s] !== false;
           const isActive = activeSession === s;
           
