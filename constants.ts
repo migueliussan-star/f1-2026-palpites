@@ -83,12 +83,13 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'hulkenberg', name: 'Nico Hülkenberg', number: 27, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'GER',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png"
+    // GitHub: hulkenberg.png
+    image: `${GITHUB_REPO}/hulkenberg.png`
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    // GitHub: gobrielbortoleto.png
-    image: `${GITHUB_REPO}/gobrielbortoleto.png`
+    // GitHub: gabrielbortoleto.png
+    image: `${GITHUB_REPO}/gabrielbortoleto.png`
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
@@ -101,11 +102,13 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'MEX',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/S/SERPER01_Sergio_Perez/serper01.png"
+    // GitHub: perez.png
+    image: `${GITHUB_REPO}/perez.png`
   },
   { 
     id: 'bottas', name: 'Valtteri Bottas', number: 77, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'FIN',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/V/VALBOT01_Valtteri_Bottas/valbot01.png"
+    // GitHub: bottas.png
+    image: `${GITHUB_REPO}/bottas.png`
   },
   { 
     id: 'albon', name: 'Alex Albon', number: 23, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'THA',
