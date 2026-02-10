@@ -15,7 +15,7 @@ export const TEAM_COLORS: Record<string, string> = {
   'Williams': '#00A0DE'
 };
 
-// URL de fallback oficial (silhueta) - Agora exportada para uso nos componentes
+// URL de fallback oficial (silhueta)
 export const FALLBACK_IMG = "https://media.formula1.com/content/dam/fom-website/drivers/d_driver_fallback_image.png";
 
 export const DRIVERS: Driver[] = [
@@ -33,8 +33,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'antonelli', name: 'Kimi Antonelli', number: 12, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'ITA',
-    // Adicionado .jpg e f_auto para garantir renderização
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/f_auto,q_auto/v1/f2/drivers/2024/Headshots/Antonelli.jpg"
+    // Imagem F2 2024 (Headshot)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/antonelli"
   },
   { 
     id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
@@ -42,7 +42,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA',
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/f_auto,q_auto/v1/f2/drivers/2024/Headshots/Hadjar.jpg"
+    // Imagem F2 2024 (Headshot)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/hadjar"
   },
   { 
     id: 'leclerc', name: 'Charles Leclerc', number: 16, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'MON',
@@ -58,8 +59,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR',
-    // Fonte F3
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/f_auto,q_auto/v1/f3/drivers/2024/Headshots/Lindblad.jpg"
+    // Imagem F3 2024 (Headshot)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f3/drivers/2024/Headshots/lindblad"
   },
   { 
     id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP',
@@ -83,7 +84,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/f_auto,q_auto/v1/f2/drivers/2024/Headshots/Bortoleto.jpg"
+    // Imagem F2 2024 (Headshot)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/bortoleto"
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
