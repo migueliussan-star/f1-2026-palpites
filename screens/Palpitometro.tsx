@@ -70,8 +70,8 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                                     src={driver?.image} 
                                     alt="" 
                                     className={`w-full h-full object-contain object-bottom 
-                                        ${driver?.id === 'lindblad' ? 'scale-[1.8] translate-y-0' : 
-                                          driver?.id === 'hulkenberg' ? 'scale-[1.7] -translate-y-2' : 
+                                        ${driver?.id === 'lindblad' ? 'scale-[1.8] -translate-y-3' : 
+                                          driver?.id === 'hulkenberg' ? 'scale-[1.7] -translate-y-5' : 
                                           'scale-125 translate-y-1'}
                                     `}
                                     onError={(e) => { 
