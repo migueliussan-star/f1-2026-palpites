@@ -178,12 +178,11 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                                 <>
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 pointer-events-none" style={{ backgroundColor: driver.color }} />
                                 
-                                {/* F1 Standard Cutout Style for ALL drivers */}
                                 <div className="absolute right-[-10px] top-1 bottom-0 w-16 opacity-80 pointer-events-none group-hover:scale-105 transition-transform origin-bottom">
                                     <img 
                                         src={driver.image} 
                                         alt={driver.name} 
-                                        className="h-full w-full object-contain object-bottom"
+                                        className={`h-full w-full ${driver.image.includes('formula1.com') ? 'object-contain object-bottom' : 'object-cover object-center rounded-r-lg opacity-80 mix-blend-lighten'}`}
                                         onError={(e) => { 
                                             e.currentTarget.onerror = null; 
                                             e.currentTarget.src = FALLBACK_IMG;
@@ -274,12 +273,12 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                     >
                         <div className="absolute top-0 right-0 w-full h-1 opacity-60 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
 
-                        {/* Standard Cutout for ALL drivers */}
+                        {/* Adaptive Image Rendering */}
                         <div className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none opacity-90 transition-transform group-hover:scale-110 origin-bottom-right">
                             <img 
                                 src={driver.image} 
                                 alt={driver.name} 
-                                className="w-full h-full object-contain object-bottom"
+                                className={`w-full h-full ${driver.image.includes('formula1.com') ? 'object-contain object-bottom' : 'object-cover object-center rounded-lg opacity-90 mask-fade'}`}
                                 onError={(e) => { 
                                     e.currentTarget.onerror = null;
                                     e.currentTarget.src = FALLBACK_IMG;
