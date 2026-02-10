@@ -177,18 +177,40 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                             {driver ? (
                                 <>
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 pointer-events-none" style={{ backgroundColor: driver.color }} />
-                                {/* Imagem de fundo estilizada */}
-                                <div className="absolute right-[-10px] top-1 bottom-0 w-16 opacity-80 pointer-events-none group-hover:scale-105 transition-transform origin-bottom">
-                                    <img 
-                                        src={driver.image} 
-                                        alt={driver.name} 
-                                        className="h-full w-full object-contain object-bottom"
-                                        onError={(e) => { 
-                                            e.currentTarget.onerror = null; 
-                                            e.currentTarget.src = FALLBACK_IMG;
-                                        }} 
-                                    />
-                                </div>
+                                
+                                {/* Image Handling - Diferencia entre Cutout (F1) e Foto (Rookies) */}
+                                {driver.isCutout !== false ? (
+                                    <>
+                                        {/* F1 Standard Cutout */}
+                                        <div className="absolute right-[-10px] top-1 bottom-0 w-16 opacity-80 pointer-events-none group-hover:scale-105 transition-transform origin-bottom">
+                                            <img 
+                                                src={driver.image} 
+                                                alt={driver.name} 
+                                                className="h-full w-full object-contain object-bottom"
+                                                onError={(e) => { 
+                                                    e.currentTarget.onerror = null; 
+                                                    e.currentTarget.src = FALLBACK_IMG;
+                                                }} 
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Rookie Photo Style */}
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full overflow-hidden border border-white/20 opacity-90 group-hover:scale-105 transition-transform">
+                                            <img 
+                                                src={driver.image} 
+                                                alt={driver.name} 
+                                                className="h-full w-full object-cover object-center"
+                                                onError={(e) => { 
+                                                    e.currentTarget.onerror = null; 
+                                                    e.currentTarget.src = FALLBACK_IMG;
+                                                }} 
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
                                 <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
                                 
                                 <div className="flex-1 z-10 pointer-events-none">
@@ -272,18 +294,35 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                     >
                         <div className="absolute top-0 right-0 w-full h-1 opacity-60 pointer-events-none" style={{ backgroundColor: driver.color }}></div>
 
-                        {/* Driver Photo */}
-                        <div className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none opacity-90 transition-transform group-hover:scale-110 origin-bottom-right">
-                             <img 
-                                src={driver.image} 
-                                alt={driver.name} 
-                                className="w-full h-full object-contain object-bottom"
-                                onError={(e) => { 
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = FALLBACK_IMG;
-                                }}
-                             />
-                        </div>
+                        {/* Driver Photo - Lógica Híbrida */}
+                        {driver.isCutout !== false ? (
+                            <div className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none opacity-90 transition-transform group-hover:scale-110 origin-bottom-right">
+                                <img 
+                                    src={driver.image} 
+                                    alt={driver.name} 
+                                    className="w-full h-full object-contain object-bottom"
+                                    onError={(e) => { 
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = FALLBACK_IMG;
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            // Rookie/Photo Style
+                            <div className="absolute bottom-2 right-2 w-16 h-16 pointer-events-none opacity-90 transition-transform group-hover:scale-105">
+                                <div className="w-full h-full rounded-full overflow-hidden border-2 border-white/10 shadow-lg">
+                                    <img 
+                                        src={driver.image} 
+                                        alt={driver.name} 
+                                        className="w-full h-full object-cover object-center"
+                                        onError={(e) => { 
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = FALLBACK_IMG;
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                         
                         {/* Gradient overlay to make text readable */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none md:bg-gradient-to-r md:from-black/60 md:to-transparent" />

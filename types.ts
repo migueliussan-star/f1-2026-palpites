@@ -11,6 +11,7 @@ export interface Driver {
   color: string;
   country: string;
   image: string;
+  isCutout?: boolean; // true = PNG transparente (padrão), false = Foto JPG (requer máscara)
 }
 
 // Nomes exatos conforme pedido

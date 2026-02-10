@@ -69,7 +69,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                                 <img 
                                     src={driver?.image} 
                                     alt="" 
-                                    className="w-full h-full object-cover object-top scale-125 translate-y-1" 
+                                    className={`w-full h-full ${driver?.isCutout !== false ? 'object-cover object-top scale-125 translate-y-1' : 'object-cover object-center scale-100'}`} 
                                     onError={(e) => { 
                                         e.currentTarget.onerror = null;
                                         e.currentTarget.src = FALLBACK_IMG;

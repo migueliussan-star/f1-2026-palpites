@@ -21,95 +21,95 @@ export const FALLBACK_IMG = "https://media.formula1.com/content/dam/fom-website/
 export const DRIVERS: Driver[] = [
   { 
     id: 'norris', name: 'Lando Norris', number: 4, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'GBR',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png", isCutout: true
   },
   { 
     id: 'piastri', name: 'Oscar Piastri', number: 81, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'AUS',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png", isCutout: true
   },
   { 
     id: 'russell', name: 'George Russell', number: 63, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'GBR',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png", isCutout: true
   },
   { 
     id: 'antonelli', name: 'Kimi Antonelli', number: 12, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'ITA',
-    // Fonte F2 (Case sensitive: Antonelli.jpg)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Antonelli.jpg"
+    // Foto Wikimedia (Estável)
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Andrea_Kimi_Antonelli_Imola_2022.jpg/640px-Andrea_Kimi_Antonelli_Imola_2022.jpg", isCutout: false
   },
   { 
     id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png", isCutout: true
   },
   { 
     id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA',
-    // Fonte F2 (Case sensitive: Hadjar.jpg)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Hadjar.jpg"
+    // Foto Wikimedia (Estável)
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Isack_Hadjar_Red_Bull_Ring_2022.jpg/640px-Isack_Hadjar_Red_Bull_Ring_2022.jpg", isCutout: false
   },
   { 
     id: 'leclerc', name: 'Charles Leclerc', number: 16, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'MON',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png", isCutout: true
   },
   { 
     id: 'hamilton', name: 'Lewis Hamilton', number: 44, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'GBR',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png", isCutout: true
   },
   { 
     id: 'lawson', name: 'Liam Lawson', number: 30, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'NZL',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png", isCutout: true
   },
   { 
     id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR',
-    // Fonte F3 (Case sensitive: Lindblad.jpg)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f3/drivers/2024/Headshots/Lindblad.jpg"
+    // Foto Wikimedia (Estável)
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Arvid_Lindblad_2022.jpg/640px-Arvid_Lindblad_2022.jpg", isCutout: false
   },
   { 
     id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png", isCutout: true
   },
   { 
     id: 'stroll', name: 'Lance Stroll', number: 18, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'CAN',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png", isCutout: true
   },
   { 
     id: 'ocon', name: 'Esteban Ocon', number: 31, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'FRA',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png", isCutout: true
   },
   { 
     id: 'bearman', name: 'Oliver Bearman', number: 87, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'GBR',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png", isCutout: true
   },
   { 
     id: 'hulkenberg', name: 'Nico Hülkenberg', number: 27, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'GER',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png", isCutout: true
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    // Fonte F2 (Case sensitive: Bortoleto.jpg)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Bortoleto.jpg"
+    // Foto Wikimedia (Estável)
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Gabriel_Bortoleto_F3_2023.jpg/640px-Gabriel_Bortoleto_F3_2023.jpg", isCutout: false
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png", isCutout: true
   },
   { 
     id: 'colapinto', name: 'Franco Colapinto', number: 43, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'ARG',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png", isCutout: true
   },
   { 
     id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'MEX',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/S/SERPER01_Sergio_Perez/serper01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/S/SERPER01_Sergio_Perez/serper01.png", isCutout: true
   },
   { 
     id: 'bottas', name: 'Valtteri Bottas', number: 77, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'FIN',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/V/VALBOT01_Valtteri_Bottas/valbot01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/V/VALBOT01_Valtteri_Bottas/valbot01.png", isCutout: true
   },
   { 
     id: 'albon', name: 'Alex Albon', number: 23, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'THA',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png", isCutout: true
   },
   { 
     id: 'sainz', name: 'Carlos Sainz', number: 55, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'ESP',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png"
+    image: "https://media.formula1.com/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png", isCutout: true
   },
 ];
 
