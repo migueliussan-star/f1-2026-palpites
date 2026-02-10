@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, RaceGP, Prediction, SessionType } from '../types';
-import { DRIVERS } from '../constants';
+import { DRIVERS, FALLBACK_IMG } from '../constants';
 import { Lock, Eye, ShieldAlert, Swords } from 'lucide-react';
 
 interface AdversariosProps {
@@ -107,7 +107,15 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                 <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/5 overflow-hidden relative">
                                                     <div className="absolute top-0 right-0 w-full h-1 opacity-60 z-10" style={{ backgroundColor: driver?.color || '#333' }} />
                                                     {driver ? (
-                                                        <img src={driver.image} className="w-full h-full object-cover object-top scale-125 translate-y-2" alt={driver.name} onError={(e) => e.currentTarget.style.display = 'none'} />
+                                                        <img 
+                                                            src={driver.image} 
+                                                            className="w-full h-full object-cover object-top scale-125 translate-y-2" 
+                                                            alt={driver.name} 
+                                                            onError={(e) => { 
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = FALLBACK_IMG;
+                                                            }} 
+                                                        />
                                                     ) : null}
                                                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-center font-bold text-gray-300 py-0.5 backdrop-blur-sm truncate">
                                                         {driver?.name.split(' ').pop()?.substring(0, 3)}

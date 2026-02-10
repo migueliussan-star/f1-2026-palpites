@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { DRIVERS } from '../constants';
+import { DRIVERS, FALLBACK_IMG } from '../constants';
 import { RaceGP } from '../types';
 import { Users, Info } from 'lucide-react';
 
@@ -66,7 +66,15 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                             <span className="text-[10px] font-black f1-font text-gray-600 w-5">#{idx + 1}</span>
                             {/* Avatar Pequeno */}
                             <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 border border-white/10">
-                                <img src={driver?.image} alt="" className="w-full h-full object-cover object-top scale-125 translate-y-1" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                <img 
+                                    src={driver?.image} 
+                                    alt="" 
+                                    className="w-full h-full object-cover object-top scale-125 translate-y-1" 
+                                    onError={(e) => { 
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = FALLBACK_IMG;
+                                    }} 
+                                />
                             </div>
                             <p className="text-sm font-bold">{driver?.name}</p>
                           </div>

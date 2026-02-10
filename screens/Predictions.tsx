@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, Prediction, Driver } from '../types';
-import { DRIVERS } from '../constants';
+import { DRIVERS, FALLBACK_IMG } from '../constants';
 import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3, Trash2, RotateCcw, Flag, XCircle } from 'lucide-react';
 
 interface PredictionsProps {
@@ -183,7 +183,10 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                                         src={driver.image} 
                                         alt={driver.name} 
                                         className="h-full w-full object-contain object-bottom"
-                                        onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                                        onError={(e) => { 
+                                            e.currentTarget.onerror = null; 
+                                            e.currentTarget.src = FALLBACK_IMG;
+                                        }} 
                                     />
                                 </div>
                                 <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
@@ -275,7 +278,10 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                                 src={driver.image} 
                                 alt={driver.name} 
                                 className="w-full h-full object-contain object-bottom"
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                onError={(e) => { 
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = FALLBACK_IMG;
+                                }}
                              />
                         </div>
                         
