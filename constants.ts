@@ -88,8 +88,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    // GitHub: gabrielbortoleto.png
-    image: `${GITHUB_REPO}/gabrielbortoleto.png`
+    // GitHub: gabrielbortoletto.png (CORRIGIDO: dois 't's)
+    image: `${GITHUB_REPO}/gabrielbortoletto.png`
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
