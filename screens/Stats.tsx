@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User } from '../types';
-import { TrendingUp, Clock, Crown, Minus } from 'lucide-react';
+import { TrendingUp, Crown, Minus } from 'lucide-react';
 
 interface StatsProps {
     currentUser: User;
@@ -49,16 +49,19 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
 
   const maxWeeks = leadershipStats[0]?.weeksAtOne || 1;
 
-  // Configurações do Gráfico
-  const TOTAL_POSITIONS = 15;
-  const VIEWBOX_HEIGHT = 200; // Altura interna do SVG aumentada
-  const VIEWBOX_WIDTH = 300;
+  // Configurações do Gráfico DINÂMICAS
+  // Se houver 2 usuários, mostra até P3 (buffer). Se houver 20, mostra até P20.
+  const activeUserCount = users.length;
+  const TOTAL_POSITIONS = Math.max(activeUserCount, 3); 
+
+  const VIEWBOX_HEIGHT = 250; // Altura interna do SVG
+  const VIEWBOX_WIDTH = 350;
   const PADDING_TOP = 20;
-  const PADDING_BOTTOM = 20;
+  const PADDING_BOTTOM = 30;
   const CHART_HEIGHT = VIEWBOX_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
   const getYForRank = (rank: number) => {
-      // Clamp rank entre 1 e 15
+      // Clamp rank entre 1 e TOTAL_POSITIONS
       const clampedRank = Math.max(1, Math.min(rank, TOTAL_POSITIONS));
       // Interpolação linear
       return PADDING_TOP + ((clampedRank - 1) / (TOTAL_POSITIONS - 1)) * CHART_HEIGHT;
@@ -79,11 +82,11 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
       {/* Gráfico de Tendência (TODOS) - Visual Dark Card */}
       <div className="bg-[#0f0f11] rounded-[32px] p-6 border border-white/5 overflow-hidden relative mb-10 shadow-2xl">
         
-        {/* Chart Container - Aumentado altura para acomodar 15 linhas */}
+        {/* Chart Container */}
         <div className="h-80 w-full relative">
             {/* SVG Chart */}
             <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`} preserveAspectRatio="none">
-                {/* Grid Lines & Labels (1 to 15) */}
+                {/* Grid Lines & Labels (Dinâmico 1 até TOTAL_POSITIONS) */}
                 {Array.from({ length: TOTAL_POSITIONS }, (_, i) => i + 1).map((pos) => {
                         const y = getYForRank(pos);
                         return (
@@ -92,7 +95,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                             <text 
                                 x="0" 
                                 y={y + 3} 
-                                fill="#666" 
+                                fill="#444" 
                                 fontSize="8" 
                                 fontWeight="900" 
                                 className="f1-font select-none"
@@ -105,9 +108,9 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                 y1={y} 
                                 x2={VIEWBOX_WIDTH} 
                                 y2={y} 
-                                stroke="rgba(255,255,255,0.08)" 
+                                stroke="rgba(255,255,255,0.05)" 
                                 strokeWidth="1" 
-                                strokeDasharray="6 6" 
+                                strokeDasharray="4 4" 
                             />
                         </g>
                         );
@@ -120,7 +123,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     
                     const points = history.map((rank, hIdx) => {
                         const totalPoints = Math.max(history.length, 2); // Evita div by zero
-                        // X space starts from 25 (padding for labels) to 300
+                        // X space starts from 25 (padding for labels) to VIEWBOX_WIDTH
                         const x = 25 + (hIdx / (totalPoints - 1)) * (VIEWBOX_WIDTH - 25);
                         const y = getYForRank(rank);
                         return { x, y };
@@ -134,7 +137,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     const isCurrentUser = u.id === currentUser.id;
 
                     return (
-                        <g key={u.id} style={{ opacity: isCurrentUser ? 1 : 0.6 }}>
+                        <g key={u.id} style={{ opacity: isCurrentUser ? 1 : 0.5 }}>
                             <path 
                                 d={pathD} 
                                 fill="none" 
@@ -148,7 +151,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                              <circle 
                                 cx={points[points.length-1].x} 
                                 cy={points[points.length-1].y} 
-                                r={isCurrentUser ? "4" : "2"} 
+                                r={isCurrentUser ? "4" : "2.5"} 
                                 fill={lineColor} 
                             />
                         </g>

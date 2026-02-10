@@ -15,6 +15,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
 
   // Ordena os usuários reais por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
+  const leaderPoints = sortedUsers[0]?.points || 0;
 
   return (
     <div className="p-6 lg:p-12">
@@ -58,6 +59,8 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
             sortedUsers.map((item, idx) => {
                 // Cálculo de Gap (Pontos atrás do próximo)
                 const pointsDiff = idx === 0 ? 0 : (sortedUsers[idx-1].points || 0) - (item.points || 0);
+                // Cálculo de Gap para o LÍDER
+                const diffToLeader = leaderPoints - (item.points || 0);
                 
                 // Cálculo de Posições Ganhas (Mock se não tiver histórico real)
                 const prevRank = item.previousRank || (item.points ? idx + 2 : idx + 1); 
@@ -97,13 +100,19 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
                     
                     <div className="text-right">
                     <p className="text-xl font-black f1-font leading-none">{item.points || 0}</p>
-                    {/* GAP para o próximo */}
-                    {idx > 0 && (
-                        <p className="text-[9px] text-red-400/80 font-bold uppercase tracking-tight mt-0.5">
-                            GAP -{pointsDiff}
-                        </p>
+                    {/* GAPS */}
+                    {idx > 0 ? (
+                        <div className="flex flex-col items-end">
+                            <p className="text-[9px] text-red-400/60 font-bold uppercase tracking-tight mt-0.5">
+                                GAP -{pointsDiff}
+                            </p>
+                            <p className="text-[9px] text-orange-500 font-black uppercase tracking-tight leading-none mt-0.5">
+                                LÍDER -{diffToLeader}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-[9px] text-yellow-500 font-bold uppercase tracking-tight mt-0.5">LÍDER</p>
                     )}
-                    {idx === 0 && <p className="text-[9px] text-yellow-500 font-bold uppercase tracking-tight mt-0.5">LÍDER</p>}
                     </div>
                 </div>
                 );
