@@ -120,7 +120,7 @@ const App: React.FC = () => {
             return {
                 ...u,
                 rank: currentRank,
-                positionHistory: u.positionHistory || [],
+                positionHistory: u.positionHistory ? Object.values(u.positionHistory) : [], // Garante array mesmo se vier como objeto do Firebase
                 previousRank: u.previousRank || currentRank
             };
         });
@@ -423,10 +423,17 @@ const App: React.FC = () => {
         if (u.newPoints >= 150) newLevel = 'Ouro';
         else if (u.newPoints >= 50) newLevel = 'Prata';
         
+        // --- ATUALIZAÇÃO DO HISTÓRICO DE POSIÇÕES ---
+        // Pega o histórico atual ou array vazio
+        const currentHistory = u.positionHistory || [];
+        // Adiciona a nova posição ao final do array
+        const newHistory = [...currentHistory, newRank];
+
         updates[`users/${u.id}/points`] = u.newPoints;
         updates[`users/${u.id}/rank`] = newRank;
         updates[`users/${u.id}/level`] = newLevel; 
         updates[`users/${u.id}/previousRank`] = u.rank;
+        updates[`users/${u.id}/positionHistory`] = newHistory; // Salva o novo histórico
     });
 
     // Atualiza Visitantes (sem ranking)
@@ -449,7 +456,7 @@ const App: React.FC = () => {
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
         }
-        alert("Pontos e Níveis recalculados com sucesso!");
+        alert("Pontos, Níveis e Histórico recalculados com sucesso!");
     } catch (e) {
         console.error(e);
         alert("Erro ao salvar no banco.");

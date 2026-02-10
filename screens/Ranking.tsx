@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { User as UserType, RaceGP } from '../types';
 import { ChevronUp, ChevronDown, Minus } from 'lucide-react';
 
@@ -9,10 +9,7 @@ interface RankingProps {
   calendar: RaceGP[];
 }
 
-const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
-  const [activeFilter, setActiveFilter] = useState<'geral' | 'gp'>('geral');
-  const [selectedGpId, setSelectedGpId] = useState<number>(calendar[0]?.id || 1);
-
+const Ranking: React.FC<RankingProps> = ({ currentUser, users }) => {
   // Ordena os usuários reais por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
   const leaderPoints = sortedUsers[0]?.points || 0;
@@ -21,32 +18,8 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
     <div className="p-6 lg:p-12">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-            <h2 className="text-2xl font-black f1-font">RANKING</h2>
-            <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-            {['geral', 'gp'].map((f) => (
-                <button 
-                key={f}
-                onClick={() => setActiveFilter(f as any)}
-                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase transition-all whitespace-nowrap ${activeFilter === f ? 'bg-[#e10600] text-white shadow-lg shadow-red-600/20' : 'bg-white/5 text-gray-500'}`}
-                >
-                {f === 'gp' ? 'Por GP' : f}
-                </button>
-            ))}
-            </div>
-
-            {activeFilter === 'gp' && (
-                <div className="mt-4 animate-in slide-in-from-top duration-300">
-                    <select 
-                        value={selectedGpId}
-                        onChange={(e) => setSelectedGpId(Number(e.target.value))}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-[#e10600]"
-                    >
-                        {calendar.map(gp => (
-                            <option key={gp.id} value={gp.id}>{gp.name}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
+            <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter">RANKING GLOBAL</h2>
+            <div className="h-1 w-20 bg-[#e10600] mt-2 rounded-full shadow-[0_0_10px_#e10600]"></div>
         </div>
 
         {/* Lista de Ranking */}
@@ -89,7 +62,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
                     </div>
                     
                     <div className="flex flex-col">
-                        <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px]">{item.name}</span>
+                        <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px] text-white">{item.name}</span>
                         {item.isAdmin && (
                             <span className="text-[9px] font-black uppercase tracking-tighter text-red-500">
                             Admin
@@ -99,7 +72,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar }) => {
                     </div>
                     
                     <div className="text-right">
-                    <p className="text-xl font-black f1-font leading-none">{item.points || 0}</p>
+                    <p className="text-xl font-black f1-font leading-none text-white">{item.points || 0}</p>
                     {/* GAPS */}
                     {idx > 0 ? (
                         <div className="flex flex-col items-end">

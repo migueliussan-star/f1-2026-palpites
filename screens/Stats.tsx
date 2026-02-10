@@ -90,26 +90,33 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                 {/* Linhas de Dados (SVG com vector-effect para não distorcer espessura) */}
                 <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
                     {chartUsers.map((u, idx) => {
-                        const history = u.positionHistory || [];
+                        // Se não tiver histórico, usa o rank atual como único ponto
+                        let history = u.positionHistory || [];
+                        if (history.length === 0 && u.rank) {
+                            history = [u.rank];
+                        }
+                        
                         if (history.length === 0) return null;
 
                         // Cria o path usando coordenadas de porcentagem
                         const points = history.map((rank, hIdx) => {
                             const totalPoints = Math.max(history.length, 1);
-                            // Se tiver só 1 ponto, desenha uma linha reta do início ao fim
-                            if (totalPoints === 1) return `0,${getYPercent(rank)} 100,${getYPercent(rank)}`;
+                            
+                            // Se tiver só 1 ponto, desenha uma linha reta do início ao fim (constante)
+                            if (totalPoints === 1 || history.length === 1) {
+                                const y = getYPercent(history[0]);
+                                return `0,${y} 100,${y}`; 
+                            }
                             
                             const x = (hIdx / (totalPoints - 1)) * 100;
                             const y = getYPercent(rank);
                             return `${x},${y}`;
                         });
                         
-                        // Se tiver pontos suficientes, une com L
+                        // Formata o Path Data (d)
                         let d = "";
                         if (history.length > 1) {
-                            d = `M ${points.map(p => p.replace(',', ' ')).join(' L ').replace(/ /g, ',')}`; 
-                            // Correção manual da string: "x,y" -> M x,y L x,y ...
-                            // Re-gerando string limpa:
+                            // M x,y L x,y L x,y ...
                             const pathCoords = history.map((rank, hIdx) => {
                                 const x = (hIdx / (history.length - 1)) * 100;
                                 const y = getYPercent(rank);
@@ -144,7 +151,10 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
 
                 {/* Bolinhas (Dots) - HTML puro para garantir que sejam círculos perfeitos */}
                 {chartUsers.map((u, idx) => {
-                    const history = u.positionHistory || [];
+                    let history = u.positionHistory || [];
+                    if (history.length === 0 && u.rank) {
+                        history = [u.rank];
+                    }
                     if (history.length === 0) return null;
 
                     const lastRank = history[history.length - 1];
@@ -221,8 +231,11 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                         {u.name} {currentUser.id === u.id && '(Você)'}
                                     </p>
                                     <div className="flex items-center gap-2">
+                                        <p className="text-[10px] text-gray-400 font-bold">
+                                            {u.points || 0} pts
+                                        </p>
                                         {hasLed && (
-                                            <span className="text-[8px] text-yellow-500/80 font-bold uppercase">
+                                            <span className="text-[8px] text-yellow-500/80 font-bold uppercase ml-2">
                                                 ★ Liderou
                                             </span>
                                         )}
