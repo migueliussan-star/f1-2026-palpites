@@ -33,8 +33,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'antonelli', name: 'Kimi Antonelli', number: 12, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'ITA',
-    // Imagem F2 2024 (Headshot)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/antonelli"
+    // Fonte F2 (Estável com .jpg)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/antonelli.jpg"
   },
   { 
     id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
@@ -42,8 +42,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA',
-    // Imagem F2 2024 (Headshot)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/hadjar"
+    // Fonte F2
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/hadjar.jpg"
   },
   { 
     id: 'leclerc', name: 'Charles Leclerc', number: 16, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'MON',
@@ -59,8 +59,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR',
-    // Imagem F3 2024 (Headshot)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f3/drivers/2024/Headshots/lindblad"
+    // Fonte F3
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f3/drivers/2024/Headshots/lindblad.jpg"
   },
   { 
     id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP',
@@ -84,8 +84,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    // Imagem F2 2024 (Headshot)
-    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/bortoleto"
+    // Fonte F2
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/bortoleto.jpg"
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
