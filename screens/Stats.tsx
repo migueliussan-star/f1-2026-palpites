@@ -11,60 +11,37 @@ interface StatsProps {
 const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
   // Ordena os usuários por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
-  
-  // Agora usamos TODOS os usuários para o gráfico, conforme solicitado
   const chartUsers = sortedUsers;
 
-  // Paleta de cores expandida para suportar mais usuários visualmente
   const chartColors = [
-    '#FFD700', // Gold
-    '#C0C0C0', // Silver
-    '#CD7F32', // Bronze
-    '#3b82f6', // Blue
-    '#8b5cf6', // Purple
-    '#ec4899', // Pink
-    '#10b981', // Emerald
-    '#f97316', // Orange
-    '#06b6d4', // Cyan
-    '#ef4444', // Red
-    '#84cc16', // Lime
-    '#6366f1', // Indigo
-    '#d946ef', // Fuchsia
-    '#14b8a6', // Teal
+    '#FFD700', '#C0C0C0', '#CD7F32', '#3b82f6', '#8b5cf6', 
+    '#ec4899', '#10b981', '#f97316', '#06b6d4', '#ef4444', 
+    '#84cc16', '#6366f1', '#d946ef', '#14b8a6', 
   ];
 
-  // Calcula tempo de liderança para TODOS os pilotos (sem filtro)
+  // Calcula tempo de liderança
   const leadershipStats = users.map(u => {
       const weeksAtOne = (u.positionHistory || []).filter(p => p === 1).length;
-      return {
-          ...u,
-          weeksAtOne
-      };
-  })
-  .sort((a, b) => {
-      // Ordena por tempo na liderança, desempata por pontos totais
+      return { ...u, weeksAtOne };
+  }).sort((a, b) => {
       if (b.weeksAtOne !== a.weeksAtOne) return b.weeksAtOne - a.weeksAtOne;
       return (b.points || 0) - (a.points || 0);
   });
 
   const maxWeeks = leadershipStats[0]?.weeksAtOne || 1;
 
-  // Configurações do Gráfico DINÂMICAS
-  // Se houver 2 usuários, mostra até P3 (buffer). Se houver 20, mostra até P20.
-  const activeUserCount = users.length;
-  const TOTAL_POSITIONS = Math.max(activeUserCount, 3); 
+  // --- CONFIGURAÇÃO DO GRÁFICO ---
+  // Define o número de linhas do gráfico baseado no total de usuários (Mínimo 2 para ter P1 e P2)
+  const rowCount = Math.max(users.length, 2);
 
-  const VIEWBOX_HEIGHT = 250; // Altura interna do SVG
-  const VIEWBOX_WIDTH = 350;
-  const PADDING_TOP = 20;
-  const PADDING_BOTTOM = 30;
-  const CHART_HEIGHT = VIEWBOX_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
-
-  const getYForRank = (rank: number) => {
-      // Clamp rank entre 1 e TOTAL_POSITIONS
-      const clampedRank = Math.max(1, Math.min(rank, TOTAL_POSITIONS));
-      // Interpolação linear
-      return PADDING_TOP + ((clampedRank - 1) / (TOTAL_POSITIONS - 1)) * CHART_HEIGHT;
+  // Calcula a posição Y (em %) para um determinado Rank
+  // Deixa 10% de margem em cima e 10% em baixo para não cortar bolinhas
+  const getYPercent = (rank: number) => {
+    if (rowCount <= 1) return 50;
+    const safeRank = Math.min(Math.max(rank, 1), rowCount); // Garante que rank esteja entre 1 e rowCount
+    const availableSpace = 80; // 80% do espaço (100 - 10 - 10)
+    const step = availableSpace / (rowCount - 1);
+    return 10 + ((safeRank - 1) * step);
   };
 
   return (
@@ -79,88 +56,119 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
           </div>
       </div>
 
-      {/* Gráfico de Tendência (TODOS) - Visual Dark Card */}
-      <div className="bg-[#0f0f11] rounded-[32px] p-6 border border-white/5 overflow-hidden relative mb-10 shadow-2xl">
+      {/* Gráfico de Tendência - Visual Dark Card */}
+      <div className="bg-[#0f0f11] rounded-[32px] p-6 border border-white/5 shadow-2xl mb-10">
         
-        {/* Chart Container */}
-        <div className="h-80 w-full relative">
-            {/* SVG Chart */}
-            <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`} preserveAspectRatio="none">
-                {/* Grid Lines & Labels (Dinâmico 1 até TOTAL_POSITIONS) */}
-                {Array.from({ length: TOTAL_POSITIONS }, (_, i) => i + 1).map((pos) => {
-                        const y = getYForRank(pos);
-                        return (
-                        <g key={pos}>
-                            {/* Label */}
-                            <text 
-                                x="0" 
-                                y={y + 3} 
-                                fill="#444" 
-                                fontSize="8" 
-                                fontWeight="900" 
-                                className="f1-font select-none"
-                            >
-                                P{pos}
-                            </text>
-                            {/* Line */}
-                            <line 
-                                x1="25" 
-                                y1={y} 
-                                x2={VIEWBOX_WIDTH} 
-                                y2={y} 
-                                stroke="rgba(255,255,255,0.05)" 
-                                strokeWidth="1" 
-                                strokeDasharray="4 4" 
-                            />
-                        </g>
-                        );
-                })}
+        {/* Container do Gráfico */}
+        <div className="h-80 w-full relative flex select-none">
+            
+            {/* Eixo Y (Labels P1, P2...) - HTML puro para não distorcer */}
+            <div className="flex flex-col w-8 shrink-0 relative h-full mr-2 z-10 pointer-events-none">
+                {Array.from({ length: rowCount }, (_, i) => i + 1).map((pos) => (
+                    <div 
+                        key={pos} 
+                        className="absolute w-full text-right flex items-center justify-end"
+                        style={{ top: `${getYPercent(pos)}%`, transform: 'translateY(-50%)' }}
+                    >
+                        <span className="text-[10px] font-black f1-font text-gray-600">P{pos}</span>
+                    </div>
+                ))}
+            </div>
+
+            {/* Área de Plotagem */}
+            <div className="flex-1 relative h-full overflow-visible">
                 
-                {/* Data Lines */}
+                {/* Linhas de Grade (Grid) */}
+                {Array.from({ length: rowCount }, (_, i) => i + 1).map((pos) => (
+                    <div 
+                        key={pos}
+                        className="absolute w-full border-b border-white/5 border-dashed left-0 right-0"
+                        style={{ top: `${getYPercent(pos)}%` }}
+                    />
+                ))}
+
+                {/* Linhas de Dados (SVG com vector-effect para não distorcer espessura) */}
+                <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    {chartUsers.map((u, idx) => {
+                        const history = u.positionHistory || [];
+                        if (history.length === 0) return null;
+
+                        // Cria o path usando coordenadas de porcentagem
+                        const points = history.map((rank, hIdx) => {
+                            const totalPoints = Math.max(history.length, 1);
+                            // Se tiver só 1 ponto, desenha uma linha reta do início ao fim
+                            if (totalPoints === 1) return `0,${getYPercent(rank)} 100,${getYPercent(rank)}`;
+                            
+                            const x = (hIdx / (totalPoints - 1)) * 100;
+                            const y = getYPercent(rank);
+                            return `${x},${y}`;
+                        });
+                        
+                        // Se tiver pontos suficientes, une com L
+                        let d = "";
+                        if (history.length > 1) {
+                            d = `M ${points.map(p => p.replace(',', ' ')).join(' L ').replace(/ /g, ',')}`; 
+                            // Correção manual da string: "x,y" -> M x,y L x,y ...
+                            // Re-gerando string limpa:
+                            const pathCoords = history.map((rank, hIdx) => {
+                                const x = (hIdx / (history.length - 1)) * 100;
+                                const y = getYPercent(rank);
+                                return `${x},${y}`;
+                            });
+                            d = `M ${pathCoords.join(' L ')}`;
+                        } else {
+                            // Linha reta constante se só tiver 1 dado
+                            const y = getYPercent(history[0]);
+                            d = `M 0,${y} L 100,${y}`;
+                        }
+
+                        const color = chartColors[idx % chartColors.length];
+                        const isCurrentUser = u.id === currentUser.id;
+
+                        return (
+                            <path 
+                                key={u.id}
+                                d={d}
+                                fill="none"
+                                stroke={color}
+                                strokeWidth={isCurrentUser ? 3 : 1.5}
+                                strokeOpacity={isCurrentUser ? 1 : 0.4}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                vectorEffect="non-scaling-stroke" // Mágica: Mantém a linha fina mesmo se o SVG esticar
+                                className="transition-all duration-300"
+                            />
+                        );
+                    })}
+                </svg>
+
+                {/* Bolinhas (Dots) - HTML puro para garantir que sejam círculos perfeitos */}
                 {chartUsers.map((u, idx) => {
                     const history = u.positionHistory || [];
                     if (history.length === 0) return null;
-                    
-                    const points = history.map((rank, hIdx) => {
-                        const totalPoints = Math.max(history.length, 2); // Evita div by zero
-                        // X space starts from 25 (padding for labels) to VIEWBOX_WIDTH
-                        const x = 25 + (hIdx / (totalPoints - 1)) * (VIEWBOX_WIDTH - 25);
-                        const y = getYForRank(rank);
-                        return { x, y };
-                    });
 
-                    const pathD = points.length > 1 
-                        ? points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ')
-                        : `M ${points[0].x} ${points[0].y} L ${points[0].x + 1} ${points[0].y}`;
-
-                    const lineColor = chartColors[idx % chartColors.length];
+                    const lastRank = history[history.length - 1];
+                    const y = getYPercent(lastRank);
+                    const color = chartColors[idx % chartColors.length];
                     const isCurrentUser = u.id === currentUser.id;
 
                     return (
-                        <g key={u.id} style={{ opacity: isCurrentUser ? 1 : 0.5 }}>
-                            <path 
-                                d={pathD} 
-                                fill="none" 
-                                stroke={lineColor} 
-                                strokeWidth={isCurrentUser ? "3" : "1.5"} 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                                className="drop-shadow-[0_0_8px_rgba(0,0,0,0.8)] transition-all duration-300"
-                            />
-                            {/* Dot only on last point */}
-                             <circle 
-                                cx={points[points.length-1].x} 
-                                cy={points[points.length-1].y} 
-                                r={isCurrentUser ? "4" : "2.5"} 
-                                fill={lineColor} 
-                            />
-                        </g>
+                        <div 
+                            key={u.id}
+                            className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg transition-all ${isCurrentUser ? 'z-20 w-3 h-3 ring-2 ring-white/20' : 'z-10 w-2 h-2 opacity-80'}`}
+                            style={{ 
+                                left: '100%', 
+                                top: `${y}%`,
+                                backgroundColor: color
+                            }}
+                        />
                     );
                 })}
-            </svg>
+
+            </div>
         </div>
 
-        {/* Legend - Lista Completa */}
+        {/* Legenda */}
         <div className="flex flex-wrap gap-x-4 gap-y-2 mt-8 justify-center border-t border-white/5 pt-4 max-h-40 overflow-y-auto custom-scrollbar">
             {chartUsers.map((u, idx) => (
                 <div key={u.id} className="flex items-center gap-2">
@@ -173,7 +181,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
         </div>
       </div>
 
-      {/* Lista de Tempo na Liderança - TODOS OS USUÁRIOS */}
+      {/* Lista de Tempo na Liderança */}
       <div>
          <div className="flex items-center justify-between mb-6 px-1">
             <h3 className="text-lg font-black f1-font uppercase flex items-center gap-2 text-white">
@@ -197,7 +205,6 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     return (
                         <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all ${currentUser.id === u.id ? 'bg-white/10 border border-white/20' : 'bg-[#121214] border border-white/5'}`}>
                             
-                            {/* Barra de Progresso Sutil no Fundo */}
                             {hasLed && (
                                 <div 
                                     className="absolute left-0 top-0 bottom-0 bg-yellow-500/5 z-0 transition-all duration-1000" 
