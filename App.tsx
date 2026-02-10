@@ -92,18 +92,23 @@ const App: React.FC = () => {
         let rawList = Object.entries(data).map(([key, value]: [string, any]) => ({
             ...value,
             id: value.id || key 
-        })).filter(u => u.email); 
+        })).filter(u => u && u.name); // Filtra usuários válidos (visitante pode não ter e-mail)
         
-        // --- DEDUPLICAÇÃO VISUAL ---
+        // --- DEDUPLICAÇÃO VISUAL (Para usuários com email) ---
         const uniqueUsersMap = new Map<string, User>();
         rawList.forEach(u => {
-            if (!uniqueUsersMap.has(u.email)) {
-                uniqueUsersMap.set(u.email, u);
-            } else {
-                const existing = uniqueUsersMap.get(u.email)!;
-                if ((u.points || 0) > (existing.points || 0)) {
+            if (u.email && !u.isGuest) {
+                if (!uniqueUsersMap.has(u.email)) {
                     uniqueUsersMap.set(u.email, u);
+                } else {
+                    const existing = uniqueUsersMap.get(u.email)!;
+                    if ((u.points || 0) > (existing.points || 0)) {
+                        uniqueUsersMap.set(u.email, u);
+                    }
                 }
+            } else {
+                // Visitantes (sem email) ou marcados como guest são adicionados diretamente com ID
+                uniqueUsersMap.set(u.id, u);
             }
         });
         
@@ -141,8 +146,8 @@ const App: React.FC = () => {
     const predictionsRef = ref(db, 'predictions');
 
     // 1. Fetch Inicial Rápido (garante dados sem esperar o handshake do socket)
-    get(calendarRef).then(snap => snap.exists() && setCalendar(snap.val()));
-    get(usersRef).then(snap => snap.exists() && processUsersData(snap.val()));
+    get(calendarRef).then(snap => snap.exists() && setCalendar(snap.val())).catch(e => console.log("Calendar read skipped", e));
+    get(usersRef).then(snap => snap.exists() && processUsersData(snap.val())).catch(e => console.log("Users read skipped", e));
     get(predictionsRef).then(snap => {
         if (snap.exists()) {
              const predList: Prediction[] = [];
@@ -151,7 +156,7 @@ const App: React.FC = () => {
              });
              setPredictions(predList);
         }
-    });
+    }).catch(e => console.log("Predictions read skipped", e));
 
     // 2. Listeners para Real-time Updates
     const unsubCalendar = onValue(calendarRef, (snapshot) => {
@@ -161,7 +166,7 @@ const App: React.FC = () => {
       } else {
         setCalendar(INITIAL_CALENDAR);
       }
-    });
+    }, (e) => console.log("Sync Calendar silenciado"));
 
     const unsubUsers = onValue(usersRef, (snapshot) => {
         processUsersData(snapshot.val());
@@ -189,7 +194,7 @@ const App: React.FC = () => {
     };
   }, [user?.id, processUsersData]);
 
-  // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS
+  // Função isolada para carregar perfil com MIGRAÇÃO DE DADOS e SUPORTE A VISITANTE
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');
       setIsAuthButNoDb(false);
@@ -211,7 +216,26 @@ const App: React.FC = () => {
         if (snapshot.exists()) {
           setUser(snapshot.val());
         } else {
-          // --- LÓGICA DE MIGRAÇÃO ---
+            // Se for login anônimo legado, cria perfil específico (código mantido para compatibilidade, mas sem entrada na UI)
+            if (firebaseUser.isAnonymous) {
+                 const guestUser: User = {
+                    id: userKey,
+                    name: 'Visitante',
+                    email: '', 
+                    points: 0,
+                    rank: 0,
+                    level: 'Bronze',
+                    isAdmin: true,
+                    isGuest: true,
+                    previousRank: 0,
+                    positionHistory: []
+                 };
+                 await set(userRef, guestUser);
+                 setUser(guestUser);
+                 return;
+            }
+
+          // --- LÓGICA DE MIGRAÇÃO (apenas para usuários reais) ---
           const usersRef = ref(db, 'users');
           const usersSnap = await get(usersRef);
           let oldUserData: any = null;
@@ -222,7 +246,7 @@ const App: React.FC = () => {
             userCount = usersSnap.size;
             usersSnap.forEach((child) => {
                 const u = child.val();
-                if (u.email === firebaseUser.email && child.key !== userKey) {
+                if (u.email === firebaseUser.email && child.key !== userKey && !u.isGuest) {
                     oldUserData = u;
                     oldUserKey = child.key;
                 }
@@ -331,9 +355,12 @@ const App: React.FC = () => {
 
   const handlePromoteSelfToAdmin = async () => {
     if (!liveUser) return;
-    const userRef = ref(db, `users/${liveUser.id}`);
-    await update(userRef, { isAdmin: true });
-    // O listener vai atualizar o liveUser automaticamente
+    try {
+        const userRef = ref(db, `users/${liveUser.id}`);
+        await update(userRef, { isAdmin: true });
+    } catch(e) {
+        alert("Erro ao promover: Verifique conexao ou permissoes.");
+    }
   };
 
   // Lógica de Cálculo de Pontos REESCRITA (Recalcula TOTALMENTE do zero)
@@ -375,8 +402,12 @@ const App: React.FC = () => {
       userPointsMap[u.id] = userTotalPoints;
     });
 
-    // 2. Ordena para definir novo Ranking
-    const rankedUsers = allUsers.map(u => ({
+    // 2. Ordena para definir novo Ranking (Ignora Visitantes no ranking real, mas calcula pontos)
+    // Filtramos apenas usuários NÃO convidados para a ordenação oficial
+    const realUsers = allUsers.filter(u => !u.isGuest);
+    const guestUsers = allUsers.filter(u => u.isGuest);
+
+    const rankedUsers = realUsers.map(u => ({
         ...u,
         newPoints: userPointsMap[u.id] || 0
     })).sort((a, b) => b.newPoints - a.newPoints);
@@ -384,35 +415,45 @@ const App: React.FC = () => {
     // 3. Prepara o Update em Batch
     const updates: Record<string, any> = {};
 
+    // Atualiza usuários reais
     rankedUsers.forEach((u, index) => {
         const newRank = index + 1;
         
-        // Lógica de Nível
         let newLevel = 'Bronze';
         if (u.newPoints >= 150) newLevel = 'Ouro';
         else if (u.newPoints >= 50) newLevel = 'Prata';
         
         updates[`users/${u.id}/points`] = u.newPoints;
         updates[`users/${u.id}/rank`] = newRank;
-        updates[`users/${u.id}/level`] = newLevel; // Atualiza o nível
+        updates[`users/${u.id}/level`] = newLevel; 
         updates[`users/${u.id}/previousRank`] = u.rank;
     });
 
-    // Se o GP estava ABERTO, marca como FINALIZADO no calendário
-    if (currentGp.status === 'OPEN') {
-        const newCalendar = updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c);
-        await set(ref(db, 'calendar'), newCalendar);
-    } else {
-        // Se só estamos recalculando (já estava finished), atualizamos o calendário com possíveis correções de resultados
-        await set(ref(db, 'calendar'), updatedCalendar);
+    // Atualiza Visitantes (sem ranking)
+    guestUsers.forEach(u => {
+        updates[`users/${u.id}/points`] = userPointsMap[u.id] || 0;
+        // Não atualiza rank nem level de visitante para não interferir
+    });
+
+    try {
+        // Se o GP estava ABERTO, marca como FINALIZADO no calendário
+        if (currentGp.status === 'OPEN') {
+            const newCalendar = updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c);
+            await set(ref(db, 'calendar'), newCalendar);
+        } else {
+            // Se só estamos recalculando (já estava finished), atualizamos o calendário com possíveis correções de resultados
+            await set(ref(db, 'calendar'), updatedCalendar);
+        }
+        
+        // Executa updates dos usuários
+        if (Object.keys(updates).length > 0) {
+            await update(ref(db), updates);
+        }
+        alert("Pontos e Níveis recalculados com sucesso!");
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar no banco.");
     }
-    
-    // Executa updates dos usuários
-    if (Object.keys(updates).length > 0) {
-        await update(ref(db), updates);
-    }
-    
-    alert("Pontos e Níveis recalculados com sucesso!");
   };
 
   const handleClearAllPredictions = async () => {
@@ -423,7 +464,7 @@ const App: React.FC = () => {
         allUsers.forEach(u => {
             updates[`${u.id}/points`] = 0;
             updates[`${u.id}/rank`] = 0;
-            updates[`${u.id}/level`] = 'Bronze'; // Reseta para Bronze
+            updates[`${u.id}/level`] = 'Bronze'; 
             updates[`${u.id}/previousRank`] = 0;
             updates[`${u.id}/positionHistory`] = [];
         });
@@ -444,12 +485,22 @@ const App: React.FC = () => {
     } catch (e) { console.error(e); alert("Erro ao remover."); }
   };
 
-  const handleLogout = () => { signOut(auth); setUser(null); setActiveTab('home'); };
+  const handleLogout = () => { 
+      signOut(auth); 
+      setUser(null); 
+      setActiveTab('home'); 
+  };
 
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
-    set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), { userId: liveUser.id, gpId, session, top5 });
+    // Salva localmente nas predictions para refletir na UI instantaneamente
+    const newPrediction = { userId: liveUser.id, gpId, session, top5 };
+    setPredictions(prev => [...prev.filter(p => !(p.userId === liveUser.id && p.gpId === gpId && p.session === session)), newPrediction]);
+    
+    // Tenta salvar no Firebase
+    set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction)
+      .catch(e => console.warn("Erro ao salvar palpite:", e));
   };
   
   // Callback chamado pelo Home.tsx quando o tempo do GP acaba
@@ -466,26 +517,25 @@ const App: React.FC = () => {
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   // Usa liveUser.rank se disponível, senão fallback para índice
   const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
-  const currentCalendar = calendar.length > 0 ? calendar : INITIAL_CALENDAR;
+  // FILTRA NULOS NO CALENDÁRIO para evitar crash
+  const safeCalendar = calendar.filter(c => c !== null);
+  const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
   
   const now = new Date();
   
   // Lógica de Seleção do GP Ativo (Baseada em Data e Status)
-  // Prioridade: GP Aberto manualmente -> Próximo GP baseado em Data (agora <= endDate) -> Último GP se tudo acabou
   let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
   
   if (!activeGP) {
       activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
-          // O GP é ativo enquanto AGORA for menor que a data de TÉRMINO
           return now <= endDate;
       });
   }
   
-  // Se não achou nenhum (todos acabaram), pega o último do calendário ou o primeiro (fallback)
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
-  const adminGP = calendar.find(c => c.id === adminEditingGpId) || activeGP;
+  const adminGP = calendar.find(c => c && c.id === adminEditingGpId) || activeGP;
   
   // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
@@ -509,7 +559,7 @@ const App: React.FC = () => {
       {activeTab === 'adversarios' && (
         <Adversarios 
           gp={activeGP}
-          users={allUsers}
+          users={allUsers.filter(u => !u.isGuest)} // Filtra visitantes da lista de adversários
           predictions={activePredictions}
           currentUser={liveUser}
         />
@@ -526,8 +576,8 @@ const App: React.FC = () => {
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers} calendar={calendar} />}
-      {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers} />}
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={calendar} />}
+      {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
       {activeTab === 'admin' && liveUser.isAdmin && (
         <Admin 
           gp={adminGP} 

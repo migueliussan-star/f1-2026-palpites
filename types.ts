@@ -10,6 +10,7 @@ export interface Driver {
   team: Team;
   color: string;
   country: string;
+  image: string;
 }
 
 // Nomes exatos conforme pedido
@@ -24,6 +25,8 @@ export interface RaceGP {
   status: 'UPCOMING' | 'OPEN' | 'CLOSED' | 'FINISHED';
   sessionStatus: Record<string, boolean>; // true = aberto
   results?: Partial<Record<SessionType, string[]>>; // Top 5 oficial
+  // Mapeamento de nome da sessão (ex: "TL1") para data ISO string
+  sessions?: Record<string, string>; 
 }
 
 export interface Prediction {
@@ -43,4 +46,5 @@ export interface User {
   positionHistory?: number[]; // Histórico de posições nas últimas corridas
   level: 'Ouro' | 'Prata' | 'Bronze';
   isAdmin: boolean;
+  isGuest?: boolean; // Flag para usuários visitantes
 }

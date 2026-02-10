@@ -46,7 +46,9 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
     setDetailedError(err.message || JSON.stringify(err));
 
     if (err.code === 'auth/unauthorized-domain') {
-        setError('Domínio não autorizado. Adicione ao Firebase Console.');
+        setError('Domínio não autorizado.');
+        // Se o erro for de domínio, sugerimos o fallback
+        setTimeout(() => setShowRedirectFallback(true), 500);
     } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Janela fechada antes do login.');
     } else if (err.code === 'auth/popup-blocked') {
@@ -127,15 +129,18 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
       <div className="flex-1 overflow-y-auto w-full relative z-10 scroll-smooth">
         <div className="min-h-full w-full flex flex-col items-center justify-center p-6">
           
-          <div className="w-full max-w-sm py-10">
-            <div className="text-center mb-24 flex flex-col items-center">
+          <div className="w-full max-w-sm py-10 glass p-8 rounded-[40px] border border-white/5 shadow-2xl relative overflow-hidden">
+            {/* Glossy effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+
+            <div className="text-center mb-16 flex flex-col items-center relative z-10">
               <h1 className="text-6xl font-black f1-font text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
               <div className="h-1.5 w-24 bg-[#e10600] mb-6 rounded-full shadow-[0_0_10px_#e10600]"></div>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em]">Fantasy League</p>
             </div>
 
-            <div className="space-y-4">
-              {/* Botão Principal */}
+            <div className="space-y-4 relative z-10">
+              {/* Botão Principal - Google */}
               <button 
                 onClick={loading ? undefined : loginWithPopup}
                 disabled={loading}

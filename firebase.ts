@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithRedirect, 
+  signInAnonymously,
   getRedirectResult, 
   signOut, 
   onAuthStateChanged,
@@ -44,6 +45,6 @@ googleProvider.setCustomParameters({
 export { 
   db, auth, googleProvider, 
   ref, set, onValue, update, get, remove, 
-  signInWithPopup, signInWithRedirect, getRedirectResult, 
+  signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, 
   signOut, onAuthStateChanged 
 };

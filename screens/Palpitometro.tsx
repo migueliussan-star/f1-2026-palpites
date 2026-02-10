@@ -63,7 +63,11 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                       <div key={driverId}>
                         <div className="flex justify-between items-end mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black f1-font text-gray-600">#{idx + 1}</span>
+                            <span className="text-[10px] font-black f1-font text-gray-600 w-5">#{idx + 1}</span>
+                            {/* Avatar Pequeno */}
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 border border-white/10">
+                                <img src={driver?.image} alt="" className="w-full h-full object-cover object-top scale-125 translate-y-1" onError={(e) => e.currentTarget.style.display = 'none'} />
+                            </div>
                             <p className="text-sm font-bold">{driver?.name}</p>
                           </div>
                           {/* Apenas o número de votos, sem a porcentagem por escrito */}
