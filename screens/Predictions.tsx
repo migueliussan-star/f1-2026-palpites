@@ -19,34 +19,57 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   const activeSession = sessions[activeSessionIdx];
   
   const currentPrediction = savedPredictions.find(p => p.session === activeSession);
-  const isAlreadyPredicted = !!currentPrediction;
+  const isAlreadyPredicted = !!currentPrediction && currentPrediction.top5.length > 0;
   const isSessionOpen = gp.sessionStatus[activeSession] !== false;
   
   const [manualEditMode, setManualEditMode] = useState(false);
   const isEditable = isSessionOpen && (!isAlreadyPredicted || manualEditMode);
   
-  const [selectedDrivers, setSelectedDrivers] = useState<string[]>(currentPrediction?.top5 || []);
+  // Estado alterado para permitir slots vazios (null)
+  const [selectedDrivers, setSelectedDrivers] = useState<(string | null)[]>([null, null, null, null, null]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorShake, setErrorShake] = useState(false);
 
   useEffect(() => {
     const pred = savedPredictions.find(p => p.session === activeSession);
-    setSelectedDrivers(pred?.top5 || []);
+    
+    // Mapeia o array salvo para os 5 slots
+    if (pred && pred.top5 && pred.top5.length > 0) {
+      const newSelection = [null, null, null, null, null] as (string | null)[];
+      pred.top5.forEach((d, i) => {
+        if (i < 5) newSelection[i] = d;
+      });
+      setSelectedDrivers(newSelection);
+    } else {
+      // Se não houver palpite ou for vazio, limpa tudo
+      setSelectedDrivers([null, null, null, null, null]);
+    }
+    
     setManualEditMode(false);
   }, [activeSession, savedPredictions]);
 
   const toggleDriver = (id: string) => {
     if (!isEditable) return;
     
-    if (selectedDrivers.includes(id)) {
+    const currentIndex = selectedDrivers.indexOf(id);
+    
+    if (currentIndex !== -1) {
+      // REMOVER: Define o slot como null, mantendo o buraco (não sobe os de baixo)
       if (navigator.vibrate) navigator.vibrate(20);
-      setSelectedDrivers(prev => prev.filter(d => d !== id));
+      const newSelection = [...selectedDrivers];
+      newSelection[currentIndex] = null;
+      setSelectedDrivers(newSelection);
     } else {
-      if (selectedDrivers.length < 5) {
+      // ADICIONAR: Encontra o primeiro slot vazio (null)
+      const emptyIndex = selectedDrivers.indexOf(null);
+      
+      if (emptyIndex !== -1) {
         if (navigator.vibrate) navigator.vibrate(50);
-        setSelectedDrivers(prev => [...prev, id]);
+        const newSelection = [...selectedDrivers];
+        newSelection[emptyIndex] = id;
+        setSelectedDrivers(newSelection);
       } else {
-        // Grid full feedback
+        // Grid Cheio
         setErrorShake(true);
         if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
         setTimeout(() => setErrorShake(false), 500);
@@ -56,18 +79,26 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
 
   const handleClear = () => {
     if (navigator.vibrate) navigator.vibrate(50);
-    setSelectedDrivers([]);
+    // Limpa localmente
+    setSelectedDrivers([null, null, null, null, null]);
+    // PERSISTE o estado vazio no banco imediatamente para garantir que "continue sem nada"
+    onSave(gp.id, activeSession, []);
   };
 
   const handleSave = () => {
-    if (selectedDrivers.length === 5 && isEditable) {
+    // Filtra os nulos para enviar apenas strings válidas
+    const cleanList = selectedDrivers.filter((d): d is string => d !== null);
+    
+    if (cleanList.length === 5 && isEditable) {
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-      onSave(gp.id, activeSession, selectedDrivers);
+      onSave(gp.id, activeSession, cleanList);
       setShowSuccess(true);
       setManualEditMode(false);
       setTimeout(() => setShowSuccess(false), 3000);
     }
   };
+
+  const filledCount = selectedDrivers.filter(d => d !== null).length;
 
   return (
     <div className="p-6 pt-10 lg:p-12">
@@ -90,7 +121,8 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       {/* Session Tabs */}
       <div className="flex gap-3 mb-8 overflow-x-auto pb-4 scrollbar-hide px-1">
         {sessions.map((s, idx) => {
-          const isCompleted = savedPredictions.some(p => p.session === s);
+          // Verifica se tem palpite VÁLIDO (com itens)
+          const isCompleted = savedPredictions.some(p => p.session === s && p.top5.length > 0);
           const isOpen = gp.sessionStatus[s] !== false;
           const isActive = activeSession === s;
           
@@ -150,7 +182,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 <div className={`mb-8 transition-transform ${errorShake ? 'translate-x-[-5px] rotate-[-1deg]' : ''}`} style={{ transitionDuration: '0.1s' }}>
                     <div className="flex items-center justify-between mb-4 px-1">
                         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Seu Grid (Top 5)</h3>
-                        {isEditable && selectedDrivers.length > 0 && (
+                        {isEditable && filledCount > 0 && (
                             <button onClick={handleClear} className="text-[10px] text-red-400 font-black uppercase tracking-tighter flex items-center gap-1 hover:text-red-300">
                                 <RotateCcw size={10} /> Limpar
                             </button>
@@ -161,7 +193,8 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                     {[0, 1, 2, 3, 4].map((idx) => {
                         const pos = idx + 1;
                         const driverId = selectedDrivers[idx];
-                        const driver = DRIVERS.find(d => d.id === driverId);
+                        // driver pode ser undefined se driverId for null ou inválido
+                        const driver = driverId ? DRIVERS.find(d => d.id === driverId) : null;
                         
                         return (
                         <div key={pos} className="flex items-center gap-3">
@@ -222,17 +255,17 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                     <div className="mb-10 animate-enter">
                         <button 
                         onClick={handleSave}
-                        disabled={selectedDrivers.length < 5}
+                        disabled={filledCount < 5}
                         className={`
                             w-full py-4 rounded-xl flex items-center justify-center gap-3 font-black transition-all shadow-xl uppercase tracking-widest text-xs border
-                            ${selectedDrivers.length === 5
+                            ${filledCount === 5
                             ? 'bg-[#e10600] text-white border-[#e10600] shadow-[#e10600]/20 active:scale-95 cursor-pointer hover:bg-red-600' 
                             : 'bg-white/5 text-gray-500 border-white/5 cursor-not-allowed opacity-50'}
                         `}
                         >
                         CONFIRMAR PALPITE <Save size={18} />
                         </button>
-                        {selectedDrivers.length < 5 && (
+                        {filledCount < 5 && (
                             <p className="text-[9px] text-center text-gray-500 font-bold uppercase mt-2 tracking-wide">
                                 Selecione 5 pilotos para salvar
                             </p>
@@ -253,6 +286,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                 {DRIVERS.map(driver => {
                     const isSelected = selectedDrivers.includes(driver.id);
+                    // O índice para exibição no card do piloto (+1 para ser 1-based)
                     const selectionIndex = selectedDrivers.indexOf(driver.id) + 1;
                     
                     const activeStyle = isSelected ? {
