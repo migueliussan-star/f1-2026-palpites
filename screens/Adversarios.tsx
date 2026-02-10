@@ -109,7 +109,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                     {driver ? (
                                                         <img 
                                                             src={driver.image} 
-                                                            className={`w-full h-full ${driver.image.includes('formula1.com') ? 'object-cover object-top scale-125 translate-y-2' : 'object-cover object-center scale-100'}`}
+                                                            className="w-full h-full object-cover object-top scale-125 translate-y-2"
                                                             alt={driver.name} 
                                                             onError={(e) => { 
                                                                 e.currentTarget.onerror = null;

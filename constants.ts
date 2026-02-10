@@ -33,8 +33,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'antonelli', name: 'Kimi Antonelli', number: 12, team: 'Mercedes', color: TEAM_COLORS['Mercedes'], country: 'ITA',
-    // Wikimedia Commons (Estável)
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Andrea_Kimi_Antonelli_Imola_2022.jpg/640px-Andrea_Kimi_Antonelli_Imola_2022.jpg"
+    // Imagem Oficial F2 (PNG Transparente)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Antonelli.png"
   },
   { 
     id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
@@ -42,8 +42,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA',
-    // Wikimedia Commons (Estável)
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Isack_Hadjar_Red_Bull_Ring_2022.jpg/640px-Isack_Hadjar_Red_Bull_Ring_2022.jpg"
+    // Imagem Oficial F2 (PNG Transparente)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Hadjar.png"
   },
   { 
     id: 'leclerc', name: 'Charles Leclerc', number: 16, team: 'Ferrari', color: TEAM_COLORS['Ferrari'], country: 'MON',
@@ -59,8 +59,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR',
-    // Wikimedia Commons (Estável)
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Arvid_Lindblad_2022.jpg/640px-Arvid_Lindblad_2022.jpg"
+    // Imagem Oficial F3 (PNG Transparente)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f3/drivers/2024/Headshots/Lindblad.png"
   },
   { 
     id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP',
@@ -84,8 +84,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'bortoleto', name: 'Gabriel Bortoleto', number: 5, team: 'Audi', color: TEAM_COLORS['Audi'], country: 'BRA',
-    // Wikimedia Commons (Estável)
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Gabriel_Bortoleto_F3_2023.jpg/640px-Gabriel_Bortoleto_F3_2023.jpg"
+    // Imagem Oficial F2 (PNG Transparente)
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Bortoleto.png"
   },
   { 
     id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
@@ -93,7 +93,8 @@ export const DRIVERS: Driver[] = [
   },
   { 
     id: 'colapinto', name: 'Franco Colapinto', number: 43, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'ARG',
-    image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png"
+    // Imagem Oficial F2 (PNG Transparente) - Fallback caso a URL da F1 falhe
+    image: "https://res.cloudinary.com/prod-f2f3/image/upload/v1/f2/drivers/2024/Headshots/Colapinto.png"
   },
   { 
     id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'MEX',

@@ -182,7 +182,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                                     <img 
                                         src={driver.image} 
                                         alt={driver.name} 
-                                        className={`h-full w-full ${driver.image.includes('formula1.com') ? 'object-contain object-bottom' : 'object-cover object-center rounded-r-lg opacity-100'}`}
+                                        className="h-full w-full object-contain object-bottom"
                                         onError={(e) => { 
                                             e.currentTarget.onerror = null; 
                                             e.currentTarget.src = FALLBACK_IMG;
@@ -278,7 +278,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                             <img 
                                 src={driver.image} 
                                 alt={driver.name} 
-                                className={`w-full h-full ${driver.image.includes('formula1.com') ? 'object-contain object-bottom' : 'object-cover object-center rounded-lg opacity-100'}`}
+                                className="w-full h-full object-contain object-bottom"
                                 onError={(e) => { 
                                     e.currentTarget.onerror = null;
                                     e.currentTarget.src = FALLBACK_IMG;
