@@ -199,8 +199,8 @@ const App: React.FC = () => {
     get(calendarRef).then(snap => {
         if (snap.exists()) {
              const data = snap.val();
-             // Segurança: Garante que é array
-             const calArray = Array.isArray(data) ? data : Object.values(data);
+             // Segurança: Garante que é array e filtra nulos
+             const calArray = Array.isArray(data) ? data.filter(Boolean) : Object.values(data).filter(Boolean);
              setCalendar(calArray);
         } else {
              setCalendar(INITIAL_CALENDAR);
@@ -212,9 +212,14 @@ const App: React.FC = () => {
     get(predictionsRef).then(snap => {
         if (snap.exists()) {
              const predList: Prediction[] = [];
-             Object.values(snap.val()).forEach((userPreds: any) => {
-                Object.values(userPreds).forEach((p: any) => predList.push(p));
-             });
+             const val = snap.val();
+             if (val && typeof val === 'object') {
+                 Object.values(val).forEach((userPreds: any) => {
+                    if (userPreds && typeof userPreds === 'object') {
+                        Object.values(userPreds).forEach((p: any) => predList.push(p));
+                    }
+                 });
+             }
              setPredictions(predList);
         }
     }).catch(e => console.log("Predictions read skipped", e));
@@ -224,7 +229,7 @@ const App: React.FC = () => {
       const data = snapshot.val();
       if (data) {
         // Segurança: Garante que é array (Firebase pode retornar objeto se array for esparso)
-        const calArray = Array.isArray(data) ? data : Object.values(data);
+        const calArray = Array.isArray(data) ? data.filter(Boolean) : Object.values(data).filter(Boolean);
         setCalendar(calArray);
       } else {
         setCalendar(INITIAL_CALENDAR);
@@ -240,9 +245,11 @@ const App: React.FC = () => {
     const unsubPredictions = onValue(predictionsRef, (snapshot) => {
       const data = snapshot.val();
       const predList: Prediction[] = [];
-      if (data) {
+      if (data && typeof data === 'object') {
         Object.values(data).forEach((userPreds: any) => {
-          Object.values(userPreds).forEach((p: any) => predList.push(p));
+          if (userPreds && typeof userPreds === 'object') {
+            Object.values(userPreds).forEach((p: any) => predList.push(p));
+          }
         });
       }
       setPredictions(predList);
@@ -589,8 +596,8 @@ const App: React.FC = () => {
   // Usa liveUser.rank se disponível, senão fallback para índice
   const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
   
-  // FILTRA NULOS NO CALENDÁRIO e GARANTE que é ARRAY
-  const safeCalendar = Array.isArray(calendar) ? calendar.filter(c => c !== null) : [];
+  // FILTRA NULOS NO CALENDÁRIO e GARANTE que é ARRAY (Correção do Crash)
+  const safeCalendar = Array.isArray(calendar) ? calendar.filter(Boolean) : [];
   const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
   
   const now = new Date();
@@ -605,12 +612,22 @@ const App: React.FC = () => {
       });
   }
   
+  // Fallback final: Se não achou nenhum aberto ou futuro, pega o último ou primeiro
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
+  
+  // SEGURANÇA MÁXIMA: Se activeGP for indefinido (ex: loading data), renderiza loader ao invés de crashar
+  if (!activeGP) {
+      return (
+        <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center">
+            <div className="text-white text-xs font-bold uppercase animate-pulse">Carregando Calendário...</div>
+        </div>
+      );
+  }
                    
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
   
-  // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos)
-  const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
+  // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos e crashes)
+  const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
   // --- LOGICA DE NOTIFICAÇÕES DO SISTEMA (1 dia antes / Início de Sessão) ---
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -678,8 +695,8 @@ const App: React.FC = () => {
         <Home 
           user={{...liveUser, rank: realTimeRank}} 
           nextGP={activeGP} 
-          // FIX: Contagem segura de previsões
-          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP!.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
+          // FIX: Uso seguro com Optional Chaining para evitar crash se activeGP for nulo em renderizações rápidas
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
@@ -688,7 +705,7 @@ const App: React.FC = () => {
           constructorsList={constructorsOrder}
         />
       )}
-      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP!.id && p.userId === liveUser.id)} />}
+      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
       
       {activeTab === 'adversarios' && (
         <Adversarios 
@@ -702,13 +719,13 @@ const App: React.FC = () => {
       {activeTab === 'palpitometro' && (
         <Palpitometro 
           gp={activeGP} 
-          stats={activePredictions.filter(p => p.gpId === activeGP!.id).reduce((acc, p) => {
+          stats={activePredictions.filter(p => p.gpId === activeGP?.id).reduce((acc, p) => {
             if (!acc[p.session]) acc[p.session] = {};
             // FIX: Ensure top5 exists before forEach
             (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
             return acc;
           }, {} as any)} 
-          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP!.id).map(p => p.userId)).size} 
+          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
         />
       )}
       {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
