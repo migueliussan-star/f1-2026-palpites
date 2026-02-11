@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP, Team } from '../types';
 import { INITIAL_CALENDAR, TEAM_COLORS } from '../constants';
-import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Calendar, Flag, Car, Briefcase } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Briefcase } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -12,12 +12,11 @@ interface HomeProps {
   onLogout: () => void;
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
-  onTimerFinished?: () => void;
   constructorsList: Team[];
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, onTimerFinished, constructorsList
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [nextSessionName, setNextSessionName] = useState<string>('');
@@ -88,9 +87,6 @@ const Home: React.FC<HomeProps> = ({
         });
       } else {
         setTimeLeft({ d: 0, h: 0, m: 0, s: 0 });
-        if (currentTarget.name === 'Finalizado' && onTimerFinished) {
-            onTimerFinished();
-        }
       }
     }, 1000);
 
@@ -107,7 +103,7 @@ const Home: React.FC<HomeProps> = ({
       clearInterval(interval);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [nextGP, onTimerFinished]);
+  }, [nextGP]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -252,7 +248,7 @@ const Home: React.FC<HomeProps> = ({
                 <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2">Global</p>
             </div>
 
-            {/* Install Box (Se necessário) - Aparece no grid no Mobile, ou final da coluna no Desktop */}
+            {/* Install Box */}
             {(deferredPrompt || isIOS) && (
                 <div className="col-span-3 lg:col-span-1 p-[1px] lg:p-[2px] rounded-[18px] lg:rounded-[24px] bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 mt-2 lg:mt-0">
                     <div className="bg-[#0a0a0c] rounded-[17px] lg:rounded-[22px] p-4 lg:p-6 flex lg:flex-col items-center lg:items-start justify-between lg:justify-center gap-3">
@@ -281,7 +277,6 @@ const Home: React.FC<HomeProps> = ({
                 </div>
             )}
         </div>
-
       </div>
     </div>
   );

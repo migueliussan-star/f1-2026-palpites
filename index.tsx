@@ -15,7 +15,7 @@ if (container) {
   console.error("Elemento root não encontrado!");
 }
 
-// Registra o Service Worker para permitir instalação (PWA) e cache offline
+// Registra o Service Worker para PWA (Mantido funcional)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')

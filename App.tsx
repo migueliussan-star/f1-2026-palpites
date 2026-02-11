@@ -58,18 +58,16 @@ const App: React.FC = () => {
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS); // Estado para lista de construtores
+  const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
-  const [timeTick, setTimeTick] = useState(0); // Estado auxiliar para forçar atualização do GP ativo
 
   // Deriva o usuário "vivo" (combinando Auth + Dados do DB em tempo real)
   const liveUser = useMemo(() => {
     if (!user) return null;
     const dbUser = allUsers.find(u => u.id === user.id);
-    // Prioriza dados do DB (que tem pontos atualizados), mas mantém isAdmin/email do auth inicial se necessário
     return dbUser ? { ...user, ...dbUser } : user;
   }, [user, allUsers]);
 
@@ -87,7 +85,6 @@ const App: React.FC = () => {
   }, []);
 
   // Fetch Constructor Standings from Ergast API (or Fallback)
-  // CORREÇÃO CORS: Try/Catch silencioso e Fallback imediato
   useEffect(() => {
     const fetchConstructors = async () => {
       try {
@@ -121,14 +118,13 @@ const App: React.FC = () => {
         }
         setConstructorsOrder(FALLBACK_CONSTRUCTORS);
       } catch (e) {
-        // Silencia erro de CORS/Rede e usa fallback
         setConstructorsOrder(FALLBACK_CONSTRUCTORS);
       }
     };
     fetchConstructors();
   }, []);
 
-  // Processamento de dados de usuários extraído para reutilização
+  // Processamento de dados de usuários
   const processUsersData = useCallback((data: any) => {
       if (data && typeof data === 'object') {
         let rawList = Object.entries(data).map(([key, value]: [string, any]) => {
@@ -161,7 +157,6 @@ const App: React.FC = () => {
         
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
-            
             let safeHistory: number[] = [];
             if (u.positionHistory && Array.isArray(u.positionHistory)) {
                 safeHistory = u.positionHistory.map((val: any) => Number(val) || 0);
@@ -190,8 +185,6 @@ const App: React.FC = () => {
         setPredictions([]);
         return;
     }
-
-    console.log("Iniciando sincronização de dados...");
 
     const calendarRef = ref(db, 'calendar');
     const usersRef = ref(db, 'users');
@@ -262,7 +255,6 @@ const App: React.FC = () => {
     };
   }, [user?.id, processUsersData]);
 
-  // Função isolada para carregar perfil
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');
       setIsAuthButNoDb(false);
@@ -328,9 +320,7 @@ const App: React.FC = () => {
                  name: firebaseUser.displayName || oldUserData.name || 'Piloto',
                  isAdmin: oldUserData.isAdmin || shouldBeAdmin
              };
-
              await set(userRef, newUserData);
-
              if (oldUserKey) {
                  const oldPredsRef = ref(db, `predictions/${oldUserKey}`);
                  const oldPredsSnap = await get(oldPredsRef);
@@ -340,7 +330,6 @@ const App: React.FC = () => {
                  }
                  await remove(ref(db, `users/${oldUserKey}`));
              }
-
              setUser(newUserData);
           } else {
             const userData: User = {
@@ -480,7 +469,7 @@ const App: React.FC = () => {
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
         }
-        alert("Pontos, Níveis e Histórico recalculados com sucesso!");
+        alert("Pontos calculados com sucesso!");
     } catch (e) {
         console.error(e);
         alert("Erro ao salvar no banco.");
@@ -526,17 +515,6 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  // Callback chamado pelo Timer do Home (Visual) e Notificações
-  const handleGpTimerFinished = useCallback(() => {
-    console.log("Tempo do GP esgotou!");
-    setTimeTick(prev => prev + 1);
-    
-    // Notificação visual imediata
-    if ('Notification' in window && Notification.permission === 'granted') {
-         new Notification("F1 2026", { body: "O tempo para a sessão acabou! Confira o resultado.", icon: '/icon.svg' });
-    }
-  }, []);
-
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
@@ -554,72 +532,19 @@ const App: React.FC = () => {
           return now <= endDate;
       });
   }
+  // Fallback seguro
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
-  if (!activeGP) return null;
+  if (!activeGP) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
+              <p>Calendário não carregado. Tente recarregar.</p>
+          </div>
+      );
+  }
                    
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
   const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
-
-  // --- LÓGICA DE NOTIFICAÇÕES (1 dia antes / Início de Sessão) ---
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (!activeGP || !activeGP.sessions) return;
-
-    // Tenta pedir permissão se ainda não foi decidido
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
-
-    const checkTime = () => {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const nowTime = new Date().getTime();
-
-            // 1. Verifica falta de 1 dia para o início do evento (primeira sessão)
-            const sessionEntries = Object.entries(activeGP!.sessions!).sort((a,b) => new Date(a[1] as string).getTime() - new Date(b[1] as string).getTime());
-            if (sessionEntries.length > 0) {
-                const firstSessionTime = new Date(sessionEntries[0][1] as string).getTime();
-                const diff = firstSessionTime - nowTime;
-                const oneDay = 24 * 60 * 60 * 1000;
-
-                // Se faltar entre 24h e 23h50m (janela de 10 min para disparar)
-                if (diff <= oneDay && diff > (oneDay - 600000)) {
-                    const key = `notif_${activeGP!.id}_24h`;
-                    if (!localStorage.getItem(key)) {
-                        new Notification(`F1 ${activeGP!.name}`, { 
-                            body: `Falta 1 dia para começar! Prepare seus palpites.`,
-                            icon: '/icon.svg'
-                        });
-                        localStorage.setItem(key, 'true');
-                    }
-                }
-            }
-
-            // 2. Verifica início de sessões (que fecha palpites)
-            Object.entries(activeGP!.sessions!).forEach(([name, isoDate]) => {
-                const time = new Date(isoDate as string).getTime();
-                // Se começou nos últimos 5 minutos (janela de "agora")
-                if (nowTime >= time && (nowTime - time) < 300000) {
-                    const key = `notif_${activeGP!.id}_${name}_start`;
-                    if (!localStorage.getItem(key)) {
-                        const isPredictionSession = name.toLowerCase().includes('qualy') || name.toLowerCase().includes('corrida') || name.toLowerCase().includes('sprint');
-                        const body = isPredictionSession
-                            ? `${name} começou! Palpites fechados.`
-                            : `${name} começou agora!`;
-
-                        new Notification(`🔴 ${activeGP!.name}`, { body, icon: '/icon.svg' });
-                        localStorage.setItem(key, 'true');
-                    }
-                }
-            });
-        }
-    };
-
-    const timer = setInterval(checkTime, 60000); // Checa a cada minuto
-    checkTime(); 
-
-    return () => clearInterval(timer);
-  }, [activeGP]);
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
@@ -632,7 +557,6 @@ const App: React.FC = () => {
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
-          onTimerFinished={handleGpTimerFinished}
           constructorsList={constructorsOrder}
         />
       )}
