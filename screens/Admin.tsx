@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, User, Team } from '../types';
 import { DRIVERS, TEAM_COLORS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered, History } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -15,9 +15,10 @@ interface AdminProps {
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
   constructorsOrder?: Team[];
+  onResetHistory?: () => void; // Nova Prop opcional para não quebrar compatibilidade imediata
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder, onResetHistory }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -235,7 +236,22 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                 Ações aqui são irreversíveis. Tenha cuidado.
             </p>
 
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+            {/* BOTÃO NOVO: RESETAR HISTÓRICO */}
+            {onResetHistory && (
+                <div className="mb-8">
+                     <button 
+                        onClick={onResetHistory}
+                        className="w-full bg-orange-600/20 hover:bg-orange-600/30 text-orange-500 border border-orange-600/30 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all mb-2"
+                     >
+                        <History size={14} /> Resetar Dominância / GPs Liderados
+                     </button>
+                     <p className="text-[9px] text-gray-500 text-center">
+                        Use isso se você calculou pontos de teste. Os pontos atuais NÃO serão apagados, apenas o histórico do gráfico e a contagem de liderança.
+                     </p>
+                </div>
+            )}
+
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2 border-t border-white/5 pt-4">
                 <Users size={12} /> Pilotos Cadastrados ({users.length})
             </h4>
             

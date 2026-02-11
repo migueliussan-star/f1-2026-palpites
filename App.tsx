@@ -446,6 +446,9 @@ const App: React.FC = () => {
         else if (u.newPoints >= 50) newLevel = 'Prata';
         
         const currentHistory = u.positionHistory || [];
+        // ADICIONA O RANK ATUAL AO HISTÓRICO
+        // IMPORTANTE: Isso só deve ser feito quando o Admin clica em Calcular Pontos.
+        // O botão de Resetar Histórico serve para limpar isso caso o Admin faça testes.
         const newHistory = [...currentHistory, newRank];
 
         updates[`users/${u.id}/points`] = u.newPoints;
@@ -473,6 +476,25 @@ const App: React.FC = () => {
     } catch (e) {
         console.error(e);
         alert("Erro ao salvar no banco.");
+    }
+  };
+
+  // --- NOVA FUNÇÃO: Reseta histórico de posições (Dominância/GPs Liderados) ---
+  const handleResetHistory = async () => {
+    if (!window.confirm("ATENÇÃO: Isso apagará o histórico de posições (gráfico de dominância) e estatísticas de 'GPs Liderados' de TODOS os usuários. Os pontos atuais NÃO serão alterados.\n\nUse isso apenas se calculou pontos de teste.")) return;
+
+    const updates: Record<string, any> = {};
+    allUsers.forEach(u => {
+        updates[`users/${u.id}/positionHistory`] = [];
+        updates[`users/${u.id}/previousRank`] = u.rank; // Reseta seta de tendência
+    });
+
+    try {
+        await update(ref(db), updates);
+        alert("Histórico e Dominância resetados com sucesso.");
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao resetar histórico.");
     }
   };
 
@@ -596,6 +618,7 @@ const App: React.FC = () => {
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
           constructorsOrder={constructorsOrder}
+          onResetHistory={handleResetHistory} 
         />
       )}
     </Layout>
