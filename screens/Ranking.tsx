@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { User as UserType, RaceGP } from '../types';
-import { ChevronUp, ChevronDown, Minus } from 'lucide-react';
+import { User as UserType, RaceGP, Team } from '../types';
+import { TEAM_COLORS } from '../constants';
+import { ChevronUp, ChevronDown, Minus, Car, Flag } from 'lucide-react';
 
 interface RankingProps {
   currentUser: UserType;
   users: UserType[];
   calendar: RaceGP[];
+  constructorsList: Team[];
 }
 
-const Ranking: React.FC<RankingProps> = ({ currentUser, users }) => {
+const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList }) => {
   // Ordena os usuários reais por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
   const leaderPoints = sortedUsers[0]?.points || 0;
@@ -39,36 +41,65 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users }) => {
                 const prevRank = item.previousRank || (item.points ? idx + 2 : idx + 1); 
                 const rankChange = prevRank - (idx + 1);
 
+                // --- Lógica de Equipe ---
+                // Cada equipe tem 2 pilotos.
+                // Rank 1 e 2 -> Equipe 0
+                // Rank 3 e 4 -> Equipe 1
+                const teamIndex = Math.floor(idx / 2);
+                const assignedTeam = constructorsList[teamIndex % constructorsList.length];
+                const teamColor = TEAM_COLORS[assignedTeam] || '#666';
+                
+                // Status do Piloto
+                // Se idx é par (0, 2, 4...) -> 1º piloto da dupla (está na frente)
+                // Se idx é ímpar (1, 3, 5...) -> 2º piloto da dupla
+                const isLeadDriver = idx % 2 === 0;
+
                 return (
                 <div 
                     key={item.id} 
-                    className={`flex items-center justify-between p-4 px-6 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors ${item.id === currentUser.id ? 'bg-[#e10600]/10 border-l-4 border-l-[#e10600]' : ''}`}
+                    className={`flex items-center justify-between p-4 px-6 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors relative overflow-hidden group ${item.id === currentUser.id ? 'bg-[#e10600]/10' : ''}`}
                 >
-                    <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-center w-6">
-                            <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-500' : 'text-gray-500'}`}>
-                            {idx + 1}
-                            </span>
-                            {/* Indicador de Mudança de Posição */}
-                            <div className="flex items-center justify-center">
-                                {rankChange > 0 ? (
-                                    <div className="flex items-center text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
-                                ) : rankChange < 0 ? (
-                                    <div className="flex items-center text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
-                                ) : (
-                                    <Minus size={8} className="text-gray-600" />
+                    {/* Barra de Cor da Equipe à esquerda */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: teamColor }}></div>
+
+                    <div className="flex items-center gap-4 pl-2">
+                        <div className="flex flex-col items-center w-6">
+                                <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                                {idx + 1}
+                                </span>
+                                {/* Indicador de Mudança de Posição */}
+                                <div className="flex items-center justify-center">
+                                    {rankChange > 0 ? (
+                                        <div className="flex items-center text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
+                                    ) : rankChange < 0 ? (
+                                        <div className="flex items-center text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
+                                    ) : (
+                                        <Minus size={8} className="text-gray-600" />
+                                    )}
+                                </div>
+                        </div>
+                        
+                        <div className="flex flex-col">
+                            <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px] text-white flex items-center gap-2">
+                                {item.name}
+                                {item.isAdmin && (
+                                    <span className="text-[9px] bg-red-500/20 text-red-500 px-1.5 rounded font-black uppercase tracking-tighter">
+                                    ADM
+                                    </span>
                                 )}
-                            </div>
-                    </div>
-                    
-                    <div className="flex flex-col">
-                        <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px] text-white">{item.name}</span>
-                        {item.isAdmin && (
-                            <span className="text-[9px] font-black uppercase tracking-tighter text-red-500">
-                            Admin
                             </span>
-                        )}
-                    </div>
+                            
+                            {/* Informações da Equipe */}
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: teamColor }}>
+                                    {assignedTeam}
+                                </span>
+                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${isLeadDriver ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/20' : 'bg-gray-700/30 text-gray-400 border border-gray-700/30'}`}>
+                                    {isLeadDriver ? <Flag size={8} /> : <Car size={8} />}
+                                    {isLeadDriver ? '1º Piloto' : '2º Piloto'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div className="text-right">

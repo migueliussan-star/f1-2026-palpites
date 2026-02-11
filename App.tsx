@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, RaceGP, SessionType, Prediction } from './types';
-import { INITIAL_CALENDAR } from './constants';
+import { User, RaceGP, SessionType, Prediction, Team } from './types';
+import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
 import Palpitometro from './screens/Palpitometro';
@@ -58,6 +58,7 @@ const App: React.FC = () => {
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS); // Estado para lista de construtores
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
@@ -83,6 +84,55 @@ const App: React.FC = () => {
       }
     });
     return () => unsub();
+  }, []);
+
+  // Fetch Constructor Standings from Ergast API (or Fallback)
+  useEffect(() => {
+    const fetchConstructors = async () => {
+      try {
+        // Tenta buscar de 2026. Se não existir, vai cair no catch.
+        // Se quisermos dados reais HOJE (antes de 2026), podemos mudar para 'current'
+        const res = await fetch('https://ergast.com/api/f1/2026/constructorStandings.json');
+        if (!res.ok) throw new Error('API not available');
+        const data = await res.json();
+        const standings = data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings;
+        
+        if (standings && standings.length > 0) {
+            // Mapeia a resposta da API para o nosso tipo Team
+            // Precisamos garantir que os nomes batam com nosso tipo Team
+            const apiTeams = standings.map((s: any) => {
+                const name = s.Constructor.name;
+                // Normalização básica de nomes (API -> App)
+                if (name.includes('Red Bull')) return 'Red Bull';
+                if (name.includes('Ferrari')) return 'Ferrari';
+                if (name.includes('McLaren')) return 'McLaren';
+                if (name.includes('Mercedes')) return 'Mercedes';
+                if (name.includes('Aston Martin')) return 'Aston Martin';
+                if (name.includes('Alpine')) return 'Alpine';
+                if (name.includes('Williams')) return 'Williams';
+                if (name.includes('Haas')) return 'Haas';
+                if (name.includes('RB') || name.includes('AlphaTauri') || name.includes('Racing Bulls')) return 'Racing Bulls';
+                if (name.includes('Sauber') || name.includes('Audi')) return 'Audi';
+                if (name.includes('Andretti') || name.includes('Cadillac')) return 'Cadillac';
+                return null;
+            }).filter((t: any) => t !== null) as Team[];
+
+            // Se conseguirmos mapear pelo menos alguns, usamos a API. 
+            // Completamos com o fallback se faltar times.
+            if (apiTeams.length > 0) {
+                 const combined = Array.from(new Set([...apiTeams, ...FALLBACK_CONSTRUCTORS]));
+                 setConstructorsOrder(combined);
+                 return;
+            }
+        }
+        // Se dados vazios ou inválidos, mantém fallback
+        setConstructorsOrder(FALLBACK_CONSTRUCTORS);
+      } catch (e) {
+        console.log("Usando ordem de construtores padrão (API indisponível ou pré-temporada).");
+        setConstructorsOrder(FALLBACK_CONSTRUCTORS);
+      }
+    };
+    fetchConstructors();
   }, []);
 
   // Processamento de dados de usuários extraído para reutilização
@@ -561,6 +611,7 @@ const App: React.FC = () => {
           hasNoAdmin={!hasAnyAdmin}
           onClaimAdmin={handlePromoteSelfToAdmin}
           onTimerFinished={handleGpTimerFinished}
+          constructorsList={constructorsOrder}
         />
       )}
       {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id)} />}
@@ -586,7 +637,7 @@ const App: React.FC = () => {
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={calendar} />}
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={calendar} constructorsList={constructorsOrder} />}
       {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
       {activeTab === 'admin' && liveUser.isAdmin && (
         <Admin 

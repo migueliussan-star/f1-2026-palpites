@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, RaceGP } from '../types';
-import { INITIAL_CALENDAR } from '../constants';
-import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, Share, CheckCircle2, Clock, Calendar, UserCircle2 } from 'lucide-react';
+import { User, RaceGP, Team } from '../types';
+import { INITIAL_CALENDAR, TEAM_COLORS } from '../constants';
+import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Calendar, Flag, Car, Briefcase } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -13,10 +13,11 @@ interface HomeProps {
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
   onTimerFinished?: () => void;
+  constructorsList: Team[];
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, onTimerFinished
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, onTimerFinished, constructorsList
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [nextSessionName, setNextSessionName] = useState<string>('');
@@ -46,6 +47,14 @@ const Home: React.FC<HomeProps> = ({
     statusColor = "bg-yellow-400";
     buttonClass = "bg-yellow-400 text-black shadow-[0_0_30px_rgba(250,204,21,0.4)] hover:bg-yellow-300";
   }
+
+  // --- Lógica de Contrato/Equipe ---
+  const userRank = user.rank || 1;
+  const teamIndex = Math.floor((userRank - 1) / 2);
+  // Garante que não estoure o array se tiver muitos usuários
+  const assignedTeam = constructorsList[teamIndex % constructorsList.length] || 'Williams'; 
+  const teamColor = TEAM_COLORS[assignedTeam] || '#666';
+  const isLeadDriver = (userRank - 1) % 2 === 0;
 
   useEffect(() => {
     // Função para encontrar a próxima sessão
@@ -245,6 +254,36 @@ const Home: React.FC<HomeProps> = ({
 
         {/* Stats Column - Ocupa 1 coluna no desktop, abaixo no mobile */}
         <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 content-start animate-enter" style={{animationDelay: '0.3s'}}>
+            
+            {/* NOVO: CARD DE CONTRATO/EQUIPE */}
+            <div className="col-span-2 glass-card p-6 rounded-[32px] relative overflow-hidden group border border-white/5">
+                <div className="absolute right-0 top-0 bottom-0 w-24 opacity-10 bg-gradient-to-l from-current to-transparent" style={{ color: teamColor }} />
+                
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 rounded-xl bg-white/5">
+                        <Briefcase className="text-white" size={20} />
+                    </div>
+                    <div>
+                         <p className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Contrato Atual</p>
+                         <h3 className="text-lg font-black f1-font uppercase" style={{ color: teamColor }}>{assignedTeam}</h3>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                        {isLeadDriver ? <Flag className="text-yellow-500" size={16} /> : <Car className="text-gray-400" size={16} />}
+                        <span className={`text-xs font-bold uppercase ${isLeadDriver ? 'text-yellow-500' : 'text-gray-400'}`}>
+                            {isLeadDriver ? '1º Piloto' : '2º Piloto'}
+                        </span>
+                    </div>
+                    {isLeadDriver && (
+                        <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded-full font-black uppercase tracking-wider">
+                            Team Leader
+                        </span>
+                    )}
+                </div>
+            </div>
+
             <div className="glass-card p-6 rounded-[32px] relative overflow-hidden group h-full">
                 <div className="absolute -right-4 -top-4 bg-yellow-500/10 w-24 h-24 rounded-full blur-xl group-hover:bg-yellow-500/20 transition-all"></div>
                 <Zap className="text-yellow-500 mb-4" size={28} />

@@ -13,6 +13,12 @@ export interface Driver {
   image: string;
 }
 
+export interface Constructor {
+  id: string;
+  name: Team;
+  position: number;
+}
+
 // Nomes exatos conforme pedido
 export type SessionType = 'Qualy Sprint' | 'corrida Sprint' | 'Qualy corrida' | 'corrida principal';
 

@@ -15,6 +15,21 @@ export const TEAM_COLORS: Record<string, string> = {
   'Williams': '#00A0DE'
 };
 
+// Ordem de Fallback baseada na performance esperada/ficcional de 2026 para início de temporada
+export const FALLBACK_CONSTRUCTORS: Team[] = [
+  'McLaren',
+  'Ferrari',
+  'Red Bull',
+  'Mercedes',
+  'Aston Martin',
+  'Alpine',
+  'Racing Bulls',
+  'Haas',
+  'Williams',
+  'Audi',
+  'Cadillac'
+];
+
 // URL de fallback oficial (silhueta)
 export const FALLBACK_IMG = "https://media.formula1.com/content/dam/fom-website/drivers/d_driver_fallback_image.png";
 
