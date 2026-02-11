@@ -107,25 +107,29 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                         return (
                                             <div key={idx} className="flex flex-col items-center gap-1.5 group">
                                                 <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/5 overflow-hidden relative">
-                                                    <div className="absolute top-0 right-0 w-full h-1 opacity-60 z-10" style={{ backgroundColor: driver?.color || '#333' }} />
                                                     {driver ? (
-                                                        <img 
-                                                            src={driver.image} 
-                                                            className={`w-full h-full object-contain object-bottom 
-                                                                ${driver.id === 'lindblad' ? 'scale-[1.8] -translate-y-3' : 
-                                                                  driver.id === 'hulkenberg' ? 'scale-[1.7] -translate-y-5' : 
-                                                                  'scale-110 translate-y-1'}
-                                                            `}
-                                                            alt={driver.name} 
-                                                            onError={(e) => { 
-                                                                e.currentTarget.onerror = null;
-                                                                e.currentTarget.src = FALLBACK_IMG;
-                                                            }} 
-                                                        />
-                                                    ) : null}
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-center font-bold text-gray-300 py-0.5 backdrop-blur-sm truncate">
-                                                        {driver?.name.split(' ').pop()?.substring(0, 3)}
-                                                    </div>
+                                                        <>
+                                                            <div className="absolute top-0 right-0 w-full h-1 opacity-60 z-10" style={{ backgroundColor: driver.color || '#333' }} />
+                                                            <img 
+                                                                src={driver.image} 
+                                                                className={`w-full h-full object-contain object-bottom 
+                                                                    ${driver.id === 'lindblad' ? 'scale-[1.8] -translate-y-3' : 
+                                                                    driver.id === 'hulkenberg' ? 'scale-[1.7] -translate-y-5' : 
+                                                                    'scale-110 translate-y-1'}
+                                                                `}
+                                                                alt={driver.name} 
+                                                                onError={(e) => { 
+                                                                    e.currentTarget.onerror = null;
+                                                                    e.currentTarget.src = FALLBACK_IMG;
+                                                                }} 
+                                                            />
+                                                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-center font-bold text-gray-300 py-0.5 backdrop-blur-sm truncate">
+                                                                {driver.name.split(' ').pop()?.substring(0, 3)}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-gray-800 text-xs text-gray-500">?</div>
+                                                    )}
                                                 </div>
                                                 <span className="text-[10px] font-black text-gray-500">{idx + 1}</span>
                                             </div>

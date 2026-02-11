@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, RaceGP, SessionType, Prediction, Team } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
@@ -612,17 +613,17 @@ const App: React.FC = () => {
             const nowTime = new Date().getTime();
 
             // 1. Verifica falta de 1 dia para o início do evento (primeira sessão)
-            const sessionEntries = Object.entries(activeGP.sessions!).sort((a,b) => new Date(a[1]).getTime() - new Date(b[1]).getTime());
+            const sessionEntries = Object.entries(activeGP!.sessions!).sort((a,b) => new Date(a[1] as string).getTime() - new Date(b[1] as string).getTime());
             if (sessionEntries.length > 0) {
-                const firstSessionTime = new Date(sessionEntries[0][1]).getTime();
+                const firstSessionTime = new Date(sessionEntries[0][1] as string).getTime();
                 const diff = firstSessionTime - nowTime;
                 const oneDay = 24 * 60 * 60 * 1000;
 
                 // Se faltar entre 24h e 23h50m (janela de 10 min para disparar)
                 if (diff <= oneDay && diff > (oneDay - 600000)) {
-                    const key = `notif_${activeGP.id}_24h`;
+                    const key = `notif_${activeGP!.id}_24h`;
                     if (!localStorage.getItem(key)) {
-                        new Notification(`F1 ${activeGP.name}`, { 
+                        new Notification(`F1 ${activeGP!.name}`, { 
                             body: `Falta 1 dia para começar! Prepare seus palpites.`,
                             icon: '/icon.svg'
                         });
@@ -632,18 +633,18 @@ const App: React.FC = () => {
             }
 
             // 2. Verifica início de sessões (que fecha palpites)
-            Object.entries(activeGP.sessions!).forEach(([name, isoDate]) => {
-                const time = new Date(isoDate).getTime();
+            Object.entries(activeGP!.sessions!).forEach(([name, isoDate]) => {
+                const time = new Date(isoDate as string).getTime();
                 // Se começou nos últimos 5 minutos
                 if (nowTime >= time && (nowTime - time) < 300000) {
-                    const key = `notif_${activeGP.id}_${name}_start`;
+                    const key = `notif_${activeGP!.id}_${name}_start`;
                     if (!localStorage.getItem(key)) {
                         const isPredictionSession = name.toLowerCase().includes('qualy') || name.toLowerCase().includes('corrida') || name.toLowerCase().includes('sprint');
                         const body = isPredictionSession
                             ? `${name} começou! Palpites fechados.`
                             : `${name} começou agora!`;
 
-                        new Notification(`🔴 ${activeGP.name}`, { body, icon: '/icon.svg' });
+                        new Notification(`🔴 ${activeGP!.name}`, { body, icon: '/icon.svg' });
                         localStorage.setItem(key, 'true');
                     }
                 }

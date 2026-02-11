@@ -50,8 +50,10 @@ const Home: React.FC<HomeProps> = ({
   // --- Lógica de Contrato/Equipe ---
   const userRank = user.rank || 1;
   const teamIndex = Math.floor((userRank - 1) / 2);
-  const assignedTeam = constructorsList[teamIndex % constructorsList.length] || 'Williams'; 
-  const teamColor = TEAM_COLORS[assignedTeam] || '#666';
+  // Proteção contra lista vazia ou indefinida
+  const safeConstructors = (constructorsList && constructorsList.length > 0) ? constructorsList : ['Williams'];
+  const assignedTeam = safeConstructors[teamIndex % safeConstructors.length] || 'Williams'; 
+  const teamColor = TEAM_COLORS[assignedTeam as Team] || '#666';
   const isLeadDriver = (userRank - 1) % 2 === 0;
   
   // Limpeza visual forçada do nome da equipe
@@ -68,8 +70,14 @@ const Home: React.FC<HomeProps> = ({
         date: new Date(isoDate as string)
       })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
+      // Correção do Crash: Se a lista estiver vazia, retorna null para não quebrar no acesso ao índice
+      if (sessionList.length === 0) return null;
+
       const next = sessionList.find(s => s.date > now);
-      return next || { name: 'Finalizado', date: sessionList[sessionList.length-1].date };
+      // Acesso seguro ao último elemento
+      const lastSession = sessionList[sessionList.length - 1];
+      
+      return next || { name: 'Finalizado', date: lastSession.date };
     };
 
     const interval = setInterval(() => {
