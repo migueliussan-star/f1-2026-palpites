@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, ClipboardList, Trophy, PieChart, ShieldAlert, Swords, TrendingUp } from 'lucide-react';
+import { Home, ClipboardList, Trophy, ShieldAlert, Swords, TrendingUp, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,6 +35,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                     <NavButtonDesktop icon={<ShieldAlert size={20} />} label="Admin" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} isDanger />
                 </div>
             )}
+            
+            {/* Settings como último item, empurrado para o final ou apenas na lista */}
+            <div className="mt-auto pt-4 border-t border-white/5">
+                <NavButtonDesktop icon={<Settings size={20} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            </div>
         </div>
       </aside>
 
@@ -55,11 +60,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             <NavButtonMobile icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
             <NavButtonMobile icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
             <NavButtonMobile icon={<TrendingUp size={20} />} label="Stats" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
-            <NavButtonMobile icon={<Swords size={20} />} label="Grid" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
-            
-            {isAdmin && (
-                <NavButtonMobile icon={<ShieldAlert size={20} />} label="ADM" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} />
-            )}
+            {/* Removi Admin/Grid da barra mobile principal se ficar muito cheio, mas mantendo a lógica de usuário */}
+            <NavButtonMobile icon={<Settings size={20} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
     </div>

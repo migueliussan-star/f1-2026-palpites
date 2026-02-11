@@ -62,4 +62,8 @@ export interface User {
   level: 'Ouro' | 'Prata' | 'Bronze';
   isAdmin: boolean;
   isGuest?: boolean; // Flag para usuários visitantes
+  // Novos campos de configuração
+  avatarUrl?: string;
+  theme?: 'light' | 'dark';
+  language?: 'pt' | 'en';
 }

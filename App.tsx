@@ -9,6 +9,7 @@ import Ranking from './screens/Ranking';
 import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
 import Stats from './screens/Stats';
+import Settings from './screens/Settings';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
@@ -53,7 +54,7 @@ const getGpDates = (dateStr: string) => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios' | 'settings'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -529,6 +530,19 @@ const App: React.FC = () => {
       setActiveTab('home'); 
   };
 
+  const handleUpdateUser = async (data: Partial<User>) => {
+      if (!liveUser) return;
+      try {
+          await update(ref(db, `users/${liveUser.id}`), data);
+          // O listener onValue em allUsers cuidará de atualizar a UI,
+          // mas atualizamos o estado local 'user' para refletir a mudança imediatamente.
+          setUser(prev => prev ? { ...prev, ...data } : null);
+      } catch (e) {
+          console.error("Erro ao atualizar usuário", e);
+          throw e;
+      }
+  };
+
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
@@ -606,6 +620,10 @@ const App: React.FC = () => {
       )}
       {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
       {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
+      
+      {/* Nova Aba de Settings */}
+      {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
+
       {activeTab === 'admin' && liveUser.isAdmin && (
         <Admin 
           gp={adminGP} 
