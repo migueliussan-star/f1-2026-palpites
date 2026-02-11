@@ -196,8 +196,19 @@ const App: React.FC = () => {
     const predictionsRef = ref(db, 'predictions');
 
     // 1. Fetch Inicial Rápido (garante dados sem esperar o handshake do socket)
-    get(calendarRef).then(snap => snap.exists() && setCalendar(snap.val())).catch(e => console.log("Calendar read skipped", e));
+    get(calendarRef).then(snap => {
+        if (snap.exists()) {
+             const data = snap.val();
+             // Segurança: Garante que é array
+             const calArray = Array.isArray(data) ? data : Object.values(data);
+             setCalendar(calArray);
+        } else {
+             setCalendar(INITIAL_CALENDAR);
+        }
+    }).catch(e => console.log("Calendar read skipped", e));
+
     get(usersRef).then(snap => snap.exists() && processUsersData(snap.val())).catch(e => console.log("Users read skipped", e));
+    
     get(predictionsRef).then(snap => {
         if (snap.exists()) {
              const predList: Prediction[] = [];
@@ -212,7 +223,9 @@ const App: React.FC = () => {
     const unsubCalendar = onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setCalendar(data);
+        // Segurança: Garante que é array (Firebase pode retornar objeto se array for esparso)
+        const calArray = Array.isArray(data) ? data : Object.values(data);
+        setCalendar(calArray);
       } else {
         setCalendar(INITIAL_CALENDAR);
       }
@@ -575,8 +588,9 @@ const App: React.FC = () => {
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   // Usa liveUser.rank se disponível, senão fallback para índice
   const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
-  // FILTRA NULOS NO CALENDÁRIO para evitar crash
-  const safeCalendar = calendar.filter(c => c !== null);
+  
+  // FILTRA NULOS NO CALENDÁRIO e GARANTE que é ARRAY
+  const safeCalendar = Array.isArray(calendar) ? calendar.filter(c => c !== null) : [];
   const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
   
   const now = new Date();
@@ -593,7 +607,7 @@ const App: React.FC = () => {
   
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
                    
-  const adminGP = calendar.find(c => c && c.id === adminEditingGpId) || activeGP;
+  const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
   
   // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
@@ -665,7 +679,7 @@ const App: React.FC = () => {
           user={{...liveUser, rank: realTimeRank}} 
           nextGP={activeGP} 
           // FIX: Contagem segura de previsões
-          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP!.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
           onNavigateToPredict={() => setActiveTab('palpites')} 
           onLogout={handleLogout} 
           hasNoAdmin={!hasAnyAdmin}
@@ -674,7 +688,7 @@ const App: React.FC = () => {
           constructorsList={constructorsOrder}
         />
       )}
-      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP.id && p.userId === liveUser.id)} />}
+      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP!.id && p.userId === liveUser.id)} />}
       
       {activeTab === 'adversarios' && (
         <Adversarios 
@@ -688,21 +702,21 @@ const App: React.FC = () => {
       {activeTab === 'palpitometro' && (
         <Palpitometro 
           gp={activeGP} 
-          stats={activePredictions.filter(p => p.gpId === activeGP.id).reduce((acc, p) => {
+          stats={activePredictions.filter(p => p.gpId === activeGP!.id).reduce((acc, p) => {
             if (!acc[p.session]) acc[p.session] = {};
             // FIX: Ensure top5 exists before forEach
             (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
             return acc;
           }, {} as any)} 
-          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP.id).map(p => p.userId)).size} 
+          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP!.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={calendar} constructorsList={constructorsOrder} />}
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
       {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
       {activeTab === 'admin' && liveUser.isAdmin && (
         <Admin 
           gp={adminGP} 
-          calendar={calendar} 
+          calendar={currentCalendar} 
           users={allUsers}
           currentUser={liveUser}
           onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
