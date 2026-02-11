@@ -137,28 +137,34 @@ const App: React.FC = () => {
 
   // Processamento de dados de usuários extraído para reutilização
   const processUsersData = useCallback((data: any) => {
-      if (data) {
+      if (data && typeof data === 'object') {
         // Mapeia Object.entries para garantir que temos o ID
-        let rawList = Object.entries(data).map(([key, value]: [string, any]) => ({
-            ...value,
-            id: value.id || key 
-        })).filter(u => u && u.name); // Filtra usuários válidos (visitante pode não ter e-mail)
+        let rawList = Object.entries(data).map(([key, value]: [string, any]) => {
+            // Proteção contra valores nulos ou inválidos no banco
+            if (!value || typeof value !== 'object') return null;
+            return {
+                ...value,
+                id: value.id || key 
+            };
+        }).filter(u => u && u.name); // Filtra usuários válidos (visitante pode não ter e-mail)
         
         // --- DEDUPLICAÇÃO VISUAL (Para usuários com email) ---
         const uniqueUsersMap = new Map<string, User>();
         rawList.forEach(u => {
+            if (!u) return;
+            
             if (u.email && !u.isGuest) {
                 if (!uniqueUsersMap.has(u.email)) {
-                    uniqueUsersMap.set(u.email, u);
+                    uniqueUsersMap.set(u.email, u as User);
                 } else {
                     const existing = uniqueUsersMap.get(u.email)!;
                     if ((u.points || 0) > (existing.points || 0)) {
-                        uniqueUsersMap.set(u.email, u);
+                        uniqueUsersMap.set(u.email, u as User);
                     }
                 }
             } else {
                 // Visitantes (sem email) ou marcados como guest são adicionados diretamente com ID
-                uniqueUsersMap.set(u.id, u);
+                uniqueUsersMap.set(u.id, u as User);
             }
         });
         
@@ -170,7 +176,7 @@ const App: React.FC = () => {
             return {
                 ...u,
                 rank: currentRank,
-                positionHistory: u.positionHistory ? Object.values(u.positionHistory) : [], // Garante array mesmo se vier como objeto do Firebase
+                positionHistory: u.positionHistory && Array.isArray(u.positionHistory) ? u.positionHistory : u.positionHistory ? Object.values(u.positionHistory) : [], 
                 previousRank: u.previousRank || currentRank
             };
         });
