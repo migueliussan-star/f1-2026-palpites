@@ -87,6 +87,7 @@ const App: React.FC = () => {
   }, []);
 
   // Fetch Constructor Standings from Ergast API (or Fallback)
+  // CORREÇÃO CORS: Try/Catch silencioso e Fallback imediato
   useEffect(() => {
     const fetchConstructors = async () => {
       try {
@@ -120,7 +121,7 @@ const App: React.FC = () => {
         }
         setConstructorsOrder(FALLBACK_CONSTRUCTORS);
       } catch (e) {
-        console.log("Usando ordem de construtores padrão (API indisponível ou pré-temporada).");
+        // Silencia erro de CORS/Rede e usa fallback
         setConstructorsOrder(FALLBACK_CONSTRUCTORS);
       }
     };
@@ -525,12 +526,12 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  // Callback chamado pelo Timer do Home (Visual)
+  // Callback chamado pelo Timer do Home (Visual) e Notificações
   const handleGpTimerFinished = useCallback(() => {
     console.log("Tempo do GP esgotou!");
     setTimeTick(prev => prev + 1);
     
-    // Notificação visual imediata do fim do timer
+    // Notificação visual imediata
     if ('Notification' in window && Notification.permission === 'granted') {
          new Notification("F1 2026", { body: "O tempo para a sessão acabou! Confira o resultado.", icon: '/icon.svg' });
     }
@@ -565,7 +566,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!activeGP || !activeGP.sessions) return;
 
-    // Tenta pedir permissão
+    // Tenta pedir permissão se ainda não foi decidido
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
     }
