@@ -650,6 +650,8 @@ const App: React.FC = () => {
           onCalculatePoints={handleCalculatePoints} 
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
+          // NEW PROP
+          constructorsOrder={constructorsOrder}
         />
       )}
     </Layout>

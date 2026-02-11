@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { RaceGP, SessionType, User } from '../types';
-import { DRIVERS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert } from 'lucide-react';
+import { RaceGP, SessionType, User, Team } from '../types';
+import { DRIVERS, TEAM_COLORS } from '../constants';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -14,9 +14,10 @@ interface AdminProps {
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
+  constructorsOrder?: Team[];
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -94,6 +95,26 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
       </div>
 
       <div className="space-y-6 pb-24">
+
+        {/* --- EXIBIÇÃO DA ORDEM DE CONSTRUTORES --- */}
+        {constructorsOrder && (
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                <h3 className="text-xs font-black mb-4 uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                    <ListOrdered size={14} /> Ordem Atual de Contratos
+                </h3>
+                <p className="text-[10px] text-gray-500 mb-3">Baseado na classificação real (API) ou fallback.</p>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {constructorsOrder.map((team, idx) => (
+                        <div key={idx} className="shrink-0 flex items-center gap-2 bg-[#0a0a0c] px-3 py-2 rounded-xl border border-white/5">
+                            <span className="text-[10px] font-black text-gray-500">#{idx + 1}</span>
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: TEAM_COLORS[team] || '#666' }} />
+                            <span className="text-[10px] font-bold uppercase">{team}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+
         <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
           <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 block">Gerenciar Grande Prêmio</label>
           <select 
