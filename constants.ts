@@ -38,7 +38,7 @@ const GITHUB_REPO = "https://raw.githubusercontent.com/migueliussan-star/imagens
 
 export const DRIVERS: Driver[] = [
   { 
-    id: 'norris', name: 'Lando Norris', number: 4, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'GBR',
+    id: 'norris', name: 'Lando Norris', number: 1, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'GBR',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png"
   },
   { 
@@ -55,7 +55,7 @@ export const DRIVERS: Driver[] = [
     image: `${GITHUB_REPO}/antonelli.png`
   },
   { 
-    id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
+    id: 'verstappen', name: 'Max Verstappen', number: 3, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png"
   },
   { 

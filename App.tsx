@@ -488,24 +488,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleResetHistory = async () => {
-    if (!window.confirm("ATENÇÃO: Isso apagará o histórico de posições...")) return;
-
-    const updates: Record<string, any> = {};
-    allUsers.forEach(u => {
-        updates[`users/${u.id}/positionHistory`] = [];
-        updates[`users/${u.id}/previousRank`] = u.rank;
-    });
-
-    try {
-        await update(ref(db), updates);
-        alert("Histórico e Dominância resetados com sucesso.");
-    } catch (e) {
-        console.error(e);
-        alert("Erro ao resetar histórico.");
-    }
-  };
-
   const handleClearAllPredictions = async () => {
     if (!window.confirm("Zerar palpites e pontos?")) return;
     try {
@@ -640,7 +622,6 @@ const App: React.FC = () => {
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
           constructorsOrder={constructorsOrder}
-          onResetHistory={handleResetHistory} 
         />
       )}
     </Layout>
