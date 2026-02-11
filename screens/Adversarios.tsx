@@ -80,15 +80,18 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                 {sortedUsers.map((user) => {
                     const userPred = predictions.find(p => p.gpId === gp.id && p.session === activeSession && p.userId === user.id);
                     const isMe = user.id === currentUser.id;
-                    // FIX: Verifica se top5 existe e tem itens
                     const hasValidPrediction = userPred && userPred.top5 && userPred.top5.length > 0;
 
                     return (
                         <div key={user.id} className={`rounded-2xl border p-5 transition-all hover:scale-[1.01] ${isMe ? 'bg-purple-600/10 border-purple-600/50' : 'bg-white/5 border-white/5'}`}>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black f1-font ${isMe ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-400'}`}>
-                                        {user.name.charAt(0).toUpperCase()}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black f1-font overflow-hidden relative ${isMe ? 'ring-2 ring-purple-600' : ''} ${!user.avatarUrl ? (isMe ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-400') : ''}`}>
+                                        {user.avatarUrl ? (
+                                             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                             user.name.charAt(0).toUpperCase()
+                                        )}
                                     </div>
                                     <div>
                                         <p className={`text-sm font-bold ${isMe ? 'text-purple-400' : 'text-gray-200'}`}>{user.name} {isMe && '(Você)'}</p>

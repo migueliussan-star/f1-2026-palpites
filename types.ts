@@ -65,5 +65,4 @@ export interface User {
   // Novos campos de configuração
   avatarUrl?: string;
   theme?: 'light' | 'dark';
-  language?: 'pt' | 'en';
 }

@@ -42,16 +42,10 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                 const rankChange = prevRank - (idx + 1);
 
                 // --- Lógica de Equipe ---
-                // Cada equipe tem 2 pilotos.
-                // Rank 1 e 2 -> Equipe 0
-                // Rank 3 e 4 -> Equipe 1
                 const teamIndex = Math.floor(idx / 2);
                 const assignedTeam = constructorsList[teamIndex % constructorsList.length];
                 const teamColor = TEAM_COLORS[assignedTeam] || '#666';
                 
-                // Status do Piloto
-                // Se idx é par (0, 2, 4...) -> 1º piloto da dupla (está na frente)
-                // Se idx é ímpar (1, 3, 5...) -> 2º piloto da dupla
                 const isLeadDriver = idx % 2 === 0;
 
                 return (
@@ -63,7 +57,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                     <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: teamColor }}></div>
 
                     <div className="flex items-center gap-4 pl-2">
-                        <div className="flex flex-col items-center w-6">
+                        <div className="flex flex-col items-center w-6 shrink-0">
                                 <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-500' : 'text-gray-500'}`}>
                                 {idx + 1}
                                 </span>
@@ -77,6 +71,15 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                                         <Minus size={8} className="text-gray-600" />
                                     )}
                                 </div>
+                        </div>
+
+                        {/* Avatar no Ranking */}
+                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-white/5">
+                             {item.avatarUrl ? (
+                                <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
+                             ) : (
+                                <span className="text-xs font-bold text-gray-500">{item.name.charAt(0).toUpperCase()}</span>
+                             )}
                         </div>
                         
                         <div className="flex flex-col">

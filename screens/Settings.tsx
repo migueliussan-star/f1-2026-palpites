@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
-import { Settings as SettingsIcon, User as UserIcon, Globe, Palette, Save, Camera, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
 
 interface SettingsProps {
   currentUser: User;
@@ -12,7 +12,6 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [theme, setTheme] = useState<'light' | 'dark'>(currentUser.theme || 'dark');
-  const [language, setLanguage] = useState<'pt' | 'en'>(currentUser.language || 'pt');
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -100,8 +99,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
       await onUpdateUser({
         name: name.trim(),
         avatarUrl: avatarUrl.trim(),
-        theme,
-        language
+        theme
       });
       setMessage({ type: 'success', text: 'Configurações salvas e aplicadas!' });
     } catch (error) {
@@ -224,38 +222,6 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                                     <span className="text-[10px] font-black uppercase">Claro</span>
                                 </button>
                             </div>
-                        </div>
-
-                        {/* Language Selector */}
-                        <div>
-                             <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <Globe size={12} /> Idioma
-                             </label>
-                             <div className="flex gap-2 p-1 bg-gray-100 dark:bg-black/30 rounded-xl border border-gray-200 dark:border-white/5">
-                                <button 
-                                    onClick={() => setLanguage('pt')}
-                                    className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase transition-all ${
-                                        language === 'pt' 
-                                            ? 'bg-white text-black shadow dark:bg-white/10 dark:text-white' 
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-400'
-                                    }`}
-                                >
-                                    Português
-                                </button>
-                                <button 
-                                    onClick={() => setLanguage('en')}
-                                    className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase transition-all ${
-                                        language === 'en' 
-                                            ? 'bg-white text-black shadow dark:bg-white/10 dark:text-white' 
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-400'
-                                    }`}
-                                >
-                                    English
-                                </button>
-                             </div>
-                             <p className="text-[9px] text-gray-400 mt-2 ml-1 italic">
-                                *A tradução completa será aplicada em atualizações futuras.
-                             </p>
                         </div>
                     </div>
                 </div>

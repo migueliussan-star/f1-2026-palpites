@@ -15,7 +15,7 @@ interface AdminProps {
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
   constructorsOrder?: Team[];
-  onResetHistory?: () => void; // Nova Prop opcional para não quebrar compatibilidade imediata
+  onResetHistory?: () => void; 
 }
 
 const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder, onResetHistory }) => {
@@ -261,8 +261,12 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                     return (
                         <div key={u.id} className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-red-500/10 hover:border-red-500/30 transition-all">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">
-                                    {u.name.charAt(0).toUpperCase()}
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center overflow-hidden border border-white/5">
+                                    {u.avatarUrl ? (
+                                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-[10px] font-bold text-gray-400">{u.name.charAt(0).toUpperCase()}</span>
+                                    )}
                                 </div>
                                 <div className="flex-1 overflow-hidden">
                                     <p className="text-xs font-bold truncate text-gray-200">{u.name}</p>

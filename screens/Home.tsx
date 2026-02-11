@@ -119,8 +119,12 @@ const Home: React.FC<HomeProps> = ({
       <div className="flex items-center justify-between mb-4 lg:mb-8 animate-enter">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full bg-gradient-to-tr from-[#e10600] to-orange-600 p-[2px]">
-            <div className="w-full h-full rounded-full bg-[#0a0a0c] flex items-center justify-center relative">
-               <span className="text-sm lg:text-xl font-bold f1-font text-white">{user.name.charAt(0).toUpperCase()}</span>
+            <div className="w-full h-full rounded-full bg-[#0a0a0c] flex items-center justify-center relative overflow-hidden">
+               {user.avatarUrl ? (
+                   <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+               ) : (
+                   <span className="text-sm lg:text-xl font-bold f1-font text-white">{user.name.charAt(0).toUpperCase()}</span>
+               )}
             </div>
           </div>
           <div>

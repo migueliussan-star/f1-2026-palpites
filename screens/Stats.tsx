@@ -31,15 +31,11 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
   const maxWeeks = leadershipStats[0]?.weeksAtOne || 1;
 
   // --- CONFIGURAÇÃO DO GRÁFICO ---
-  // Define o número de linhas do gráfico baseado no total de usuários (Mínimo 2 para ter P1 e P2)
   const rowCount = Math.max(users.length, 2);
-
-  // Calcula a posição Y (em %) para um determinado Rank
-  // Deixa 10% de margem em cima e 10% em baixo para não cortar bolinhas
   const getYPercent = (rank: number) => {
     if (rowCount <= 1) return 50;
-    const safeRank = Math.min(Math.max(rank, 1), rowCount); // Garante que rank esteja entre 1 e rowCount
-    const availableSpace = 80; // 80% do espaço (100 - 10 - 10)
+    const safeRank = Math.min(Math.max(rank, 1), rowCount); 
+    const availableSpace = 80; 
     const step = availableSpace / (rowCount - 1);
     return 10 + ((safeRank - 1) * step);
   };
@@ -90,7 +86,6 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                 {/* Linhas de Dados (SVG com vector-effect para não distorcer espessura) */}
                 <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
                     {chartUsers.map((u, idx) => {
-                        // Se não tiver histórico, usa o rank atual como único ponto
                         let history = u.positionHistory || [];
                         if (history.length === 0 && u.rank) {
                             history = [u.rank];
@@ -98,25 +93,19 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                         
                         if (history.length === 0) return null;
 
-                        // Cria o path usando coordenadas de porcentagem
                         const points = history.map((rank, hIdx) => {
                             const totalPoints = Math.max(history.length, 1);
-                            
-                            // Se tiver só 1 ponto, desenha uma linha reta do início ao fim (constante)
                             if (totalPoints === 1 || history.length === 1) {
                                 const y = getYPercent(history[0]);
                                 return `0,${y} 100,${y}`; 
                             }
-                            
                             const x = (hIdx / (totalPoints - 1)) * 100;
                             const y = getYPercent(rank);
                             return `${x},${y}`;
                         });
                         
-                        // Formata o Path Data (d)
                         let d = "";
                         if (history.length > 1) {
-                            // M x,y L x,y L x,y ...
                             const pathCoords = history.map((rank, hIdx) => {
                                 const x = (hIdx / (history.length - 1)) * 100;
                                 const y = getYPercent(rank);
@@ -124,7 +113,6 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                             });
                             d = `M ${pathCoords.join(' L ')}`;
                         } else {
-                            // Linha reta constante se só tiver 1 dado
                             const y = getYPercent(history[0]);
                             d = `M 0,${y} L 100,${y}`;
                         }
@@ -142,14 +130,14 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                 strokeOpacity={isCurrentUser ? 1 : 0.4}
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                vectorEffect="non-scaling-stroke" // Mágica: Mantém a linha fina mesmo se o SVG esticar
+                                vectorEffect="non-scaling-stroke" 
                                 className="transition-all duration-300"
                             />
                         );
                     })}
                 </svg>
 
-                {/* Bolinhas (Dots) - HTML puro para garantir que sejam círculos perfeitos */}
+                {/* Bolinhas (Dots) */}
                 {chartUsers.map((u, idx) => {
                     let history = u.positionHistory || [];
                     if (history.length === 0 && u.rank) {
@@ -226,6 +214,16 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${isLeader ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-gray-500'}`}>
                                     {idx + 1}
                                 </div>
+                                
+                                {/* Avatar */}
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-white/5">
+                                     {u.avatarUrl ? (
+                                        <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
+                                     ) : (
+                                        <span className="text-[9px] font-bold text-gray-400">{u.name.charAt(0).toUpperCase()}</span>
+                                     )}
+                                </div>
+
                                 <div className="min-w-0">
                                     <p className={`text-sm font-bold truncate ${currentUser.id === u.id ? 'text-white' : 'text-gray-300'}`}>
                                         {u.name} {currentUser.id === u.id && '(Você)'}
