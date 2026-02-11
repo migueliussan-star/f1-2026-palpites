@@ -171,12 +171,24 @@ const App: React.FC = () => {
         const deduplicatedList = Array.from(uniqueUsersMap.values());
         const sortedList = deduplicatedList.sort((a, b) => (b.points || 0) - (a.points || 0));
         
+        // CORREÇÃO DO ERRO DE BUILD AQUI: Garantir que positionHistory seja number[]
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
+            
+            let safeHistory: number[] = [];
+            
+            if (u.positionHistory && Array.isArray(u.positionHistory)) {
+                // Se já for array, garante que são números
+                safeHistory = u.positionHistory.map((val: any) => Number(val) || 0);
+            } else if (u.positionHistory && typeof u.positionHistory === 'object') {
+                // Se for objeto (Firebase), converte values para array de números
+                safeHistory = Object.values(u.positionHistory).map((val: any) => Number(val) || 0);
+            }
+
             return {
                 ...u,
                 rank: currentRank,
-                positionHistory: u.positionHistory && Array.isArray(u.positionHistory) ? u.positionHistory : u.positionHistory ? Object.values(u.positionHistory) : [], 
+                positionHistory: safeHistory,
                 previousRank: u.previousRank || currentRank
             };
         });
