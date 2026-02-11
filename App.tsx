@@ -90,19 +90,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchConstructors = async () => {
       try {
-        // Tenta buscar de 2026. Se não existir, vai cair no catch.
-        // Se quisermos dados reais HOJE (antes de 2026), podemos mudar para 'current'
         const res = await fetch('https://ergast.com/api/f1/2026/constructorStandings.json');
         if (!res.ok) throw new Error('API not available');
         const data = await res.json();
         const standings = data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings;
         
         if (standings && standings.length > 0) {
-            // Mapeia a resposta da API para o nosso tipo Team
-            // Precisamos garantir que os nomes batam com nosso tipo Team
             const apiTeams = standings.map((s: any) => {
                 const name = s.Constructor.name;
-                // Normalização básica de nomes (API -> App com nomes simplificados)
                 if (name.includes('Red Bull')) return 'Red Bull';
                 if (name.includes('Ferrari')) return 'Ferrari';
                 if (name.includes('McLaren')) return 'McLaren';
@@ -117,15 +112,12 @@ const App: React.FC = () => {
                 return null;
             }).filter((t: any) => t !== null) as Team[];
 
-            // Se conseguirmos mapear pelo menos alguns, usamos a API. 
-            // Completamos com o fallback se faltar times.
             if (apiTeams.length > 0) {
                  const combined = Array.from(new Set([...apiTeams, ...FALLBACK_CONSTRUCTORS]));
                  setConstructorsOrder(combined);
                  return;
             }
         }
-        // Se dados vazios ou inválidos, mantém fallback
         setConstructorsOrder(FALLBACK_CONSTRUCTORS);
       } catch (e) {
         console.log("Usando ordem de construtores padrão (API indisponível ou pré-temporada).");
@@ -138,16 +130,14 @@ const App: React.FC = () => {
   // Processamento de dados de usuários extraído para reutilização
   const processUsersData = useCallback((data: any) => {
       if (data && typeof data === 'object') {
-        // Mapeia Object.entries para garantir que temos o ID
         let rawList = Object.entries(data).map(([key, value]: [string, any]) => {
             if (!value || typeof value !== 'object') return null;
             return {
                 ...value,
                 id: value.id || key 
             };
-        }).filter(u => u && u.name); // Filtra usuários válidos
+        }).filter(u => u && u.name);
         
-        // --- DEDUPLICAÇÃO VISUAL (Para usuários com email) ---
         const uniqueUsersMap = new Map<string, User>();
         rawList.forEach(u => {
             if (!u) return;
@@ -171,7 +161,6 @@ const App: React.FC = () => {
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
             
-            // FIX: Conversão segura de positionHistory para array de números
             let safeHistory: number[] = [];
             if (u.positionHistory && Array.isArray(u.positionHistory)) {
                 safeHistory = u.positionHistory.map((val: any) => Number(val) || 0);
@@ -193,7 +182,7 @@ const App: React.FC = () => {
       }
   }, []);
 
-  // Listeners de Dados - HÍBRIDO (GET inicial + Listener)
+  // Listeners de Dados
   useEffect(() => {
     if (!user) {
         setAllUsers([]);
@@ -207,7 +196,6 @@ const App: React.FC = () => {
     const usersRef = ref(db, 'users');
     const predictionsRef = ref(db, 'predictions');
 
-    // 1. Fetch Inicial Rápido
     get(calendarRef).then(snap => {
         if (snap.exists()) {
              const data = snap.val();
@@ -235,7 +223,6 @@ const App: React.FC = () => {
         }
     }).catch(e => console.log("Predictions read skipped", e));
 
-    // 2. Listeners para Real-time Updates
     const unsubCalendar = onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -295,7 +282,6 @@ const App: React.FC = () => {
         if (snapshot.exists()) {
           setUser(snapshot.val());
         } else {
-            // Login anônimo legado
             if (firebaseUser.isAnonymous) {
                  const guestUser: User = {
                     id: userKey,
@@ -314,7 +300,6 @@ const App: React.FC = () => {
                  return;
             }
 
-          // Migração de usuários
           const usersRef = ref(db, 'users');
           const usersSnap = await get(usersRef);
           let oldUserData: any = null;
@@ -540,13 +525,14 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
+  // Callback chamado pelo Timer do Home (Visual)
   const handleGpTimerFinished = useCallback(() => {
     console.log("Tempo do GP esgotou!");
     setTimeTick(prev => prev + 1);
     
-    // Notificação de Timer Finalizado
+    // Notificação visual imediata do fim do timer
     if ('Notification' in window && Notification.permission === 'granted') {
-         new Notification("F1 2026", { body: "O tempo para o GP acabou! Confira a próxima sessão.", icon: '/icon.svg' });
+         new Notification("F1 2026", { body: "O tempo para a sessão acabou! Confira o resultado.", icon: '/icon.svg' });
     }
   }, []);
 
@@ -569,7 +555,6 @@ const App: React.FC = () => {
   }
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
-  // Safe guard contra activeGP null
   if (!activeGP) return null;
                    
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
@@ -580,6 +565,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!activeGP || !activeGP.sessions) return;
 
+    // Tenta pedir permissão
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
     }
@@ -611,7 +597,7 @@ const App: React.FC = () => {
             // 2. Verifica início de sessões (que fecha palpites)
             Object.entries(activeGP!.sessions!).forEach(([name, isoDate]) => {
                 const time = new Date(isoDate as string).getTime();
-                // Se começou nos últimos 5 minutos
+                // Se começou nos últimos 5 minutos (janela de "agora")
                 if (nowTime >= time && (nowTime - time) < 300000) {
                     const key = `notif_${activeGP!.id}_${name}_start`;
                     if (!localStorage.getItem(key)) {
