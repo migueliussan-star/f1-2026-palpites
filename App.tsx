@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, RaceGP, SessionType, Prediction, Team } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
@@ -597,6 +596,66 @@ const App: React.FC = () => {
   
   // Filtra previsões apenas de usuários válidos na lista (evita dados órfãos)
   const activePredictions = predictions.filter(p => allUsers.some(u => u.id === p.userId));
+
+  // --- LOGICA DE NOTIFICAÇÕES DO SISTEMA (1 dia antes / Início de Sessão) ---
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!activeGP || !activeGP.sessions) return;
+
+    // Tenta pedir permissão na montagem (alguns browsers bloqueiam sem interação, mas vale tentar)
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    const checkTime = () => {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const nowTime = new Date().getTime();
+
+            // 1. Verifica falta de 1 dia para o início do evento (primeira sessão)
+            const sessionEntries = Object.entries(activeGP.sessions!).sort((a,b) => new Date(a[1]).getTime() - new Date(b[1]).getTime());
+            if (sessionEntries.length > 0) {
+                const firstSessionTime = new Date(sessionEntries[0][1]).getTime();
+                const diff = firstSessionTime - nowTime;
+                const oneDay = 24 * 60 * 60 * 1000;
+
+                // Se faltar entre 24h e 23h50m (janela de 10 min para disparar)
+                if (diff <= oneDay && diff > (oneDay - 600000)) {
+                    const key = `notif_${activeGP.id}_24h`;
+                    if (!localStorage.getItem(key)) {
+                        new Notification(`F1 ${activeGP.name}`, { 
+                            body: `Falta 1 dia para começar! Prepare seus palpites.`,
+                            icon: '/icon.svg'
+                        });
+                        localStorage.setItem(key, 'true');
+                    }
+                }
+            }
+
+            // 2. Verifica início de sessões (que fecha palpites)
+            Object.entries(activeGP.sessions!).forEach(([name, isoDate]) => {
+                const time = new Date(isoDate).getTime();
+                // Se começou nos últimos 5 minutos
+                if (nowTime >= time && (nowTime - time) < 300000) {
+                    const key = `notif_${activeGP.id}_${name}_start`;
+                    if (!localStorage.getItem(key)) {
+                        const isPredictionSession = name.toLowerCase().includes('qualy') || name.toLowerCase().includes('corrida') || name.toLowerCase().includes('sprint');
+                        const body = isPredictionSession
+                            ? `${name} começou! Palpites fechados.`
+                            : `${name} começou agora!`;
+
+                        new Notification(`🔴 ${activeGP.name}`, { body, icon: '/icon.svg' });
+                        localStorage.setItem(key, 'true');
+                    }
+                }
+            });
+        }
+    };
+
+    const timer = setInterval(checkTime, 60000); // Checa a cada minuto
+    checkTime(); // Checa na montagem também
+
+    return () => clearInterval(timer);
+  }, [activeGP]);
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
