@@ -72,6 +72,17 @@ const App: React.FC = () => {
     return dbUser ? { ...user, ...dbUser } : user;
   }, [user, allUsers]);
 
+  // APLICA O TEMA AO DOM
+  useEffect(() => {
+    if (liveUser?.theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    }
+  }, [liveUser?.theme]);
+
   // Monitora estado da conexão com Firebase
   useEffect(() => {
     const connectedRef = ref(db, ".info/connected");
@@ -447,9 +458,6 @@ const App: React.FC = () => {
         else if (u.newPoints >= 50) newLevel = 'Prata';
         
         const currentHistory = u.positionHistory || [];
-        // ADICIONA O RANK ATUAL AO HISTÓRICO
-        // IMPORTANTE: Isso só deve ser feito quando o Admin clica em Calcular Pontos.
-        // O botão de Resetar Histórico serve para limpar isso caso o Admin faça testes.
         const newHistory = [...currentHistory, newRank];
 
         updates[`users/${u.id}/points`] = u.newPoints;
@@ -480,14 +488,13 @@ const App: React.FC = () => {
     }
   };
 
-  // --- NOVA FUNÇÃO: Reseta histórico de posições (Dominância/GPs Liderados) ---
   const handleResetHistory = async () => {
-    if (!window.confirm("ATENÇÃO: Isso apagará o histórico de posições (gráfico de dominância) e estatísticas de 'GPs Liderados' de TODOS os usuários. Os pontos atuais NÃO serão alterados.\n\nUse isso apenas se calculou pontos de teste.")) return;
+    if (!window.confirm("ATENÇÃO: Isso apagará o histórico de posições...")) return;
 
     const updates: Record<string, any> = {};
     allUsers.forEach(u => {
         updates[`users/${u.id}/positionHistory`] = [];
-        updates[`users/${u.id}/previousRank`] = u.rank; // Reseta seta de tendência
+        updates[`users/${u.id}/previousRank`] = u.rank;
     });
 
     try {
@@ -534,8 +541,7 @@ const App: React.FC = () => {
       if (!liveUser) return;
       try {
           await update(ref(db, `users/${liveUser.id}`), data);
-          // O listener onValue em allUsers cuidará de atualizar a UI,
-          // mas atualizamos o estado local 'user' para refletir a mudança imediatamente.
+          // Atualiza estado local para reflexo imediato
           setUser(prev => prev ? { ...prev, ...data } : null);
       } catch (e) {
           console.error("Erro ao atualizar usuário", e);
@@ -568,7 +574,6 @@ const App: React.FC = () => {
           return now <= endDate;
       });
   }
-  // Fallback seguro
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
   if (!activeGP) {
@@ -621,7 +626,6 @@ const App: React.FC = () => {
       {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
       {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
       
-      {/* Nova Aba de Settings */}
       {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
 
       {activeTab === 'admin' && liveUser.isAdmin && (
