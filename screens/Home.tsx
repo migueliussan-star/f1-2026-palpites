@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, RaceGP, Team } from '../types';
 import { INITIAL_CALENDAR, TEAM_COLORS } from '../constants';
-import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Calendar, Flag, Car, Briefcase, AlertCircle } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Calendar, Flag, Car, Briefcase } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -23,7 +23,6 @@ const Home: React.FC<HomeProps> = ({
   const [nextSessionName, setNextSessionName] = useState<string>('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [showTimerToast, setShowTimerToast] = useState(false); // Estado para notificação visual
 
   // Lógica de Cores baseada nos palpites
   const totalSessions = nextGP.isSprint ? 4 : 2;
@@ -50,10 +49,8 @@ const Home: React.FC<HomeProps> = ({
   // --- Lógica de Contrato/Equipe ---
   const userRank = user.rank || 1;
   const teamIndex = Math.floor((userRank - 1) / 2);
-  // Proteção contra lista vazia ou indefinida
-  const safeConstructors = (constructorsList && constructorsList.length > 0) ? constructorsList : ['Williams'];
-  const assignedTeam = safeConstructors[teamIndex % safeConstructors.length] || 'Williams'; 
-  const teamColor = TEAM_COLORS[assignedTeam as Team] || '#666';
+  const assignedTeam = constructorsList[teamIndex % constructorsList.length] || 'Williams'; 
+  const teamColor = TEAM_COLORS[assignedTeam] || '#666';
   const isLeadDriver = (userRank - 1) % 2 === 0;
   
   // Limpeza visual forçada do nome da equipe
@@ -70,14 +67,8 @@ const Home: React.FC<HomeProps> = ({
         date: new Date(isoDate as string)
       })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      // Correção do Crash: Se a lista estiver vazia, retorna null para não quebrar no acesso ao índice
-      if (sessionList.length === 0) return null;
-
       const next = sessionList.find(s => s.date > now);
-      // Acesso seguro ao último elemento
-      const lastSession = sessionList[sessionList.length - 1];
-      
-      return next || { name: 'Finalizado', date: lastSession.date };
+      return next || { name: 'Finalizado', date: sessionList[sessionList.length-1].date };
     };
 
     const interval = setInterval(() => {
@@ -96,15 +87,9 @@ const Home: React.FC<HomeProps> = ({
           s: Math.floor((diff / 1000) % 60)
         });
       } else {
-        // Quando o tempo zera:
         setTimeLeft({ d: 0, h: 0, m: 0, s: 0 });
-        
-        // Evita disparar múltiplas vezes se já estiver zerado
-        if (currentTarget.name !== 'Finalizado') {
-            setShowTimerToast(true);
-            setTimeout(() => setShowTimerToast(false), 5000);
-            
-            if (onTimerFinished) onTimerFinished();
+        if (currentTarget.name === 'Finalizado' && onTimerFinished) {
+            onTimerFinished();
         }
       }
     }, 1000);
@@ -134,15 +119,6 @@ const Home: React.FC<HomeProps> = ({
 
   return (
     <div className="p-4 pt-6 lg:p-12 pb-32">
-      
-      {/* Toast Notification quando o tempo acaba */}
-      {showTimerToast && (
-        <div className="fixed top-8 left-0 right-0 mx-auto w-max z-[100] bg-[#e10600] text-white px-6 py-4 rounded-2xl font-black text-xs shadow-2xl flex items-center justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-          <AlertCircle size={20} />
-          <span>SESSÃO INICIADA! PALPITES ENCERRADOS.</span>
-        </div>
-      )}
-
       {/* Header Compacto */}
       <div className="flex items-center justify-between mb-4 lg:mb-8 animate-enter">
         <div className="flex items-center gap-3">
