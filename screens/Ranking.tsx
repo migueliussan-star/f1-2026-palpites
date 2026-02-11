@@ -20,14 +20,14 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
     <div className="p-6 lg:p-12">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-            <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter">RANKING GLOBAL</h2>
+            <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter text-gray-900 dark:text-white">RANKING GLOBAL</h2>
             <div className="h-1 w-20 bg-[#e10600] mt-2 rounded-full shadow-[0_0_10px_#e10600]"></div>
         </div>
 
         {/* Lista de Ranking */}
-        <div className="bg-white/5 rounded-[32px] overflow-hidden border border-white/10 shadow-2xl mb-24">
+        <div className="bg-white dark:bg-white/5 rounded-[32px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl mb-24 transition-colors">
             {sortedUsers.length === 0 ? (
-            <div className="p-16 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+            <div className="p-16 text-center text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest leading-relaxed">
                 Nenhum competidor <br/> cadastrado ainda.
             </div>
             ) : (
@@ -51,30 +51,30 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                 return (
                 <div 
                     key={item.id} 
-                    className={`flex items-center justify-between p-4 px-6 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors relative overflow-hidden group ${item.id === currentUser.id ? 'bg-[#e10600]/10' : ''}`}
+                    className={`flex items-center justify-between p-4 px-6 border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors relative overflow-hidden group ${item.id === currentUser.id ? 'bg-red-50 dark:bg-[#e10600]/10' : ''}`}
                 >
                     {/* Barra de Cor da Equipe à esquerda */}
                     <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: teamColor }}></div>
 
                     <div className="flex items-center gap-4 pl-2">
                         <div className="flex flex-col items-center w-6 shrink-0">
-                                <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                                <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 dark:text-gray-500'}`}>
                                 {idx + 1}
                                 </span>
                                 {/* Indicador de Mudança de Posição */}
                                 <div className="flex items-center justify-center">
                                     {rankChange > 0 ? (
-                                        <div className="flex items-center text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
+                                        <div className="flex items-center text-green-600 dark:text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
                                     ) : rankChange < 0 ? (
-                                        <div className="flex items-center text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
+                                        <div className="flex items-center text-red-600 dark:text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
                                     ) : (
-                                        <Minus size={8} className="text-gray-600" />
+                                        <Minus size={8} className="text-gray-400 dark:text-gray-600" />
                                     )}
                                 </div>
                         </div>
 
                         {/* Avatar no Ranking */}
-                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-white/5">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 dark:border-white/5">
                              {item.avatarUrl ? (
                                 <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
                              ) : (
@@ -83,10 +83,10 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                         </div>
                         
                         <div className="flex flex-col">
-                            <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px] text-white flex items-center gap-2">
+                            <span className="font-bold text-sm tracking-tight truncate max-w-[120px] md:max-w-[300px] text-gray-900 dark:text-white flex items-center gap-2">
                                 {item.name}
                                 {item.isAdmin && (
-                                    <span className="text-[9px] bg-red-500/20 text-red-500 px-1.5 rounded font-black uppercase tracking-tighter">
+                                    <span className="text-[9px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-500 px-1.5 rounded font-black uppercase tracking-tighter">
                                     ADM
                                     </span>
                                 )}
@@ -97,7 +97,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                                 <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: teamColor }}>
                                     {assignedTeam}
                                 </span>
-                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${isLeadDriver ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/20' : 'bg-gray-700/30 text-gray-400 border border-gray-700/30'}`}>
+                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${isLeadDriver ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-500/20' : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700/30'}`}>
                                     {isLeadDriver ? <Flag size={8} /> : <Car size={8} />}
                                     {isLeadDriver ? '1º Piloto' : '2º Piloto'}
                                 </span>
@@ -106,11 +106,11 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                     </div>
                     
                     <div className="text-right">
-                    <p className="text-xl font-black f1-font leading-none text-white">{item.points || 0}</p>
+                    <p className="text-xl font-black f1-font leading-none text-gray-900 dark:text-white">{item.points || 0}</p>
                     {/* GAPS */}
                     {idx > 0 ? (
                         <div className="flex flex-col items-end">
-                            <p className="text-[9px] text-red-400/60 font-bold uppercase tracking-tight mt-0.5">
+                            <p className="text-[9px] text-red-500 dark:text-red-400/60 font-bold uppercase tracking-tight mt-0.5">
                                 GAP -{pointsDiff}
                             </p>
                             <p className="text-[9px] text-orange-500 font-black uppercase tracking-tight leading-none mt-0.5">
@@ -118,7 +118,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                             </p>
                         </div>
                     ) : (
-                        <p className="text-[9px] text-yellow-500 font-bold uppercase tracking-tight mt-0.5">LÍDER</p>
+                        <p className="text-[9px] text-yellow-600 dark:text-yellow-500 font-bold uppercase tracking-tight mt-0.5">LÍDER</p>
                     )}
                     </div>
                 </div>
