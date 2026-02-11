@@ -1,16 +1,16 @@
 
 export type Team = 
-  | 'Alpine-Mercedes' 
-  | 'Aston Martin Aramco-Honda' 
+  | 'Alpine' 
+  | 'Aston Martin' 
   | 'Audi' 
-  | 'Cadillac-Ferrari' 
+  | 'Cadillac' 
   | 'Ferrari' 
-  | 'Haas-Ferrari' 
-  | 'McLaren-Mercedes' 
+  | 'Haas' 
+  | 'McLaren' 
   | 'Mercedes' 
-  | 'Racing Bulls-Red Bull Ford' 
-  | 'Red Bull Racing-Red Bull Ford' 
-  | 'Williams-Mercedes';
+  | 'Racing Bulls' 
+  | 'Red Bull' 
+  | 'Williams';
 
 export interface Driver {
   id: string;

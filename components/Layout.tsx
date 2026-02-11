@@ -39,7 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       </aside>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative z-10 scroll-smooth pb-24 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative z-10 scroll-smooth pb-32 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="max-w-7xl mx-auto w-full h-full">
             {children}
         </div>

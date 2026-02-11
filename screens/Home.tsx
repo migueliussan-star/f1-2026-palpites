@@ -288,14 +288,14 @@ const Home: React.FC<HomeProps> = ({
                 <div className="absolute -right-4 -top-4 bg-yellow-500/10 w-24 h-24 rounded-full blur-xl group-hover:bg-yellow-500/20 transition-all"></div>
                 <Zap className="text-yellow-500 mb-4" size={28} />
                 <p className="text-3xl lg:text-4xl font-black f1-font text-white mb-1">{user.points || 0}</p>
-                <p className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Pontos Totais</p>
+                <p className="text-xs uppercase text-gray-500 font-black tracking-widest">Pontos Totais</p>
             </div>
             
             <div className="glass-card p-6 rounded-[32px] relative overflow-hidden group h-full">
                 <div className="absolute -right-4 -top-4 bg-blue-500/10 w-24 h-24 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
                 <Trophy className="text-blue-500 mb-4" size={28} />
                 <p className="text-3xl lg:text-4xl font-black f1-font text-white mb-1">{user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-'}</p>
-                <p className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Ranking Global</p>
+                <p className="text-xs uppercase text-gray-500 font-black tracking-widest">Ranking Global</p>
             </div>
 
             {/* Install Box for Desktop (Hidden) / Mobile */}

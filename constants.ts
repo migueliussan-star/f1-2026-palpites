@@ -2,32 +2,32 @@
 import { Driver, RaceGP, Team } from './types';
 
 export const TEAM_COLORS: Record<Team, string> = {
-  'McLaren-Mercedes': '#FF8700',
+  'McLaren': '#FF8700',
   'Mercedes': '#27F4D2',
-  'Red Bull Racing-Red Bull Ford': '#3671C6',
+  'Red Bull': '#3671C6',
   'Ferrari': '#E80020',
-  'Racing Bulls-Red Bull Ford': '#6692FF',
-  'Aston Martin Aramco-Honda': '#229971',
-  'Haas-Ferrari': '#B6BABD',
+  'Racing Bulls': '#6692FF',
+  'Aston Martin': '#229971',
+  'Haas': '#B6BABD',
   'Audi': '#A2A2A2',
-  'Alpine-Mercedes': '#0093CC',
-  'Cadillac-Ferrari': '#FFCC00',
-  'Williams-Mercedes': '#00A0DE'
+  'Alpine': '#0093CC',
+  'Cadillac': '#FFCC00',
+  'Williams': '#00A0DE'
 };
 
-// Ordem de Fallback OFICIAL (Alfabética) para início de temporada 2026
+// Ordem de Fallback OFICIAL (Alfabética) Simplificada
 export const FALLBACK_CONSTRUCTORS: Team[] = [
-  'Alpine-Mercedes',
-  'Aston Martin Aramco-Honda',
+  'Alpine',
+  'Aston Martin',
   'Audi',
-  'Cadillac-Ferrari',
+  'Cadillac',
   'Ferrari',
-  'Haas-Ferrari',
-  'McLaren-Mercedes',
+  'Haas',
+  'McLaren',
   'Mercedes',
-  'Racing Bulls-Red Bull Ford',
-  'Red Bull Racing-Red Bull Ford',
-  'Williams-Mercedes'
+  'Racing Bulls',
+  'Red Bull',
+  'Williams'
 ];
 
 // URL de fallback oficial (silhueta)
@@ -38,11 +38,11 @@ const GITHUB_REPO = "https://raw.githubusercontent.com/migueliussan-star/imagens
 
 export const DRIVERS: Driver[] = [
   { 
-    id: 'norris', name: 'Lando Norris', number: 4, team: 'McLaren-Mercedes', color: TEAM_COLORS['McLaren-Mercedes'], country: 'GBR',
+    id: 'norris', name: 'Lando Norris', number: 4, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'GBR',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png"
   },
   { 
-    id: 'piastri', name: 'Oscar Piastri', number: 81, team: 'McLaren-Mercedes', color: TEAM_COLORS['McLaren-Mercedes'], country: 'AUS',
+    id: 'piastri', name: 'Oscar Piastri', number: 81, team: 'McLaren', color: TEAM_COLORS['McLaren'], country: 'AUS',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png"
   },
   { 
@@ -55,11 +55,11 @@ export const DRIVERS: Driver[] = [
     image: `${GITHUB_REPO}/antonelli.png`
   },
   { 
-    id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull Racing-Red Bull Ford', color: TEAM_COLORS['Red Bull Racing-Red Bull Ford'], country: 'NED',
+    id: 'verstappen', name: 'Max Verstappen', number: 1, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'NED',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png"
   },
   { 
-    id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull Racing-Red Bull Ford', color: TEAM_COLORS['Red Bull Racing-Red Bull Ford'], country: 'FRA',
+    id: 'hadjar', name: 'Isack Hadjar', number: 6, team: 'Red Bull', color: TEAM_COLORS['Red Bull'], country: 'FRA',
     // GitHub: Isack-Hadjar-F1-2026-RedBull.png
     image: `${GITHUB_REPO}/Isack-Hadjar-F1-2026-RedBull.png`
   },
@@ -72,28 +72,28 @@ export const DRIVERS: Driver[] = [
     image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png"
   },
   { 
-    id: 'lawson', name: 'Liam Lawson', number: 30, team: 'Racing Bulls-Red Bull Ford', color: TEAM_COLORS['Racing Bulls-Red Bull Ford'], country: 'NZL',
+    id: 'lawson', name: 'Liam Lawson', number: 30, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'NZL',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png"
   },
   { 
-    id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls-Red Bull Ford', color: TEAM_COLORS['Racing Bulls-Red Bull Ford'], country: 'GBR',
+    id: 'lindblad', name: 'Arvid Lindblad', number: 41, team: 'Racing Bulls', color: TEAM_COLORS['Racing Bulls'], country: 'GBR',
     // GitHub: arvidlindblad.png
     image: `${GITHUB_REPO}/arvidlindblad.png`
   },
   { 
-    id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin Aramco-Honda', color: TEAM_COLORS['Aston Martin Aramco-Honda'], country: 'ESP',
+    id: 'alonso', name: 'Fernando Alonso', number: 14, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'ESP',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png"
   },
   { 
-    id: 'stroll', name: 'Lance Stroll', number: 18, team: 'Aston Martin Aramco-Honda', color: TEAM_COLORS['Aston Martin Aramco-Honda'], country: 'CAN',
+    id: 'stroll', name: 'Lance Stroll', number: 18, team: 'Aston Martin', color: TEAM_COLORS['Aston Martin'], country: 'CAN',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png"
   },
   { 
-    id: 'ocon', name: 'Esteban Ocon', number: 31, team: 'Haas-Ferrari', color: TEAM_COLORS['Haas-Ferrari'], country: 'FRA',
+    id: 'ocon', name: 'Esteban Ocon', number: 31, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'FRA',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png"
   },
   { 
-    id: 'bearman', name: 'Oliver Bearman', number: 87, team: 'Haas-Ferrari', color: TEAM_COLORS['Haas-Ferrari'], country: 'GBR',
+    id: 'bearman', name: 'Oliver Bearman', number: 87, team: 'Haas', color: TEAM_COLORS['Haas'], country: 'GBR',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png"
   },
   { 
@@ -107,30 +107,30 @@ export const DRIVERS: Driver[] = [
     image: `${GITHUB_REPO}/gabrielbortoletto.png`
   },
   { 
-    id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine-Mercedes', color: TEAM_COLORS['Alpine-Mercedes'], country: 'FRA',
+    id: 'gasly', name: 'Pierre Gasly', number: 10, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'FRA',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png"
   },
   { 
-    id: 'colapinto', name: 'Franco Colapinto', number: 43, team: 'Alpine-Mercedes', color: TEAM_COLORS['Alpine-Mercedes'], country: 'ARG',
+    id: 'colapinto', name: 'Franco Colapinto', number: 43, team: 'Alpine', color: TEAM_COLORS['Alpine'], country: 'ARG',
     // GitHub: francocolapinto.png
     image: `${GITHUB_REPO}/francocolapinto.png`
   },
   { 
-    id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac-Ferrari', color: TEAM_COLORS['Cadillac-Ferrari'], country: 'MEX',
+    id: 'perez', name: 'Sergio Pérez', number: 11, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'MEX',
     // GitHub: perez.png
     image: `${GITHUB_REPO}/perez.png`
   },
   { 
-    id: 'bottas', name: 'Valtteri Bottas', number: 77, team: 'Cadillac-Ferrari', color: TEAM_COLORS['Cadillac-Ferrari'], country: 'FIN',
+    id: 'bottas', name: 'Valtteri Bottas', number: 77, team: 'Cadillac', color: TEAM_COLORS['Cadillac'], country: 'FIN',
     // GitHub: bottas.png
     image: `${GITHUB_REPO}/bottas.png`
   },
   { 
-    id: 'albon', name: 'Alex Albon', number: 23, team: 'Williams-Mercedes', color: TEAM_COLORS['Williams-Mercedes'], country: 'THA',
+    id: 'albon', name: 'Alex Albon', number: 23, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'THA',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png"
   },
   { 
-    id: 'sainz', name: 'Carlos Sainz', number: 55, team: 'Williams-Mercedes', color: TEAM_COLORS['Williams-Mercedes'], country: 'ESP',
+    id: 'sainz', name: 'Carlos Sainz', number: 55, team: 'Williams', color: TEAM_COLORS['Williams'], country: 'ESP',
     image: "https://media.formula1.com/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png"
   },
 ];
