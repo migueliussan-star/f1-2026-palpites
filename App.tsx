@@ -102,18 +102,18 @@ const App: React.FC = () => {
             // Precisamos garantir que os nomes batam com nosso tipo Team
             const apiTeams = standings.map((s: any) => {
                 const name = s.Constructor.name;
-                // Normalização básica de nomes (API -> App)
-                if (name.includes('Red Bull')) return 'Red Bull';
+                // Normalização básica de nomes (API -> App com nomes oficiais)
+                if (name.includes('Red Bull')) return 'Red Bull Racing-Red Bull Ford';
                 if (name.includes('Ferrari')) return 'Ferrari';
-                if (name.includes('McLaren')) return 'McLaren';
+                if (name.includes('McLaren')) return 'McLaren-Mercedes';
                 if (name.includes('Mercedes')) return 'Mercedes';
-                if (name.includes('Aston Martin')) return 'Aston Martin';
-                if (name.includes('Alpine')) return 'Alpine';
-                if (name.includes('Williams')) return 'Williams';
-                if (name.includes('Haas')) return 'Haas';
-                if (name.includes('RB') || name.includes('AlphaTauri') || name.includes('Racing Bulls')) return 'Racing Bulls';
+                if (name.includes('Aston Martin')) return 'Aston Martin Aramco-Honda';
+                if (name.includes('Alpine')) return 'Alpine-Mercedes';
+                if (name.includes('Williams')) return 'Williams-Mercedes';
+                if (name.includes('Haas')) return 'Haas-Ferrari';
+                if (name.includes('RB') || name.includes('AlphaTauri') || name.includes('Racing Bulls')) return 'Racing Bulls-Red Bull Ford';
                 if (name.includes('Sauber') || name.includes('Audi')) return 'Audi';
-                if (name.includes('Andretti') || name.includes('Cadillac')) return 'Cadillac';
+                if (name.includes('Andretti') || name.includes('Cadillac')) return 'Cadillac-Ferrari';
                 return null;
             }).filter((t: any) => t !== null) as Team[];
 
