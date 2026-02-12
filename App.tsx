@@ -415,9 +415,13 @@ const App: React.FC = () => {
   };
 
   const handleCalculatePoints = async (currentGp: RaceGP) => {
+    // 1. Verificar se TODAS as sessões estão fechadas (status === false)
+    const allSessionsClosed = Object.values(currentGp.sessionStatus).every(isOpen => isOpen === false);
+
     const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
     const userPointsMap: Record<string, number> = {};
 
+    // 2. Cálculo dos pontos
     allUsers.forEach(u => {
       let userTotalPoints = 0;
       updatedCalendar.forEach(calGp => {
@@ -444,6 +448,7 @@ const App: React.FC = () => {
     const realUsers = allUsers.filter(u => !u.isGuest);
     const guestUsers = allUsers.filter(u => u.isGuest);
 
+    // Ordenação para Ranking
     const rankedUsers = realUsers.map(u => ({
         ...u,
         newPoints: userPointsMap[u.id] || 0
@@ -457,8 +462,19 @@ const App: React.FC = () => {
         if (u.newPoints >= 150) newLevel = 'Ouro';
         else if (u.newPoints >= 50) newLevel = 'Prata';
         
-        const currentHistory = u.positionHistory || [];
-        const newHistory = [...currentHistory, newRank];
+        // 3. Atualização do Histórico (positionHistory)
+        // Só atualizamos o array de histórico se o GP estiver totalmente fechado.
+        let newHistory = [...(u.positionHistory || [])];
+        
+        if (allSessionsClosed) {
+            // Garante que o array tenha tamanho suficiente preenchendo com 0 se necessário
+            // O índice do GP ID 1 é 0, GP ID 2 é 1, etc.
+            while (newHistory.length < currentGp.id) {
+                newHistory.push(0);
+            }
+            // Atualiza a posição específica deste GP
+            newHistory[currentGp.id - 1] = newRank;
+        }
 
         updates[`users/${u.id}/points`] = u.newPoints;
         updates[`users/${u.id}/rank`] = newRank;
@@ -482,10 +498,32 @@ const App: React.FC = () => {
             await update(ref(db), updates);
         }
         alert("Pontos calculados com sucesso!");
+        if (!allSessionsClosed) {
+            alert("AVISO: O histórico de 'Tempo no Topo' NÃO foi atualizado pois existem sessões abertas neste GP.");
+        }
     } catch (e) {
         console.error(e);
         alert("Erro ao salvar no banco.");
     }
+  };
+
+  const handleResetLeadershipStats = async () => {
+      if (!window.confirm("ATENÇÃO: Isso apagará todo o histórico de liderança (GPs no Topo) de TODOS os usuários. Deseja continuar?")) return;
+      
+      const updates: Record<string, any> = {};
+      allUsers.forEach(u => {
+          updates[`users/${u.id}/positionHistory`] = [];
+      });
+
+      try {
+          if (Object.keys(updates).length > 0) {
+              await update(ref(db), updates);
+          }
+          alert("Histórico de liderança resetado com sucesso.");
+      } catch (e) {
+          console.error(e);
+          alert("Erro ao resetar histórico.");
+      }
   };
 
   const handleClearAllPredictions = async () => {
@@ -621,6 +659,7 @@ const App: React.FC = () => {
           onCalculatePoints={handleCalculatePoints} 
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
+          onResetLeadership={handleResetLeadershipStats}
           constructorsOrder={constructorsOrder}
         />
       )}
