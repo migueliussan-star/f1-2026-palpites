@@ -13,7 +13,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
   const chartUsers = sortedUsers;
 
   const chartColors = [
-    '#FFD700', '#C0C0C0', '#CD7F32', '#3b82f6', '#8b5cf6', 
+    '#FFD700', '#E0E0E0', '#CD7F32', '#3b82f6', '#8b5cf6', 
     '#ec4899', '#10b981', '#f97316', '#06b6d4', '#ef4444', 
     '#84cc16', '#6366f1', '#d946ef', '#14b8a6', 
   ];
@@ -29,12 +29,18 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
   const maxWeeks = leadershipStats[0]?.weeksAtOne || 1;
 
   const rowCount = Math.max(users.length, 2);
+  
+  // Melhorando a escala para poucos usuários
   const getYPercent = (rank: number) => {
     if (rowCount <= 1) return 50;
     const safeRank = Math.min(Math.max(rank, 1), rowCount); 
-    const availableSpace = 80; 
+    
+    // Margens maiores para centralizar mais
+    const margin = 20; 
+    const availableSpace = 100 - (margin * 2); 
     const step = availableSpace / (rowCount - 1);
-    return 10 + ((safeRank - 1) * step);
+    
+    return margin + ((safeRank - 1) * step);
   };
 
   return (
@@ -83,24 +89,17 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                 <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
                     {chartUsers.map((u, idx) => {
                         let history = u.positionHistory || [];
+                        
+                        // Fallback se não tiver histórico: usa o rank atual como ponto único
                         if (history.length === 0 && u.rank) {
                             history = [u.rank];
                         }
                         
                         if (history.length === 0) return null;
 
-                        const points = history.map((rank, hIdx) => {
-                            const totalPoints = Math.max(history.length, 1);
-                            if (totalPoints === 1 || history.length === 1) {
-                                const y = getYPercent(history[0]);
-                                return `0,${y} 100,${y}`; 
-                            }
-                            const x = (hIdx / (totalPoints - 1)) * 100;
-                            const y = getYPercent(rank);
-                            return `${x},${y}`;
-                        });
-                        
+                        // Pontos para o SVG Path
                         let d = "";
+                        
                         if (history.length > 1) {
                             const pathCoords = history.map((rank, hIdx) => {
                                 const x = (hIdx / (history.length - 1)) * 100;
@@ -109,6 +108,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                             });
                             d = `M ${pathCoords.join(' L ')}`;
                         } else {
+                            // Se só tem 1 ponto, desenha uma linha reta do início ao fim no nível desse rank
                             const y = getYPercent(history[0]);
                             d = `M 0,${y} L 100,${y}`;
                         }
@@ -116,14 +116,15 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                         const color = chartColors[idx % chartColors.length];
                         const isCurrentUser = u.id === currentUser.id;
 
+                        // Aumentei a opacidade e largura para garantir visibilidade
                         return (
                             <path 
                                 key={u.id}
                                 d={d}
                                 fill="none"
                                 stroke={color}
-                                strokeWidth={isCurrentUser ? 3 : 1.5}
-                                strokeOpacity={isCurrentUser ? 1 : 0.4}
+                                strokeWidth={isCurrentUser ? 4 : 2.5}
+                                strokeOpacity={isCurrentUser ? 1 : 0.6}
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 vectorEffect="non-scaling-stroke" 
@@ -149,7 +150,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     return (
                         <div 
                             key={u.id}
-                            className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg transition-all ${isCurrentUser ? 'z-20 w-3 h-3 ring-2 ring-gray-900/10 dark:ring-white/20' : 'z-10 w-2 h-2 opacity-80'}`}
+                            className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg transition-all ${isCurrentUser ? 'z-20 w-4 h-4 ring-4 ring-gray-900/10 dark:ring-white/10' : 'z-10 w-2.5 h-2.5 opacity-90'}`}
                             style={{ 
                                 left: '100%', 
                                 top: `${y}%`,
@@ -193,8 +194,8 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                  </div>
              ) : (
                 leadershipStats.map((u, idx) => {
-                    const isLeader = idx === 0 && u.weeksAtOne > 0;
                     const hasLed = u.weeksAtOne > 0;
+                    const rankOrder = idx + 1;
 
                     return (
                         <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all border ${currentUser.id === u.id ? 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20' : 'bg-white dark:bg-[#121214] border-gray-200 dark:border-white/5'}`}>
@@ -207,8 +208,8 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                             )}
                             
                             <div className="flex items-center gap-4 relative z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${isLeader ? 'bg-yellow-500 text-black shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}>
-                                    {idx + 1}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${rankOrder === 1 && hasLed ? 'bg-yellow-500 text-black shadow-lg' : 'bg-gray-100 dark:bg-white/5 text-gray-500'}`}>
+                                    {rankOrder}
                                 </div>
                                 
                                 {/* Avatar */}
