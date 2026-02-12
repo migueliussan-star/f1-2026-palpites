@@ -51,13 +51,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
       {/* --- MOBILE BOTTOM BAR (Visible on sm/mobile only) --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-bottom pointer-events-none">
-        <nav className="h-20 glass rounded-[32px] px-2 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5">
+        <nav className="h-20 glass rounded-[32px] px-1 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5">
             
-            <NavButtonMobile icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-            <NavButtonMobile icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonMobile icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-            <NavButtonMobile icon={<TrendingUp size={20} />} label="Stats" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
-            <NavButtonMobile icon={<Settings size={20} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+            <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
+            <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
+            <NavButtonMobile icon={<TrendingUp size={18} />} label="Stats" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+            <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+            <NavButtonMobile icon={<Settings size={18} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
     </div>
@@ -68,10 +69,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 const NavButtonMobile: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
-    className="relative flex-1 flex flex-col items-center justify-center h-full transition-all duration-300 group"
+    className="relative flex-1 flex flex-col items-center justify-center h-full transition-all duration-300 group min-w-0"
   >
     <div className={`
-      relative p-2.5 rounded-2xl transition-all duration-300
+      relative p-2 rounded-2xl transition-all duration-300
       ${active 
         ? 'text-white bg-[#e10600] shadow-[0_0_15px_rgba(225,6,0,0.5)] translate-y-[-4px]' 
         : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}
@@ -79,7 +80,7 @@ const NavButtonMobile: React.FC<{ icon: React.ReactNode, label: string, active: 
       {icon}
     </div>
     <span className={`
-      text-[8px] font-bold mt-1 uppercase tracking-wider transition-all duration-300
+      text-[7px] font-bold mt-1 uppercase tracking-wider transition-all duration-300 truncate max-w-full px-0.5
       ${active ? 'text-gray-900 dark:text-white opacity-100 translate-y-[-2px]' : 'text-gray-600 opacity-0 scale-0 h-0'}
     `}>
       {label}
