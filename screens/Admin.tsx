@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, User, Team } from '../types';
 import { DRIVERS, TEAM_COLORS } from '../constants';
-import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered, Eraser } from 'lucide-react';
+import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered } from 'lucide-react';
 
 interface AdminProps {
   gp: RaceGP;
@@ -14,11 +14,10 @@ interface AdminProps {
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
-  onResetLeadership: () => void;
   constructorsOrder?: Team[];
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, onResetLeadership, constructorsOrder }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -235,16 +234,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
             <p className="text-[10px] text-gray-400 mb-6 font-medium leading-relaxed">
                 Ações aqui são irreversíveis. Tenha cuidado.
             </p>
-
-            {/* BOTÕES DE AÇÃO MASSIVA */}
-            <div className="grid grid-cols-1 gap-3 mb-8">
-                <button 
-                    onClick={onResetLeadership}
-                    className="bg-white dark:bg-white/5 border border-red-200 dark:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"
-                >
-                    <Eraser size={14} /> Resetar Histórico de Liderança
-                </button>
-            </div>
 
             <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2 border-t border-gray-200 dark:border-white/5 pt-4">
                 <Users size={12} /> Pilotos Cadastrados ({users.length})

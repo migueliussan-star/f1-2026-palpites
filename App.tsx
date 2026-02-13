@@ -8,7 +8,6 @@ import Palpitometro from './screens/Palpitometro';
 import Ranking from './screens/Ranking';
 import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
-import Stats from './screens/Stats';
 import Settings from './screens/Settings';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
@@ -54,7 +53,7 @@ const getGpDates = (dateStr: string) => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'stats' | 'admin' | 'adversarios' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -507,25 +506,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleResetLeadershipStats = async () => {
-      if (!window.confirm("ATENÇÃO: Isso apagará todo o histórico de liderança (GPs no Topo) de TODOS os usuários. Deseja continuar?")) return;
-      
-      const updates: Record<string, any> = {};
-      allUsers.forEach(u => {
-          updates[`users/${u.id}/positionHistory`] = [];
-      });
-
-      try {
-          if (Object.keys(updates).length > 0) {
-              await update(ref(db), updates);
-          }
-          alert("Histórico de liderança resetado com sucesso.");
-      } catch (e) {
-          console.error(e);
-          alert("Erro ao resetar histórico.");
-      }
-  };
-
   const handleClearAllPredictions = async () => {
     if (!window.confirm("Zerar palpites e pontos?")) return;
     try {
@@ -644,7 +624,6 @@ const App: React.FC = () => {
         />
       )}
       {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
-      {activeTab === 'stats' && <Stats currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} />}
       
       {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
 
@@ -659,7 +638,6 @@ const App: React.FC = () => {
           onCalculatePoints={handleCalculatePoints} 
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
-          onResetLeadership={handleResetLeadershipStats}
           constructorsOrder={constructorsOrder}
         />
       )}
