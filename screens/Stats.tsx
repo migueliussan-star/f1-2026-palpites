@@ -56,7 +56,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
       </div>
 
       {/* Gráfico de Tendência */}
-      <div className="bg-white dark:bg-[#0f0f11] rounded-[32px] p-6 border border-gray-200 dark:border-white/5 shadow-2xl mb-10 transition-colors">
+      <div className="bg-white dark:bg-[#050505] rounded-[32px] p-6 border border-gray-200 dark:border-white/5 shadow-2xl mb-10 transition-colors">
         
         <div className="h-80 w-full relative flex select-none">
             
@@ -198,7 +198,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     const rankOrder = idx + 1;
 
                     return (
-                        <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all border ${currentUser.id === u.id ? 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20' : 'bg-white dark:bg-[#121214] border-gray-200 dark:border-white/5'}`}>
+                        <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all border ${currentUser.id === u.id ? 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20' : 'bg-white dark:bg-[#050505] border-gray-200 dark:border-white/5'}`}>
                             
                             {hasLed && (
                                 <div 

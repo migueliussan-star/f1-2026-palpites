@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark"> <!-- Padrão Dark -->
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -16,18 +16,7 @@
     <link rel="apple-touch-icon" href="/icon.svg" />
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
-
-    <!-- Tailwind CDN (Restaurado para corrigir layout) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {}
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&family=Anton&display=swap" rel="stylesheet" />
 
     <style>
         html, body {
@@ -35,7 +24,6 @@
             width: 100%;
             margin: 0;
             padding: 0;
-            /* Cores controladas pelo Tailwind agora */
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -43,18 +31,26 @@
         
         /* Tema Escuro (Padrão) */
         html.dark body {
-            background-color: #0a0a0c;
+            background-color: #050505;
             color: #ffffff;
         }
 
         /* Tema Claro */
         html.light body {
-            background-color: #f3f4f6;
+            background-color: #f5f5f5;
             color: #111827;
         }
         
         .f1-font {
             font-family: 'Orbitron', sans-serif;
+        }
+
+        .display-font {
+            font-family: 'Anton', sans-serif;
+        }
+
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .glass {
@@ -95,40 +91,7 @@
         .animate-enter {
             animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
-        /* Scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-        html.light ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "firebase/": "https://esm.sh/firebase@^12.9.0/",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
-  }
-}
-</script>
 </head>
 
 <body>

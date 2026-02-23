@@ -19,9 +19,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       <aside className="hidden md:flex flex-col w-24 lg:w-64 h-full glass border-r border-gray-200 dark:border-white/5 z-50 relative bg-white/50 dark:bg-transparent">
         <div className="p-6 flex items-center justify-center lg:justify-start gap-3 mb-6">
            <div className="w-8 h-8 bg-[#e10600] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_15px_#e10600]">
-              <span className="font-black f1-font text-white text-[10px]">F1</span>
+              <span className="font-black display-font text-white text-[10px]">F1</span>
            </div>
-           <span className="hidden lg:block font-black f1-font text-xl tracking-tighter italic text-gray-900 dark:text-white">2026</span>
+           <span className="hidden lg:block font-black display-font text-2xl tracking-tight italic text-gray-900 dark:text-white">2026</span>
         </div>
 
         <div className="flex-1 px-4 space-y-2 overflow-y-auto">

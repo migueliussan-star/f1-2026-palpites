@@ -146,7 +146,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                     <div className="flex flex-col items-center justify-center mb-6">
                         <div 
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-32 h-32 rounded-full bg-gray-100 dark:bg-[#0a0a0c] border-4 border-white dark:border-white/10 flex items-center justify-center overflow-hidden relative shadow-xl mb-3 group cursor-pointer hover:scale-105 transition-transform"
+                            className="w-32 h-32 rounded-full bg-gray-100 dark:bg-[#050505] border-4 border-white dark:border-white/10 flex items-center justify-center overflow-hidden relative shadow-xl mb-3 group cursor-pointer hover:scale-105 transition-transform"
                         >
                              {avatarUrl ? (
                                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -204,10 +204,10 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                                     className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
                                         theme === 'dark' 
                                             ? 'bg-gray-900 border-gray-700 text-white dark:bg-white/10 dark:border-white' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-black/20 dark:border-white/5 dark:hover:bg-white/5'
+                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-[#050505]/20 dark:border-white/5 dark:hover:bg-white/5'
                                     }`}
                                 >
-                                    <div className="w-6 h-6 rounded-full bg-[#0a0a0c] border border-gray-600"></div>
+                                    <div className="w-6 h-6 rounded-full bg-[#050505] border border-gray-600"></div>
                                     <span className="text-[10px] font-black uppercase">Escuro</span>
                                 </button>
                                 <button 

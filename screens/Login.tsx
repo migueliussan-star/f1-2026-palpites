@@ -123,7 +123,7 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
   };
 
   return (
-    <div className="h-full w-full flex flex-col relative bg-[#0a0a0c] overflow-hidden">
+    <div className="h-full w-full flex flex-col relative bg-[#050505] overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
       
       <div className="flex-1 overflow-y-auto w-full relative z-10 scroll-smooth">
@@ -228,7 +228,7 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
       </div>
 
       {showConfigGuide && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] bg-[#050505]/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-red-600/20 rounded-2xl">
@@ -240,7 +240,7 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
             <div className="space-y-4">
               <div className="bg-white/5 p-4 rounded-3xl">
                  <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Detalhe Técnico:</h4>
-                 <p className="text-[10px] text-red-300 font-mono break-all bg-black/30 p-2 rounded-lg">
+                 <p className="text-[10px] text-red-300 font-mono break-all bg-[#050505]/30 p-2 rounded-lg">
                     {detailedError || "Erro desconhecido"}
                  </p>
               </div>

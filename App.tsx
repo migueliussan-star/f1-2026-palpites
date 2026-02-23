@@ -557,7 +557,7 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
+  if (isInitialLoading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
@@ -578,7 +578,7 @@ const App: React.FC = () => {
   
   if (!activeGP) {
       return (
-          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
+          <div className="min-h-screen flex items-center justify-center bg-[#050505] text-white">
               <p>Calendário não carregado. Tente recarregar.</p>
           </div>
       );

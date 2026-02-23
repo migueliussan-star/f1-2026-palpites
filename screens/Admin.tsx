@@ -105,7 +105,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                 <p className="text-[10px] text-gray-500 mb-3">Baseado na classificação real (API) ou fallback.</p>
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {constructorsOrder.map((team, idx) => (
-                        <div key={idx} className="shrink-0 flex items-center gap-2 bg-gray-100 dark:bg-[#0a0a0c] px-3 py-2 rounded-xl border border-gray-200 dark:border-white/5">
+                        <div key={idx} className="shrink-0 flex items-center gap-2 bg-gray-100 dark:bg-[#050505] px-3 py-2 rounded-xl border border-gray-200 dark:border-white/5">
                             <span className="text-[10px] font-black text-gray-500">#{idx + 1}</span>
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: TEAM_COLORS[team] || '#666' }} />
                             <span className="text-[10px] font-bold uppercase text-gray-700 dark:text-gray-300">{team}</span>
@@ -180,7 +180,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                 <select 
                   value={gp.results?.[activeResultSession]?.[idx] || ''}
                   onChange={(e) => updateResult(activeResultSession, idx, e.target.value)}
-                  className="flex-1 bg-gray-100 dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-green-500 text-gray-900 dark:text-white"
+                  className="flex-1 bg-gray-100 dark:bg-[#050505] border border-gray-200 dark:border-white/10 rounded-xl p-3 text-xs font-bold outline-none focus:border-green-500 text-gray-900 dark:text-white"
                 >
                   <option value="">Selecione o piloto...</option>
                   {DRIVERS.map(d => (
@@ -207,7 +207,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
           <h3 className="text-xs font-black mb-6 uppercase tracking-widest text-[#e10600]">Travar/Liberar Votações</h3>
           <div className="space-y-3">
             {sessions.map(session => (
-              <div key={session} className="flex items-center justify-between p-4 bg-gray-100 dark:bg-[#0a0a0c] rounded-2xl border border-gray-200 dark:border-white/5">
+              <div key={session} className="flex items-center justify-between p-4 bg-gray-100 dark:bg-[#050505] rounded-2xl border border-gray-200 dark:border-white/5">
                 <span className="font-bold text-xs uppercase tracking-tight text-gray-900 dark:text-white">{session}</span>
                 <button 
                   onClick={() => toggleSession(session)}

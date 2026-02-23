@@ -159,8 +159,8 @@ const Home: React.FC<HomeProps> = ({
                         <span className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-white">{statusText}</span>
                     </div>
                     <div className="text-right">
-                        <p className="text-2xl lg:text-5xl font-black f1-font leading-none text-white">{nextGP.id}</p>
-                        <p className="text-[8px] lg:text-[10px] font-bold uppercase text-gray-300 tracking-widest">Round</p>
+                        <p className="text-4xl lg:text-7xl font-black display-font leading-none text-white tracking-tight">{nextGP.id}</p>
+                        <p className="text-[8px] lg:text-[10px] font-bold uppercase text-gray-300 tracking-widest mono-font">Round</p>
                     </div>
                 </div>
 
@@ -170,15 +170,15 @@ const Home: React.FC<HomeProps> = ({
                             <MapPin size={12} className="lg:w-4 lg:h-4" />
                             <span className="text-[10px] lg:text-xs font-black uppercase tracking-widest">{nextGP.location}</span>
                         </div>
-                        <h2 className="text-2xl lg:text-6xl font-black f1-font uppercase italic leading-none text-white">{nextGP.name}</h2>
+                        <h2 className="text-3xl lg:text-7xl font-black display-font uppercase leading-none text-white tracking-tight">{nextGP.name}</h2>
                         
                         {/* Countdown Mobile */}
-                        <div className="flex lg:hidden items-center gap-2 mt-1">
-                             <span className="text-[9px] font-bold text-gray-300 bg-black/40 px-2 py-0.5 rounded flex items-center gap-1 border border-white/10">
+                        <div className="flex lg:hidden items-center gap-2 mt-2">
+                             <span className="text-[9px] font-bold text-gray-300 bg-black/40 px-2 py-0.5 rounded flex items-center gap-1 border border-white/10 mono-font uppercase">
                                 <Clock size={8} /> {nextSessionName}
                              </span>
-                             {timeLeft.d > 0 && <span className="text-[9px] font-mono text-gray-300">{timeLeft.d}d {timeLeft.h}h</span>}
-                             {timeLeft.d === 0 && <span className="text-[9px] font-mono text-gray-300">{timeLeft.h}:{timeLeft.m}:{timeLeft.s}</span>}
+                             {timeLeft.d > 0 && <span className="text-[10px] font-bold mono-font text-gray-300">{timeLeft.d}d {timeLeft.h}h</span>}
+                             {timeLeft.d === 0 && <span className="text-[10px] font-bold mono-font text-gray-300">{timeLeft.h}:{timeLeft.m}:{timeLeft.s}</span>}
                         </div>
 
                          {/* Countdown Desktop (Maior) */}
@@ -221,11 +221,11 @@ const Home: React.FC<HomeProps> = ({
                 <Briefcase size={16} className="lg:hidden text-gray-400 mb-1" />
                 
                 <div className="w-full relative z-10">
-                    <p className="hidden lg:block text-[10px] uppercase text-gray-500 font-black tracking-widest mb-1">Contrato</p>
-                    <h3 className="text-xs lg:text-xl font-black f1-font uppercase truncate w-full" style={{ color: teamColor }}>{displayTeamName}</h3>
+                    <p className="hidden lg:block text-[10px] uppercase text-gray-500 font-black tracking-widest mb-1 mono-font">Contrato</p>
+                    <h3 className="text-sm lg:text-2xl font-black display-font uppercase truncate w-full tracking-wide" style={{ color: teamColor }}>{displayTeamName}</h3>
                 </div>
                 
-                <span className={`relative z-10 text-[8px] lg:text-[10px] font-bold uppercase mt-1 lg:mt-3 px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-md ${isLeadDriver ? 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-500' : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400'}`}>
+                <span className={`relative z-10 text-[8px] lg:text-[10px] font-bold uppercase mt-1 lg:mt-3 px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-md mono-font ${isLeadDriver ? 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-500' : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400'}`}>
                     {isLeadDriver ? '1º Piloto' : '2º Piloto'}
                 </span>
             </div>
@@ -237,8 +237,8 @@ const Home: React.FC<HomeProps> = ({
                 <div className="hidden lg:block mb-2">
                     <Zap className="text-yellow-500" size={28} />
                 </div>
-                <p className="text-xl lg:text-4xl font-black f1-font text-gray-900 dark:text-white leading-none relative z-10">{user.points || 0}</p>
-                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10">Pontos Totais</p>
+                <p className="text-2xl lg:text-5xl font-black display-font text-gray-900 dark:text-white leading-none relative z-10 tracking-tight">{user.points || 0}</p>
+                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10 mono-font">Pontos Totais</p>
             </div>
             
             {/* 3. Ranking */}
@@ -248,8 +248,8 @@ const Home: React.FC<HomeProps> = ({
                 <div className="hidden lg:block mb-2">
                     <Trophy className="text-blue-500" size={28} />
                 </div>
-                <p className="text-xl lg:text-4xl font-black f1-font text-gray-900 dark:text-white leading-none relative z-10">{user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-'}</p>
-                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10">Global</p>
+                <p className="text-2xl lg:text-5xl font-black display-font text-gray-900 dark:text-white leading-none relative z-10 tracking-tight">{user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-'}</p>
+                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10 mono-font">Global</p>
             </div>
 
             {/* Install Box */}
@@ -289,8 +289,8 @@ const Home: React.FC<HomeProps> = ({
 // Countdown simplificado para Desktop
 const CountdownUnitDesktop: React.FC<{ value: number, label: string }> = ({ value, label }) => (
     <div className="flex-1 bg-black/40 backdrop-blur-md rounded-xl p-2 text-center border border-white/10">
-        <span className="block text-2xl font-black f1-font text-white leading-none mb-1">{value < 10 ? `0${value}` : value}</span>
-        <span className="block text-[8px] font-bold uppercase text-gray-400 tracking-wider">{label}</span>
+        <span className="block text-3xl font-black display-font text-white leading-none mb-1 tracking-tight">{value < 10 ? `0${value}` : value}</span>
+        <span className="block text-[8px] font-bold uppercase text-gray-400 tracking-wider mono-font">{label}</span>
     </div>
 );
 

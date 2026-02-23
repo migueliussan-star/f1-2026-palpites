@@ -109,7 +109,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                         const driver = DRIVERS.find(d => d.id === driverId);
                                         return (
                                             <div key={idx} className="flex flex-col items-center gap-1.5 group">
-                                                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
+                                                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#050505]/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
                                                     <div className="absolute top-0 right-0 w-full h-1 opacity-60 z-10" style={{ backgroundColor: driver?.color || '#333' }} />
                                                     {driver ? (
                                                         <img 
@@ -126,7 +126,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                             }} 
                                                         />
                                                     ) : null}
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-black/60 text-[8px] text-center font-bold text-gray-900 dark:text-gray-300 py-0.5 backdrop-blur-sm truncate">
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-[#050505]/60 text-[8px] text-center font-bold text-gray-900 dark:text-gray-300 py-0.5 backdrop-blur-sm truncate">
                                                         {driver?.name.split(' ').pop()?.substring(0, 3)}
                                                     </div>
                                                 </div>
@@ -136,7 +136,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                     })}
                                 </div>
                             ) : (
-                                <div className="h-12 bg-gray-50 dark:bg-black/20 rounded-lg flex items-center justify-center border border-gray-200 dark:border-white/5 border-dashed">
+                                <div className="h-12 bg-gray-50 dark:bg-[#050505]/20 rounded-lg flex items-center justify-center border border-gray-200 dark:border-white/5 border-dashed">
                                     <span className="text-[10px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-widest">Sem palpite registrado</span>
                                 </div>
                             )}
