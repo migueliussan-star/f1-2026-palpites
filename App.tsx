@@ -588,7 +588,7 @@ const App: React.FC = () => {
   const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin} language={liveUser.language}>
       {activeTab === 'home' && (
         <Home 
           user={{...liveUser, rank: realTimeRank}} 

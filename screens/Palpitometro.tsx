@@ -19,7 +19,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-black f1-font text-gray-900 dark:text-white">PALPITÔMETRO</h2>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white">PALPITÔMETRO</h2>
           <p className="text-gray-500 text-xs uppercase tracking-widest">{gp.name} 2026</p>
         </div>
         <div className="bg-[#e10600]/10 text-[#e10600] px-3 py-1 rounded-full border border-[#e10600]/20 flex items-center gap-2">
@@ -46,7 +46,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
 
             return (
               <div key={session} className="bg-white dark:bg-white/5 rounded-3xl p-6 border border-gray-200 dark:border-white/5 shadow-sm">
-                <h3 className="text-xs font-black f1-font text-[#e10600] mb-6 flex items-center justify-between uppercase">
+                <h3 className="text-xs font-black text-[#e10600] mb-6 flex items-center justify-between uppercase">
                   {session}
                   <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal normal-case">Consenso da comunidade</span>
                 </h3>
@@ -61,7 +61,7 @@ const Palpitometro: React.FC<PalpitometroProps> = ({ gp, stats, totalUsers }) =>
                       <div key={driverId}>
                         <div className="flex justify-between items-end mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black f1-font text-gray-400 dark:text-gray-600 w-5">#{idx + 1}</span>
+                            <span className="text-[10px] font-black text-gray-400 dark:text-gray-600 w-5">#{idx + 1}</span>
                             <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10">
                                 <img 
                                     src={driver?.image} 

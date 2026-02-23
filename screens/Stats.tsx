@@ -50,13 +50,13 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                <TrendingUp className="text-blue-600 dark:text-blue-500" size={24} />
           </div>
           <div>
-               <h2 className="text-3xl font-black f1-font uppercase leading-none tracking-tighter text-gray-900 dark:text-white">Dominância</h2>
+               <h2 className="text-3xl font-black uppercase leading-none tracking-tighter text-gray-900 dark:text-white">Dominância</h2>
                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mt-1">Tendência Global ({users.length} Pilotos)</p>
           </div>
       </div>
 
       {/* Gráfico de Tendência */}
-      <div className="bg-white dark:bg-[#050505] rounded-[32px] p-6 border border-gray-200 dark:border-white/5 shadow-2xl mb-10 transition-colors">
+      <div className="bg-white dark:bg-[#0f0f11] rounded-[32px] p-6 border border-gray-200 dark:border-white/5 shadow-2xl mb-10 transition-colors">
         
         <div className="h-80 w-full relative flex select-none">
             
@@ -68,7 +68,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                         className="absolute w-full text-right flex items-center justify-end"
                         style={{ top: `${getYPercent(pos)}%`, transform: 'translateY(-50%)' }}
                     >
-                        <span className="text-[10px] font-black f1-font text-gray-400 dark:text-gray-600">P{pos}</span>
+                        <span className="text-[10px] font-black text-gray-400 dark:text-gray-600">P{pos}</span>
                     </div>
                 ))}
             </div>
@@ -179,7 +179,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
       {/* Lista de Tempo na Liderança */}
       <div>
          <div className="flex items-center justify-between mb-6 px-1">
-            <h3 className="text-lg font-black f1-font uppercase flex items-center gap-2 text-gray-900 dark:text-white">
+            <h3 className="text-lg font-black uppercase flex items-center gap-2 text-gray-900 dark:text-white">
                 <Crown className="text-yellow-500" size={20} /> Tempo no Topo
             </h3>
             <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider border border-gray-200 dark:border-white/10 px-2 py-1 rounded-lg">
@@ -198,7 +198,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                     const rankOrder = idx + 1;
 
                     return (
-                        <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all border ${currentUser.id === u.id ? 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20' : 'bg-white dark:bg-[#050505] border-gray-200 dark:border-white/5'}`}>
+                        <div key={u.id} className={`flex items-center justify-between p-4 rounded-2xl relative overflow-hidden transition-all border ${currentUser.id === u.id ? 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20' : 'bg-white dark:bg-[#121214] border-gray-200 dark:border-white/5'}`}>
                             
                             {hasLed && (
                                 <div 
@@ -241,7 +241,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                             <div className="relative z-10 text-right shrink-0">
                                 {hasLed ? (
                                     <>
-                                        <p className="text-xl font-black f1-font text-gray-900 dark:text-white leading-none">{u.weeksAtOne}</p>
+                                        <p className="text-xl font-black text-gray-900 dark:text-white leading-none">{u.weeksAtOne}</p>
                                         <p className="text-[8px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-wide">GPs Líder</p>
                                     </>
                                 ) : (

@@ -134,7 +134,7 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
             <div className="absolute inset-0 bg-gradient-to-tr from-white/50 dark:from-white/5 to-transparent pointer-events-none"></div>
 
             <div className="text-center mb-16 flex flex-col items-center relative z-10">
-              <h1 className="text-6xl font-black f1-font text-gray-900 dark:text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
+              <h1 className="text-6xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
               <div className="h-1.5 w-24 bg-[#e10600] mb-6 rounded-full shadow-[0_0_10px_#e10600]"></div>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em]">Fantasy League</p>
             </div>
@@ -234,7 +234,7 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black f1-font uppercase leading-tight text-gray-900 dark:text-white">Ajuda</h3>
+              <h3 className="text-xl font-black uppercase leading-tight text-gray-900 dark:text-white">Ajuda</h3>
             </div>
             
             <div className="space-y-4">

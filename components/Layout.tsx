@@ -1,15 +1,18 @@
 
 import React from 'react';
 import { Home, ClipboardList, Trophy, ShieldAlert, Swords, Settings } from 'lucide-react';
+import { useTranslation } from '../i18n';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   setActiveTab: (tab: any) => void;
   isAdmin?: boolean;
+  language?: string;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin, language }) => {
+  const { t } = useTranslation(language);
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-[#0a0a0c] overflow-hidden transition-colors duration-300">
       {/* Background effects */}
@@ -19,24 +22,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       <aside className="hidden md:flex flex-col w-24 lg:w-64 h-full glass border-r border-gray-200 dark:border-white/5 z-50 relative bg-white/50 dark:bg-transparent">
         <div className="p-6 flex items-center justify-center lg:justify-start gap-3 mb-6">
            <div className="w-8 h-8 bg-[#e10600] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_15px_#e10600]">
-              <span className="font-black display-font text-white text-[10px]">F1</span>
+              <span className="font-black text-white text-[10px]">F1</span>
            </div>
-           <span className="hidden lg:block font-black display-font text-2xl tracking-tight italic text-gray-900 dark:text-white">2026</span>
+           <span className="hidden lg:block font-black text-xl tracking-tighter italic text-gray-900 dark:text-white">2026</span>
         </div>
 
         <div className="flex-1 px-4 space-y-2 overflow-y-auto">
-            <NavButtonDesktop icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-            <NavButtonDesktop icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonDesktop icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-            <NavButtonDesktop icon={<Swords size={20} />} label="Grid Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+            <NavButtonDesktop icon={<Home size={20} />} label={t('home')} active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+            <NavButtonDesktop icon={<ClipboardList size={20} />} label={t('predictions')} active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
+            <NavButtonDesktop icon={<Trophy size={20} />} label={t('ranking')} active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
+            <NavButtonDesktop icon={<Swords size={20} />} label={t('rival')} active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
             {isAdmin && (
                 <div className="pt-4 mt-4 border-t border-gray-200 dark:border-white/5">
-                    <NavButtonDesktop icon={<ShieldAlert size={20} />} label="Admin" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} isDanger />
+                    <NavButtonDesktop icon={<ShieldAlert size={20} />} label={t('admin')} active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} isDanger />
                 </div>
             )}
             
             <div className="mt-auto pt-4 border-t border-gray-200 dark:border-white/5">
-                <NavButtonDesktop icon={<Settings size={20} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                <NavButtonDesktop icon={<Settings size={20} />} label={t('settings')} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
             </div>
         </div>
       </aside>
@@ -52,11 +55,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-bottom pointer-events-none">
         <nav className="h-20 glass rounded-[32px] px-1 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5">
             
-            <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-            <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-            <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
-            <NavButtonMobile icon={<Settings size={18} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            <NavButtonMobile icon={<Home size={18} />} label={t('home')} active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+            <NavButtonMobile icon={<ClipboardList size={18} />} label={t('predictions')} active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
+            <NavButtonMobile icon={<Trophy size={18} />} label={t('ranking')} active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
+            <NavButtonMobile icon={<Swords size={18} />} label={t('rival')} active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+            <NavButtonMobile icon={<Settings size={18} />} label={t('settings')} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
     </div>

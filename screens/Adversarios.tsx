@@ -29,7 +29,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
             <Swords className="text-purple-600 dark:text-purple-500" size={24} />
         </div>
         <div>
-            <h2 className="text-2xl font-black f1-font uppercase leading-none text-gray-900 dark:text-white">Adversários</h2>
+            <h2 className="text-2xl font-black uppercase leading-none text-gray-900 dark:text-white">Adversários</h2>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Espionagem de Grid</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                     <ShieldAlert size={20} className="text-white" />
                 </div>
             </div>
-            <h3 className="text-2xl font-black f1-font uppercase mb-4 text-gray-900 dark:text-white">Sessão Aberta</h3>
+            <h3 className="text-2xl font-black uppercase mb-4 text-gray-900 dark:text-white">Sessão Aberta</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-md leading-relaxed">
                 Os palpites dos adversários estão ocultos para evitar cópias. 
                 <br/><br/>
@@ -86,7 +86,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                         <div key={user.id} className={`rounded-2xl border p-5 transition-all hover:scale-[1.01] ${isMe ? 'bg-purple-50 dark:bg-purple-600/10 border-purple-200 dark:border-purple-600/50' : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/5'}`}>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black f1-font overflow-hidden relative ${isMe ? 'ring-2 ring-purple-500 dark:ring-purple-600' : ''} ${!user.avatarUrl ? (isMe ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400') : ''}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black overflow-hidden relative ${isMe ? 'ring-2 ring-purple-500 dark:ring-purple-600' : ''} ${!user.avatarUrl ? (isMe ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400') : ''}`}>
                                         {user.avatarUrl ? (
                                              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                                         ) : (
@@ -109,7 +109,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                         const driver = DRIVERS.find(d => d.id === driverId);
                                         return (
                                             <div key={idx} className="flex flex-col items-center gap-1.5 group">
-                                                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#050505]/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
+                                                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
                                                     <div className="absolute top-0 right-0 w-full h-1 opacity-60 z-10" style={{ backgroundColor: driver?.color || '#333' }} />
                                                     {driver ? (
                                                         <img 
@@ -126,7 +126,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                             }} 
                                                         />
                                                     ) : null}
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-[#050505]/60 text-[8px] text-center font-bold text-gray-900 dark:text-gray-300 py-0.5 backdrop-blur-sm truncate">
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-black/60 text-[8px] text-center font-bold text-gray-900 dark:text-gray-300 py-0.5 backdrop-blur-sm truncate">
                                                         {driver?.name.split(' ').pop()?.substring(0, 3)}
                                                     </div>
                                                 </div>
@@ -136,7 +136,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                     })}
                                 </div>
                             ) : (
-                                <div className="h-12 bg-gray-50 dark:bg-[#050505]/20 rounded-lg flex items-center justify-center border border-gray-200 dark:border-white/5 border-dashed">
+                                <div className="h-12 bg-gray-50 dark:bg-black/20 rounded-lg flex items-center justify-center border border-gray-200 dark:border-white/5 border-dashed">
                                     <span className="text-[10px] text-gray-400 dark:text-gray-600 font-bold uppercase tracking-widest">Sem palpite registrado</span>
                                 </div>
                             )}
