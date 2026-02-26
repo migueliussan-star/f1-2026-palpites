@@ -18,6 +18,13 @@ if (container) {
 
 // Registra o Service Worker para PWA
 if ('serviceWorker' in navigator) {
+  // Unregister existing SW to fix cache issues
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for(let registration of registrations) {
+      registration.unregister();
+    }
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
