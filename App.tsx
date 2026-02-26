@@ -557,7 +557,7 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  if (isInitialLoading) return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
+  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
@@ -588,7 +588,7 @@ const App: React.FC = () => {
   const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin} language={liveUser.language}>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
       {activeTab === 'home' && (
         <Home 
           user={{...liveUser, rank: realTimeRank}} 
