@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'f1-2026-v7-pwa';
+const CACHE_NAME = 'f1-2026-v8-pwa';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',

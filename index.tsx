@@ -1,8 +1,8 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import './index.css';
+import App from './App';
 
 const container = document.getElementById('root');
 if (container) {
@@ -18,13 +18,6 @@ if (container) {
 
 // Registra o Service Worker para PWA
 if ('serviceWorker' in navigator) {
-  // Unregister existing SW to fix cache issues
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
-  });
-
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
