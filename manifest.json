@@ -3,11 +3,11 @@
   "name": "Palpites F1 2026",
   "short_name": "F1 2026",
   "description": "Fantasy League para a Temporada 2026 da Formula 1",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
   "orientation": "portrait",
   "icons": [
     {

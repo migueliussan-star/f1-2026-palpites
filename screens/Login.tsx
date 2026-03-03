@@ -123,18 +123,18 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
   };
 
   return (
-    <div className="h-full w-full flex flex-col relative bg-gray-50 dark:bg-[#0a0a0c] overflow-hidden">
+    <div className="h-full w-full flex flex-col relative bg-[#0a0a0c] overflow-hidden">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
       
       <div className="flex-1 overflow-y-auto w-full relative z-10 scroll-smooth">
         <div className="min-h-full w-full flex flex-col items-center justify-center p-6">
           
-          <div className="w-full max-w-sm py-10 glass p-8 rounded-[40px] border border-gray-200 dark:border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="w-full max-w-sm py-10 glass p-8 rounded-[40px] border border-white/5 shadow-2xl relative overflow-hidden">
             {/* Glossy effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/50 dark:from-white/5 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
 
             <div className="text-center mb-16 flex flex-col items-center relative z-10">
-              <h1 className="text-6xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
+              <h1 className="text-6xl font-black f1-font text-white mb-2 tracking-tighter italic drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">F1 2026</h1>
               <div className="h-1.5 w-24 bg-[#e10600] mb-6 rounded-full shadow-[0_0_10px_#e10600]"></div>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em]">Fantasy League</p>
             </div>
@@ -229,24 +229,24 @@ const Login: React.FC<LoginProps> = ({ authError, onRetry, isAuthButNoDb, onLogo
 
       {showConfigGuide && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#1a1a1e] border border-gray-200 dark:border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-[#1a1a1e] border border-white/10 rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-red-600/20 rounded-2xl">
                 <Settings className="text-[#e10600]" size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase leading-tight text-gray-900 dark:text-white">Ajuda</h3>
+              <h3 className="text-xl font-black f1-font uppercase leading-tight">Ajuda</h3>
             </div>
             
             <div className="space-y-4">
-              <div className="bg-gray-100 dark:bg-white/5 p-4 rounded-3xl">
-                 <h4 className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 mb-2">Detalhe Técnico:</h4>
-                 <p className="text-[10px] text-red-600 dark:text-red-300 font-mono break-all bg-gray-200 dark:bg-black/30 p-2 rounded-lg">
+              <div className="bg-white/5 p-4 rounded-3xl">
+                 <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Detalhe Técnico:</h4>
+                 <p className="text-[10px] text-red-300 font-mono break-all bg-black/30 p-2 rounded-lg">
                     {detailedError || "Erro desconhecido"}
                  </p>
               </div>
               <div className="bg-blue-600/10 p-4 rounded-3xl border border-blue-600/20">
-                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase mb-2">Dica:</p>
-                <p className="text-[10px] text-gray-700 dark:text-gray-300">
+                <p className="text-[10px] text-blue-400 font-black uppercase mb-2">Dica:</p>
+                <p className="text-[10px] text-gray-300">
                     Se este erro persistir e você for o administrador, verifique as REGRAS (Rules) do Realtime Database no Firebase Console. Elas podem estar bloqueando leitura/gravação.
                 </p>
               </div>

@@ -91,7 +91,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
         <div className="bg-red-600/10 p-2 rounded-xl">
             <Settings className="text-[#e10600]" size={20} />
         </div>
-        <h2 className="text-2xl font-black tracking-tighter uppercase text-gray-900 dark:text-white">Painel ADM</h2>
+        <h2 className="text-2xl font-black f1-font tracking-tighter uppercase text-gray-900 dark:text-white">Painel ADM</h2>
       </div>
 
       <div className="space-y-6 pb-24">
@@ -176,7 +176,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
           <div className="space-y-3 mb-8">
             {[0, 1, 2, 3, 4].map((idx) => (
               <div key={idx} className="flex items-center gap-3">
-                <span className="w-4 text-xs font-black text-gray-500">{idx + 1}</span>
+                <span className="w-4 text-xs font-black f1-font text-gray-500">{idx + 1}</span>
                 <select 
                   value={gp.results?.[activeResultSession]?.[idx] || ''}
                   onChange={(e) => updateResult(activeResultSession, idx, e.target.value)}

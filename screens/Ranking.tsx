@@ -58,7 +58,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
 
                     <div className="flex items-center gap-4 pl-2">
                         <div className="flex flex-col items-center w-6 shrink-0">
-                                <span className={`text-center font-black text-lg ${idx + 1 <= 3 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                                <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 dark:text-gray-500'}`}>
                                 {idx + 1}
                                 </span>
                                 {/* Indicador de Mudança de Posição */}
@@ -106,7 +106,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                     </div>
                     
                     <div className="text-right">
-                    <p className="text-xl font-black leading-none text-gray-900 dark:text-white">{item.points || 0}</p>
+                    <p className="text-xl font-black f1-font leading-none text-gray-900 dark:text-white">{item.points || 0}</p>
                     {/* GAPS */}
                     {idx > 0 ? (
                         <div className="flex flex-col items-end">

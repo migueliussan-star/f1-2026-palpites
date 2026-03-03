@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
-import { useTranslation } from '../i18n';
 
 interface SettingsProps {
   currentUser: User;
@@ -10,11 +9,9 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
-  const { t } = useTranslation(currentUser.language);
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [theme, setTheme] = useState<'light' | 'dark'>(currentUser.theme || 'dark');
-  const [language, setLanguage] = useState<string>(currentUser.language || 'pt-BR');
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -102,8 +99,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
       await onUpdateUser({
         name: name.trim(),
         avatarUrl: avatarUrl.trim(),
-        theme,
-        language
+        theme
       });
       setMessage({ type: 'success', text: 'Configurações salvas e aplicadas!' });
     } catch (error) {
@@ -122,7 +118,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                 <SettingsIcon className="text-gray-400" size={24} />
             </div>
             <div>
-                <h2 className="text-3xl font-black f1-font uppercase leading-none tracking-tighter text-gray-900 dark:text-white">{t('settings')}</h2>
+                <h2 className="text-3xl font-black f1-font uppercase leading-none tracking-tighter text-gray-900 dark:text-white">Configurações</h2>
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Personalize sua experiência</p>
             </div>
         </div>
@@ -142,7 +138,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
             <div className="bg-white p-6 lg:p-8 rounded-[32px] border border-gray-200 shadow-sm dark:bg-white/5 dark:border-white/10 dark:shadow-none transition-colors">
                 <div className="flex items-center gap-2 mb-6 text-blue-500 dark:text-blue-400">
                     <UserIcon size={18} />
-                    <h3 className="text-sm font-black uppercase tracking-widest">{t('profile')}</h3>
+                    <h3 className="text-sm font-black uppercase tracking-widest">Perfil</h3>
                 </div>
 
                 <div className="space-y-6">
@@ -165,7 +161,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                              </div>
                         </div>
                         <p className="text-[10px] text-gray-500 uppercase font-bold text-center">
-                            {t('touchToChange')}<br/>{t('maxSize')}
+                            Toque na imagem para alterar<br/>(Max 5MB)
                         </p>
                         <input 
                             type="file" 
@@ -178,13 +174,13 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
 
                     {/* Name Input */}
                     <div>
-                        <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-2">{t('displayName')}</label>
+                        <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-2">Nome de Exibição</label>
                         <input 
                             type="text" 
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full bg-gray-100 dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-sm font-bold text-gray-900 dark:text-white focus:border-[#e10600] outline-none transition-all placeholder-gray-400"
-                            placeholder={t('yourName')}
+                            placeholder="Seu nome"
                         />
                     </div>
                 </div>
@@ -195,13 +191,13 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                 <div className="bg-white p-6 lg:p-8 rounded-[32px] border border-gray-200 shadow-sm dark:bg-white/5 dark:border-white/10 dark:shadow-none transition-colors h-full">
                     <div className="flex items-center gap-2 mb-6 text-purple-500 dark:text-purple-400">
                         <Palette size={18} />
-                        <h3 className="text-sm font-black uppercase tracking-widest">{t('general')}</h3>
+                        <h3 className="text-sm font-black uppercase tracking-widest">Geral</h3>
                     </div>
 
                     <div className="space-y-6">
                         {/* Theme Selector */}
                         <div>
-                            <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-3">{t('appTheme')}</label>
+                            <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-3">Tema do App</label>
                             <div className="grid grid-cols-2 gap-3">
                                 <button 
                                     onClick={() => setTheme('dark')}
@@ -212,7 +208,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                                     }`}
                                 >
                                     <div className="w-6 h-6 rounded-full bg-[#0a0a0c] border border-gray-600"></div>
-                                    <span className="text-[10px] font-black uppercase">{t('dark')}</span>
+                                    <span className="text-[10px] font-black uppercase">Escuro</span>
                                 </button>
                                 <button 
                                     onClick={() => setTheme('light')}
@@ -223,47 +219,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                                     }`}
                                 >
                                     <div className="w-6 h-6 rounded-full bg-gray-200 border border-gray-300"></div>
-                                    <span className="text-[10px] font-black uppercase">{t('light')}</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Language Selector */}
-                        <div>
-                            <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-3">{t('language')}</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                <button 
-                                    onClick={() => setLanguage('pt-BR')}
-                                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                                        language === 'pt-BR' 
-                                            ? 'bg-gray-900 border-gray-700 text-white dark:bg-white/10 dark:border-white' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-black/20 dark:border-white/5 dark:hover:bg-white/5'
-                                    }`}
-                                >
-                                    <span className="text-xl">🇧🇷</span>
-                                    <span className="text-[10px] font-black uppercase">{t('portuguese')}</span>
-                                </button>
-                                <button 
-                                    onClick={() => setLanguage('en')}
-                                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                                        language === 'en' 
-                                            ? 'bg-gray-900 border-gray-700 text-white dark:bg-white/10 dark:border-white' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-black/20 dark:border-white/5 dark:hover:bg-white/5'
-                                    }`}
-                                >
-                                    <span className="text-xl">🇺🇸</span>
-                                    <span className="text-[10px] font-black uppercase">{t('english')}</span>
-                                </button>
-                                <button 
-                                    onClick={() => setLanguage('es')}
-                                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                                        language === 'es' 
-                                            ? 'bg-gray-900 border-gray-700 text-white dark:bg-white/10 dark:border-white' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 dark:bg-black/20 dark:border-white/5 dark:hover:bg-white/5'
-                                    }`}
-                                >
-                                    <span className="text-xl">🇪🇸</span>
-                                    <span className="text-[10px] font-black uppercase">{t('spanish')}</span>
+                                    <span className="text-[10px] font-black uppercase">Claro</span>
                                 </button>
                             </div>
                         </div>
@@ -276,7 +232,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                     disabled={isLoading}
                     className="w-full py-5 bg-[#e10600] hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-red-900/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isLoading ? t('saving') : <><Save size={16} /> {t('saveAndApply')}</>}
+                    {isLoading ? 'Salvando...' : <><Save size={16} /> Salvar e Aplicar</>}
                 </button>
             </div>
         </div>

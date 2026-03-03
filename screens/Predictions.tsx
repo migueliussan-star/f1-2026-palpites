@@ -104,7 +104,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
       )}
 
       <div className="mb-8">
-        <h2 className="text-3xl font-black text-gray-900 dark:text-white italic uppercase">{gp.name}</h2>
+        <h2 className="text-3xl font-black f1-font text-gray-900 dark:text-white italic uppercase">{gp.name}</h2>
         <div className="flex items-center gap-2 text-[#e10600]">
             <Flag size={14} />
             <p className="text-xs font-bold uppercase tracking-widest">Sessão de Palpites</p>
@@ -189,7 +189,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                         
                         return (
                         <div key={pos} className="flex items-center gap-3">
-                            <span className="w-6 text-center font-black text-gray-400 dark:text-gray-600 text-lg italic">{pos}</span>
+                            <span className="w-6 text-center font-black f1-font text-gray-400 dark:text-gray-600 text-lg italic">{pos}</span>
                             <div 
                                 onClick={() => driver && toggleDriver(driver.id)}
                                 style={driver ? { borderColor: `${driver.color}60`, boxShadow: `0 4px 20px -5px ${driver.color}20` } : {}}
@@ -221,7 +221,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                                 
                                 <div className="flex-1 z-10 pointer-events-none">
                                     <div className="flex items-baseline gap-2">
-                                        <span className="text-xs font-black" style={{ color: driver.color }}>#{driver.number}</span>
+                                        <span className="text-xs font-black f1-font" style={{ color: driver.color }}>#{driver.number}</span>
                                         <p className="text-sm font-bold text-gray-900 dark:text-white leading-none uppercase">{driver.name}</p>
                                     </div>
                                     <p className="text-[9px] text-gray-500 dark:text-gray-400 uppercase font-black tracking-wider mt-1">{driver.team}</p>
@@ -319,7 +319,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
 
                         <div className="absolute top-3 left-3 z-10 pointer-events-none">
                             <p 
-                                className="text-[10px] font-bold mb-0.5 transition-colors" 
+                                className="text-[10px] font-bold f1-font mb-0.5 transition-colors" 
                                 style={{ color: isSelected ? driver.color : '#9ca3af' }}
                             >
                                 #{driver.number}
