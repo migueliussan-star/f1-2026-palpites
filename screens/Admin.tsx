@@ -14,10 +14,11 @@ interface AdminProps {
   onCalculatePoints: (gp: RaceGP) => Promise<void> | void;
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
+  onToggleInvalidateUserGp: (userId: string, gpId: number) => void;
   constructorsOrder?: Team[];
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, constructorsOrder }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, onToggleInvalidateUserGp, constructorsOrder }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -256,13 +257,26 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                     <p className="text-xs font-bold truncate text-gray-900 dark:text-gray-200">{u.name}</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => onDeleteUser(u.id)}
-                                className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-lg transition-all"
-                                title="Excluir Usuário"
-                            >
-                                <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => onToggleInvalidateUserGp(u.id, gp.id)}
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                                        u.invalidatedGPs?.includes(gp.id)
+                                            ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                                            : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
+                                    }`}
+                                    title={u.invalidatedGPs?.includes(gp.id) ? "Validar Palpite neste GP" : "Invalidar Palpite neste GP"}
+                                >
+                                    {u.invalidatedGPs?.includes(gp.id) ? "Validar" : "Invalidar"}
+                                </button>
+                                <button 
+                                    onClick={() => onDeleteUser(u.id)}
+                                    className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-lg transition-all"
+                                    title="Excluir Usuário"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
                         </div>
                     );
                 })}

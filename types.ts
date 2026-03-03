@@ -66,4 +66,5 @@ export interface User {
   avatarUrl?: string;
   theme?: 'light' | 'dark';
   language?: string;
+  invalidatedGPs?: number[]; // IDs dos GPs onde o palpite deste usuário foi invalidado
 }

@@ -425,6 +425,8 @@ const App: React.FC = () => {
       let userTotalPoints = 0;
       updatedCalendar.forEach(calGp => {
           if (!calGp.results) return;
+          if (u.invalidatedGPs?.includes(calGp.id)) return; // Ignora GPs onde o palpite foi invalidado
+          
           const sessions: SessionType[] = calGp.isSprint 
             ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
             : ['Qualy corrida', 'corrida principal'];
@@ -517,10 +519,33 @@ const App: React.FC = () => {
             updates[`${u.id}/level`] = 'Bronze'; 
             updates[`${u.id}/previousRank`] = 0;
             updates[`${u.id}/positionHistory`] = [];
+            updates[`${u.id}/invalidatedGPs`] = [];
         });
         if (Object.keys(updates).length > 0) await update(ref(db, 'users'), updates);
         alert("Resetado.");
     } catch (e) { console.error(e); }
+  };
+
+  const handleToggleInvalidateUserGp = async (userId: string, gpId: number) => {
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    const currentInvalidated = user.invalidatedGPs || [];
+    const isInvalidated = currentInvalidated.includes(gpId);
+    
+    let newInvalidated;
+    if (isInvalidated) {
+        newInvalidated = currentInvalidated.filter(id => id !== gpId);
+    } else {
+        newInvalidated = [...currentInvalidated, gpId];
+    }
+    
+    try {
+        await update(ref(db, `users/${userId}`), { invalidatedGPs: newInvalidated });
+    } catch (e) {
+        console.error("Erro ao invalidar/validar palpite:", e);
+        alert("Erro ao atualizar status do palpite.");
+    }
   };
 
   const handleDeleteUser = async (targetUserId: string) => {
@@ -623,7 +648,7 @@ const App: React.FC = () => {
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={activePredictions} />}
       
       {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
 
@@ -638,6 +663,7 @@ const App: React.FC = () => {
           onCalculatePoints={handleCalculatePoints} 
           onDeleteUser={handleDeleteUser}
           onClearAllPredictions={handleClearAllPredictions}
+          onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
           constructorsOrder={constructorsOrder}
         />
       )}
