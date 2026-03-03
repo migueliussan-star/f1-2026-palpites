@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { User as UserType, RaceGP, Team } from '../types';
+import React, { useState } from 'react';
+import { User as UserType, RaceGP, Team, Prediction, SessionType } from '../types';
 import { TEAM_COLORS } from '../constants';
 import { ChevronUp, ChevronDown, Minus, Car, Flag } from 'lucide-react';
 
@@ -9,44 +9,103 @@ interface RankingProps {
   users: UserType[];
   calendar: RaceGP[];
   constructorsList: Team[];
+  predictions?: Prediction[];
 }
 
-const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList }) => {
+const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constructorsList, predictions = [] }) => {
+  const [selectedGpId, setSelectedGpId] = useState<number | 'global'>('global');
+
   // Ordena os usuários reais por pontos
   const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
   const leaderPoints = sortedUsers[0]?.points || 0;
 
+  // Lógica para ranking por GP
+  const getGpRanking = (gpId: number) => {
+    const gp = calendar.find(c => c.id === gpId);
+    if (!gp || !gp.results) return [];
+
+    const gpPointsMap: Record<string, number> = {};
+    users.forEach(u => {
+      gpPointsMap[u.id] = 0;
+      if (u.invalidatedGPs?.includes(gpId)) return;
+
+      const sessions: SessionType[] = gp.isSprint 
+        ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
+        : ['Qualy corrida', 'corrida principal'];
+      
+      sessions.forEach(session => {
+         const officialResult = gp.results?.[session];
+         if (!officialResult) return;
+         const pred = predictions.find(p => p.gpId === gpId && p.userId === u.id && p.session === session);
+         if (pred) {
+            (pred.top5 || []).forEach((driverId, idx) => {
+               if (driverId === officialResult[idx]) gpPointsMap[u.id] += 5;
+               else if (officialResult.includes(driverId)) gpPointsMap[u.id] += 1;
+            });
+         }
+      });
+    });
+
+    return users.map(u => ({
+      ...u,
+      gpPoints: gpPointsMap[u.id] || 0
+    })).sort((a, b) => b.gpPoints - a.gpPoints) as (UserType & { gpPoints: number })[];
+  };
+
+  const currentRanking = selectedGpId === 'global' ? sortedUsers : getGpRanking(selectedGpId);
+  const currentLeaderPoints = selectedGpId === 'global' ? leaderPoints : ((currentRanking[0] as any)?.gpPoints || 0);
+
   return (
     <div className="p-6 lg:p-12">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-            <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter text-gray-900 dark:text-white">RANKING GLOBAL</h2>
-            <div className="h-1 w-20 bg-[#e10600] mt-2 rounded-full shadow-[0_0_10px_#e10600]"></div>
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter text-gray-900 dark:text-white">
+                    {selectedGpId === 'global' ? 'RANKING GLOBAL' : `RANKING: ${calendar.find(c => c.id === selectedGpId)?.name}`}
+                </h2>
+                <div className="h-1 w-20 bg-[#e10600] mt-2 rounded-full shadow-[0_0_10px_#e10600]"></div>
+            </div>
+            
+            <select 
+                value={selectedGpId}
+                onChange={(e) => setSelectedGpId(e.target.value === 'global' ? 'global' : Number(e.target.value))}
+                className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-[#e10600] focus:border-[#e10600] block p-2.5 font-bold outline-none"
+            >
+                <option value="global">Ranking Global</option>
+                {calendar.filter(gp => gp.results).map(gp => (
+                    <option key={gp.id} value={gp.id}>{gp.name}</option>
+                ))}
+            </select>
         </div>
 
         {/* Lista de Ranking */}
         <div className="bg-white dark:bg-white/5 rounded-[32px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl mb-24 transition-colors">
-            {sortedUsers.length === 0 ? (
+            {currentRanking.length === 0 ? (
             <div className="p-16 text-center text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest leading-relaxed">
                 Nenhum competidor <br/> cadastrado ainda.
             </div>
             ) : (
-            sortedUsers.map((item, idx) => {
+            currentRanking.map((item, idx) => {
+                const itemPoints = selectedGpId === 'global' ? (item.points || 0) : (item as any).gpPoints;
+                const prevItemPoints = idx === 0 ? 0 : (selectedGpId === 'global' ? (currentRanking[idx-1].points || 0) : (currentRanking[idx-1] as any).gpPoints);
+                
                 // Cálculo de Gap (Pontos atrás do próximo)
-                const pointsDiff = idx === 0 ? 0 : (sortedUsers[idx-1].points || 0) - (item.points || 0);
+                const pointsDiff = idx === 0 ? 0 : prevItemPoints - itemPoints;
                 // Cálculo de Gap para o LÍDER
-                const diffToLeader = leaderPoints - (item.points || 0);
+                const diffToLeader = currentLeaderPoints - itemPoints;
                 
                 // Cálculo de Posições Ganhas (Mock se não tiver histórico real)
-                const prevRank = item.previousRank || (item.points ? idx + 2 : idx + 1); 
-                const rankChange = prevRank - (idx + 1);
+                const prevRank = item.previousRank || (itemPoints ? idx + 2 : idx + 1); 
+                const rankChange = selectedGpId === 'global' ? (prevRank - (idx + 1)) : 0; // Não mostra mudança de rank no GP específico por enquanto
 
                 // --- Lógica de Equipe ---
-                const teamIndex = Math.floor(idx / 2);
+                // Encontra o index real do usuário na lista original para manter a mesma equipe
+                const originalIdx = sortedUsers.findIndex(u => u.id === item.id);
+                const teamIndex = Math.floor(Math.max(0, originalIdx) / 2);
                 const assignedTeam = constructorsList[teamIndex % constructorsList.length];
                 const teamColor = TEAM_COLORS[assignedTeam] || '#666';
                 
-                const isLeadDriver = idx % 2 === 0;
+                const isLeadDriver = Math.max(0, originalIdx) % 2 === 0;
 
                 return (
                 <div 
@@ -62,15 +121,17 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                                 {idx + 1}
                                 </span>
                                 {/* Indicador de Mudança de Posição */}
-                                <div className="flex items-center justify-center">
-                                    {rankChange > 0 ? (
-                                        <div className="flex items-center text-green-600 dark:text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
-                                    ) : rankChange < 0 ? (
-                                        <div className="flex items-center text-red-600 dark:text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
-                                    ) : (
-                                        <Minus size={8} className="text-gray-400 dark:text-gray-600" />
-                                    )}
-                                </div>
+                                {selectedGpId === 'global' && (
+                                    <div className="flex items-center justify-center">
+                                        {rankChange > 0 ? (
+                                            <div className="flex items-center text-green-600 dark:text-green-500 text-[8px] font-bold"><ChevronUp size={10} /> {rankChange}</div>
+                                        ) : rankChange < 0 ? (
+                                            <div className="flex items-center text-red-600 dark:text-red-500 text-[8px] font-bold"><ChevronDown size={10} /> {Math.abs(rankChange)}</div>
+                                        ) : (
+                                            <Minus size={8} className="text-gray-400 dark:text-gray-600" />
+                                        )}
+                                    </div>
+                                )}
                         </div>
 
                         {/* Avatar no Ranking */}
@@ -106,7 +167,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, constructorsList 
                     </div>
                     
                     <div className="text-right">
-                    <p className="text-xl font-black f1-font leading-none text-gray-900 dark:text-white">{item.points || 0}</p>
+                    <p className="text-xl font-black f1-font leading-none text-gray-900 dark:text-white">{itemPoints}</p>
                     {/* GAPS */}
                     {idx > 0 ? (
                         <div className="flex flex-col items-end">
