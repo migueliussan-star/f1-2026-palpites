@@ -602,14 +602,6 @@ const App: React.FC = () => {
   }
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
-  if (!activeGP) {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
-              <p>Calendário não carregado. Tente recarregar.</p>
-          </div>
-      );
-  }
-                   
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
   const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
@@ -647,9 +639,11 @@ const App: React.FC = () => {
         ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
         : ['Qualy corrida', 'corrida principal'];
 
+    const sessionStatus = activeGP.sessionStatus || {};
+
     requiredSessions.forEach(session => {
         const sessionKey = `${activeGP.id}-${session}`;
-        const isClosed = activeGP.sessionStatus[session] === false;
+        const isClosed = sessionStatus[session] === false;
         
         if (isClosed && !updatedClosedSessions.includes(sessionKey)) {
             toast(`Palpites para ${session} encerrados!`, { icon: '🔒', duration: 4000 });
@@ -664,7 +658,7 @@ const App: React.FC = () => {
 
     // 3. Uma vez por dia para lembrar de palpitar (se não tiver feito todos)
     const myPredictions = activePredictions.filter(p => p.userId === liveUser.id && p.gpId === activeGP.id);
-    const openSessions = requiredSessions.filter(s => activeGP.sessionStatus[s] !== false);
+    const openSessions = requiredSessions.filter(s => sessionStatus[s] !== false);
     
     // Verifica se há alguma sessão aberta que o usuário ainda não palpitou
     const hasMissingPredictions = openSessions.some(s => !myPredictions.find(p => p.session === s));
@@ -677,6 +671,14 @@ const App: React.FC = () => {
     }
 
   }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length]);
+
+  if (!activeGP) {
+      return (
+          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
+              <p>Calendário não carregado. Tente recarregar.</p>
+          </div>
+      );
+  }
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
