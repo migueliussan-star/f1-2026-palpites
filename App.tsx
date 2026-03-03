@@ -583,11 +583,6 @@ const App: React.FC = () => {
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
-  if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
-
-  const hasAnyAdmin = allUsers.some(u => u.isAdmin);
-  const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
   const safeCalendar = Array.isArray(calendar) ? calendar.filter(Boolean) : [];
   const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
   
@@ -672,6 +667,12 @@ const App: React.FC = () => {
 
   }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length]);
 
+  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
+  if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
+
+  const hasAnyAdmin = allUsers.some(u => u.isAdmin);
+  const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
+  
   if (!activeGP) {
       return (
           <div className="min-h-screen flex items-center justify-center bg-[#0a0a0c] text-white">
