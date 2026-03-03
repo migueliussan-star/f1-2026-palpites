@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
 import { User, RaceGP, SessionType, Prediction, Team } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
@@ -612,8 +613,81 @@ const App: React.FC = () => {
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
   const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
+  // Lógica de Notificações
+  useEffect(() => {
+    if (!liveUser || !activeGP) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const storedLastRemindedDate = localStorage.getItem('lastRemindedDate');
+    const storedLastSeenGpId = localStorage.getItem('lastSeenGpId');
+    const storedClosedSessionsStr = localStorage.getItem('closedSessions') || '[]';
+    
+    let closedSessions: string[] = [];
+    try {
+        closedSessions = JSON.parse(storedClosedSessionsStr);
+    } catch(e) {}
+
+    let justClosed = false;
+    let updatedClosedSessions = [...closedSessions];
+
+    // 1. Quando trocar de GP
+    if (storedLastSeenGpId && Number(storedLastSeenGpId) !== activeGP.id) {
+        toast.success(`O GP mudou para ${activeGP.name}! Faça seus palpites.`, { duration: 5000, icon: '🏁' });
+        localStorage.setItem('lastSeenGpId', String(activeGP.id));
+        
+        // Reset closed sessions for the new GP
+        updatedClosedSessions = [];
+        justClosed = true;
+    } else if (!storedLastSeenGpId) {
+        localStorage.setItem('lastSeenGpId', String(activeGP.id));
+    }
+
+    // 2. Quando os palpites forem fechados
+    const requiredSessions = activeGP.isSprint 
+        ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
+        : ['Qualy corrida', 'corrida principal'];
+
+    requiredSessions.forEach(session => {
+        const sessionKey = `${activeGP.id}-${session}`;
+        const isClosed = activeGP.sessionStatus[session] === false;
+        
+        if (isClosed && !updatedClosedSessions.includes(sessionKey)) {
+            toast(`Palpites para ${session} encerrados!`, { icon: '🔒', duration: 4000 });
+            updatedClosedSessions.push(sessionKey);
+            justClosed = true;
+        }
+    });
+
+    if (justClosed) {
+        localStorage.setItem('closedSessions', JSON.stringify(updatedClosedSessions));
+    }
+
+    // 3. Uma vez por dia para lembrar de palpitar (se não tiver feito todos)
+    const myPredictions = activePredictions.filter(p => p.userId === liveUser.id && p.gpId === activeGP.id);
+    const openSessions = requiredSessions.filter(s => activeGP.sessionStatus[s] !== false);
+    
+    // Verifica se há alguma sessão aberta que o usuário ainda não palpitou
+    const hasMissingPredictions = openSessions.some(s => !myPredictions.find(p => p.session === s));
+
+    if (hasMissingPredictions && storedLastRemindedDate !== today) {
+        setTimeout(() => {
+            toast('Você tem palpites pendentes para este GP! Não esqueça de palpitar.', { icon: '⏰', duration: 6000 });
+        }, 1500);
+        localStorage.setItem('lastRemindedDate', today);
+    }
+
+  }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length]);
+
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
+      <Toaster position="top-center" toastOptions={{
+        style: {
+          background: '#333',
+          color: '#fff',
+          borderRadius: '12px',
+          fontWeight: 'bold',
+        }
+      }} />
       {activeTab === 'home' && (
         <Home 
           user={{...liveUser, rank: realTimeRank}} 
