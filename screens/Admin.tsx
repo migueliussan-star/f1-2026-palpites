@@ -50,11 +50,16 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
   const toggleSession = (session: string) => {
     const newCalendar = calendar.map(c => {
       if (c.id === gp.id) {
+        const newStatus = !c.sessionStatus[session];
         return {
           ...c,
           sessionStatus: {
             ...c.sessionStatus,
-            [session]: !c.sessionStatus[session]
+            [session]: newStatus
+          },
+          manualOverride: {
+            ...(c.manualOverride || {}),
+            [session]: newStatus // Registra que o admin forçou este status
           }
         };
       }

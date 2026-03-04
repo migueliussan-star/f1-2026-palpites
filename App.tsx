@@ -190,7 +190,7 @@ const App: React.FC = () => {
       }
   }, []);
 
-  // Listeners de Dados
+  // Listeners de Dados e Automação de Fechamento
   useEffect(() => {
     if (!user) {
         setAllUsers([]);
@@ -260,12 +260,71 @@ const App: React.FC = () => {
         console.error("Erro listener predictions:", error);
     });
 
+    // Automação de fechamento de sessões (1 hora antes)
+    const checkSessionTimes = () => {
+      if (!calendar || calendar.length === 0) return;
+      const now = new Date();
+      let hasChanges = false;
+      
+      const updatedCalendar = calendar.map(gp => {
+        if (gp.status !== 'OPEN' && gp.status !== 'UPCOMING') return gp;
+        
+        const sessionsToCheck: SessionType[] = gp.isSprint 
+          ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
+          : ['Qualy corrida', 'corrida principal'];
+          
+        let gpChanged = false;
+        const newSessionStatus = { ...gp.sessionStatus };
+        
+        sessionsToCheck.forEach(session => {
+          // Se o admin fez override manual, não mexe
+          if (gp.manualOverride && gp.manualOverride[session] !== undefined) {
+             return;
+          }
+          
+          // Mapeamento do nome da sessão para a chave no objeto sessions
+          let sessionKey = '';
+          if (session === 'Qualy Sprint') sessionKey = 'Qualy Sprint';
+          else if (session === 'corrida Sprint') sessionKey = 'Sprint';
+          else if (session === 'Qualy corrida') sessionKey = 'Qualificação';
+          else if (session === 'corrida principal') sessionKey = 'Corrida';
+          
+          const sessionIsoDate = gp.sessions?.[sessionKey];
+          if (sessionIsoDate) {
+            const sessionDate = new Date(sessionIsoDate);
+            // 1 hora antes = 60 * 60 * 1000 ms
+            const oneHourBefore = new Date(sessionDate.getTime() - (60 * 60 * 1000));
+            
+            if (now >= oneHourBefore && newSessionStatus[session] !== false) {
+              newSessionStatus[session] = false;
+              gpChanged = true;
+              hasChanges = true;
+              console.log(`Auto-fechando sessão ${session} do GP ${gp.name}`);
+            }
+          }
+        });
+        
+        if (gpChanged) {
+          return { ...gp, sessionStatus: newSessionStatus };
+        }
+        return gp;
+      });
+      
+      if (hasChanges && user?.isAdmin) {
+        // Apenas o admin salva no banco para evitar múltiplas escritas
+        set(ref(db, 'calendar'), updatedCalendar).catch(e => console.error("Erro ao auto-fechar sessão:", e));
+      }
+    };
+
+    const intervalId = setInterval(checkSessionTimes, 60000); // Verifica a cada minuto
+
     return () => {
         unsubCalendar();
         unsubUsers();
         unsubPredictions();
+        clearInterval(intervalId);
     };
-  }, [user?.id, processUsersData]);
+  }, [user?.id, processUsersData, calendar, user?.isAdmin]);
 
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');

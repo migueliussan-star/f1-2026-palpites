@@ -39,6 +39,7 @@ export interface RaceGP {
   isSprint: boolean;
   status: 'UPCOMING' | 'OPEN' | 'CLOSED' | 'FINISHED';
   sessionStatus: Record<string, boolean>; // true = aberto
+  manualOverride?: Record<string, boolean>; // override manual do admin
   results?: Partial<Record<SessionType, string[]>>; // Top 5 oficial
   // Mapeamento de nome da sessão (ex: "TL1") para data ISO string
   sessions?: Record<string, string>; 
