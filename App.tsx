@@ -300,17 +300,31 @@ const App: React.FC = () => {
           else if (session === 'Qualy corrida') sessionKey = 'Qualificação';
           else if (session === 'corrida principal') sessionKey = 'Corrida';
           
-          const sessionIsoDate = gp.sessions?.[sessionKey];
-          if (sessionIsoDate) {
-            const sessionDate = new Date(sessionIsoDate);
-            // 1 hora antes = 60 * 60 * 1000 ms
-            const oneHourBefore = new Date(sessionDate.getTime() - (60 * 60 * 1000));
+          // Determinar a sessão de referência para o deadline
+          let referenceSessionKey = '';
+          if (gp.isSprint) {
+              if (session === 'Qualy Sprint' || session === 'corrida Sprint') {
+                  referenceSessionKey = 'Qualy Sprint';
+              } else {
+                  referenceSessionKey = 'Qualificação';
+              }
+          } else {
+              referenceSessionKey = 'Qualificação';
+          }
+
+          const referenceIsoDate = gp.sessions?.[referenceSessionKey];
+          if (referenceIsoDate) {
+            const referenceDate = new Date(referenceIsoDate);
             
-            if (now >= oneHourBefore && newSessionStatus[session] !== false) {
+            // 10 minutos antes da sessão de referência
+            const offset = (10 * 60 * 1000);
+            const deadline = new Date(referenceDate.getTime() - offset);
+            
+            if (now >= deadline && newSessionStatus[session] !== false) {
               newSessionStatus[session] = false;
               gpChanged = true;
               hasChanges = true;
-              console.log(`Auto-fechando sessão ${session} do GP ${gp.name}`);
+              console.log(`Auto-fechando sessão ${session} do GP ${gp.name} baseado na qualy ${referenceSessionKey}`);
             }
           }
         });
