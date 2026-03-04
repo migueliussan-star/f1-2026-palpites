@@ -61,7 +61,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 className="text-3xl font-black f1-font uppercase italic tracking-tighter text-gray-900 dark:text-white">
-                    {selectedGpId === 'global' ? 'RANKING GLOBAL' : `RANKING: ${calendar.find(c => c.id === selectedGpId)?.name}`}
+                    {selectedGpId === 'global' ? 'RANKING' : `RANKING: ${calendar.find(c => c.id === selectedGpId)?.name}`}
                 </h2>
                 <div className="h-1 w-20 bg-[#e10600] mt-2 rounded-full shadow-[0_0_10px_#e10600]"></div>
             </div>
@@ -71,7 +71,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                 onChange={(e) => setSelectedGpId(e.target.value === 'global' ? 'global' : Number(e.target.value))}
                 className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-[#e10600] focus:border-[#e10600] block p-2.5 font-bold outline-none"
             >
-                <option value="global">Ranking Global</option>
+                <option value="global">Ranking</option>
                 {calendar.filter(gp => gp.results).map(gp => (
                     <option key={gp.id} value={gp.id}>{gp.name}</option>
                 ))}

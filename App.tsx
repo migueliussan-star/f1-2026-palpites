@@ -101,7 +101,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchConstructors = async () => {
       try {
-        const res = await fetch('https://ergast.com/api/f1/2026/constructorStandings.json');
+        const res = await fetch('https://api.jolpi.ca/ergast/f1/2026/constructorstandings/');
         if (!res.ok) throw new Error('API not available');
         const data = await res.json();
         const standings = data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings;
