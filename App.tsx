@@ -12,6 +12,7 @@ import Adversarios from './screens/Adversarios';
 import Settings from './screens/Settings';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
+import { LoadingScreen } from './components/LoadingScreen';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
 // Helper ROBUSTO para datas
@@ -751,7 +752,7 @@ const App: React.FC = () => {
 
   }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length, isCalendarLoaded]);
 
-  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
+  if (isInitialLoading) return <LoadingScreen />;
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);

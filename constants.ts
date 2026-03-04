@@ -33,6 +33,15 @@ export const FALLBACK_CONSTRUCTORS: Team[] = [
 // URL de fallback oficial (silhueta)
 export const FALLBACK_IMG = "https://media.formula1.com/content/dam/fom-website/drivers/d_driver_fallback_image.png";
 
+export const LOADING_TIPS = [
+  "Sabia que a F1 2026 tem novas regras de motor?",
+  "Dica: Palpites em sessões de Sprint valem pontos extras!",
+  "Atenção: Os palpites fecham 10 minutos antes da qualificação.",
+  "Verifique a classificação do campeonato para ajustar seus palpites.",
+  "Cada ponto conta na disputa pelo título!",
+  "A consistência é a chave para subir no ranking global."
+];
+
 // NOVO Repositório do usuário (imagens3)
 const GITHUB_REPO = "https://raw.githubusercontent.com/migueliussan-star/imagens3/main";
 
