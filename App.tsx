@@ -57,6 +57,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
+  const [isCalendarLoaded, setIsCalendarLoaded] = useState(false);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS);
@@ -237,6 +238,7 @@ const App: React.FC = () => {
       } else {
         setCalendar(INITIAL_CALENDAR);
       }
+      setIsCalendarLoaded(true);
     }, (e) => console.log("Sync Calendar silenciado"));
 
     const unsubUsers = onValue(usersRef, (snapshot) => {
@@ -260,9 +262,18 @@ const App: React.FC = () => {
         console.error("Erro listener predictions:", error);
     });
 
-    // Automação de fechamento de sessões (1 hora antes)
+    return () => {
+        unsubCalendar();
+        unsubUsers();
+        unsubPredictions();
+    };
+  }, [user?.id, processUsersData]);
+
+  // Automação de fechamento de sessões (1 hora antes)
+  useEffect(() => {
+    if (!user?.isAdmin || !calendar || calendar.length === 0) return;
+
     const checkSessionTimes = () => {
-      if (!calendar || calendar.length === 0) return;
       const now = new Date();
       let hasChanges = false;
       
@@ -310,21 +321,21 @@ const App: React.FC = () => {
         return gp;
       });
       
-      if (hasChanges && user?.isAdmin) {
+      if (hasChanges) {
         // Apenas o admin salva no banco para evitar múltiplas escritas
         set(ref(db, 'calendar'), updatedCalendar).catch(e => console.error("Erro ao auto-fechar sessão:", e));
       }
     };
 
     const intervalId = setInterval(checkSessionTimes, 60000); // Verifica a cada minuto
+    
+    // Executa uma vez na montagem também
+    checkSessionTimes();
 
     return () => {
-        unsubCalendar();
-        unsubUsers();
-        unsubPredictions();
         clearInterval(intervalId);
     };
-  }, [user?.id, processUsersData, calendar, user?.isAdmin]);
+  }, [calendar, user?.isAdmin]);
 
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');
@@ -661,7 +672,7 @@ const App: React.FC = () => {
 
   // Lógica de Notificações
   useEffect(() => {
-    if (!liveUser || !activeGP) return;
+    if (!liveUser || !activeGP || !isCalendarLoaded) return;
 
     const today = new Date().toISOString().split('T')[0];
     const storedLastRemindedDate = localStorage.getItem('lastRemindedDate');
@@ -724,7 +735,7 @@ const App: React.FC = () => {
         localStorage.setItem('lastRemindedDate', today);
     }
 
-  }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length]);
+  }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length, isCalendarLoaded]);
 
   if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;

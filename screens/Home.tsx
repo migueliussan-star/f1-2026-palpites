@@ -57,14 +57,22 @@ const Home: React.FC<HomeProps> = ({
 
   useEffect(() => {
     const getNextSession = () => {
-      const sessionData = nextGP.sessions || INITIAL_CALENDAR.find(c => String(c.id) === String(nextGP.id))?.sessions;
-      if (!sessionData) return null;
+      let sessionData = nextGP.sessions;
+      
+      // Se sessionData for vazio (array ou objeto sem chaves), usa o INITIAL_CALENDAR
+      if (!sessionData || Object.keys(sessionData).length === 0) {
+          sessionData = INITIAL_CALENDAR.find(c => String(c.id) === String(nextGP.id))?.sessions;
+      }
+      
+      if (!sessionData || Object.keys(sessionData).length === 0) return null;
 
       const now = new Date();
       const sessionList = Object.entries(sessionData).map(([name, isoDate]) => ({
         name,
         date: new Date(isoDate as string)
       })).sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      if (sessionList.length === 0) return null;
 
       const next = sessionList.find(s => s.date > now);
       return next || { name: 'Finalizado', date: sessionList[sessionList.length-1].date };

@@ -29,12 +29,12 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorShake, setErrorShake] = useState(false);
 
-  useEffect(() => {
-    const pred = savedPredictions.find(p => p.session === activeSession);
-    
-    const top5 = pred?.top5 || [];
+  // Usa uma string para comparar e evitar re-renders desnecessários
+  const top5String = currentPrediction?.top5?.join(',') || '';
 
-    if (top5.length > 0) {
+  useEffect(() => {
+    if (top5String) {
+      const top5 = top5String.split(',');
       const newSelection = [null, null, null, null, null] as (string | null)[];
       top5.forEach((d, i) => {
         if (i < 5) newSelection[i] = d;
@@ -45,7 +45,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
     }
     
     setManualEditMode(false);
-  }, [activeSession, savedPredictions]);
+  }, [activeSession, top5String]);
 
   const toggleDriver = (id: string) => {
     if (!isEditable) return;
