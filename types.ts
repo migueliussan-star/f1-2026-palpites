@@ -50,6 +50,7 @@ export interface Prediction {
   gpId: number;
   session: SessionType;
   top5: string[]; 
+  timestamp?: string; // Horário em que o palpite foi feito
 }
 
 export interface User {

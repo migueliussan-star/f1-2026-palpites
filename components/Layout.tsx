@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, ClipboardList, Trophy, ShieldAlert, Swords, Settings, Calendar } from 'lucide-react';
+import { Home, ClipboardList, Trophy, ShieldAlert, Swords, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,7 +27,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         <div className="flex-1 px-4 space-y-2 overflow-y-auto">
             <NavButtonDesktop icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
             <NavButtonDesktop icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonDesktop icon={<Calendar size={20} />} label="Calendário" active={activeTab === 'calendario'} onClick={() => setActiveTab('calendario')} />
             <NavButtonDesktop icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
             <NavButtonDesktop icon={<Swords size={20} />} label="Grid Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
             {isAdmin && (
@@ -55,7 +54,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             
             <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
             <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonMobile icon={<Calendar size={18} />} label="Calendário" active={activeTab === 'calendario'} onClick={() => setActiveTab('calendario')} />
             <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
             <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
             <NavButtonMobile icon={<Settings size={18} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />

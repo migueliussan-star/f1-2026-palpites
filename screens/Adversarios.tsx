@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { User, RaceGP, Prediction, SessionType } from '../types';
 import { DRIVERS, FALLBACK_IMG } from '../constants';
-import { Lock, Eye, ShieldAlert, Swords } from 'lucide-react';
+import { Lock, Eye, ShieldAlert, Swords, Clock } from 'lucide-react';
 
 interface AdversariosProps {
   gp: RaceGP;
@@ -98,6 +98,14 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                         <p className="text-[9px] text-gray-500 uppercase font-black">
                                             {user.points || 0} pts
                                         </p>
+                                        {userPred?.timestamp && (
+                                            <p className="text-[8px] text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1 font-bold">
+                                                <Clock size={10} />
+                                                {new Date(userPred.timestamp).toLocaleString('pt-BR', {
+                                                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 {!hasValidPrediction && <span className="text-[8px] bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500 px-2 py-1 rounded-full font-black uppercase">Não apostou</span>}

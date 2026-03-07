@@ -9,7 +9,6 @@ import Palpitometro from './screens/Palpitometro';
 import Ranking from './screens/Ranking';
 import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
-import Calendar from './screens/Calendar';
 import Settings from './screens/Settings';
 import Login from './screens/Login';
 import { Layout } from './components/Layout';
@@ -56,7 +55,7 @@ const getGpDates = (dateStr: string) => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings' | 'calendario'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [isCalendarLoaded, setIsCalendarLoaded] = useState(false);
@@ -664,7 +663,7 @@ const App: React.FC = () => {
   const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
-    const newPrediction = { userId: liveUser.id, gpId, session, top5 };
+    const newPrediction = { userId: liveUser.id, gpId, session, top5, timestamp: new Date().toISOString() };
     setPredictions(prev => [...prev.filter(p => !(p.userId === liveUser.id && p.gpId === gpId && p.session === session)), newPrediction]);
     set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
@@ -811,8 +810,7 @@ const App: React.FC = () => {
           totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
         />
       )}
-      {activeTab === 'calendario' && <Calendar calendar={currentCalendar} />}
-
+      
       {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={activePredictions} />}
       
       {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}

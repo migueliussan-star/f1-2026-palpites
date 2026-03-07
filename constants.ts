@@ -156,265 +156,265 @@ const d = (month: number, day: number, hour: number, minute: number) => {
 export const INITIAL_CALENDAR: RaceGP[] = [
   { 
     id: 1, name: 'Austrália', location: 'Melbourne', date: '05-08 Mar', isSprint: false, status: 'OPEN', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
       "TL1": d(3, 5, 22, 30),
       "TL2": d(3, 6, 2, 0),
       "TL3": d(3, 6, 22, 30),
-      "Qualificação": d(3, 7, 2, 0),
+      "Classificação": d(3, 7, 2, 0),
       "Corrida": d(3, 8, 1, 0)
     }
   },
   { 
-    id: 2, name: 'China', location: 'Xangai', date: '13-15 Mar', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    id: 2, name: 'China', location: 'Shanghai', date: '13-15 Mar', isSprint: true, status: 'UPCOMING', 
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(3, 13, 0, 30),
-      "Qualy Sprint": d(3, 13, 4, 30),
-      "Sprint": d(3, 14, 0, 0),
-      "Qualificação": d(3, 14, 4, 0),
+      "TL1": d(3, 13, 8, 30),
+      "Sprint Q": d(3, 13, 11, 30),
+      "TL2": d(3, 14, 8, 30),
+      "Classificação": d(3, 14, 11, 30),
       "Corrida": d(3, 15, 4, 0)
     }
   },
   { 
     id: 3, name: 'Japão', location: 'Suzuka', date: '26-29 Mar', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(3, 26, 23, 30),
-      "TL2": d(3, 27, 3, 0),
-      "TL3": d(3, 27, 23, 30),
-      "Qualificação": d(3, 28, 3, 0),
+      "TL1": d(3, 27, 22, 30),
+      "TL2": d(3, 28, 1, 30),
+      "TL3": d(3, 28, 22, 30),
+      "Classificação": d(3, 29, 1, 30),
       "Corrida": d(3, 29, 2, 0)
     }
   },
   { 
     id: 4, name: 'Bahrein', location: 'Sakhir', date: '10-12 Abr', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(4, 10, 8, 30),
-      "TL2": d(4, 10, 12, 0),
-      "TL3": d(4, 11, 9, 30),
-      "Qualificação": d(4, 11, 13, 0),
+      "TL1": d(4, 10, 12, 30),
+      "TL2": d(4, 10, 16, 0),
+      "TL3": d(4, 11, 13, 30),
+      "Classificação": d(4, 11, 17, 0),
       "Corrida": d(4, 12, 12, 0)
     }
   },
   { 
     id: 5, name: 'Arábia Saudita', location: 'Jeddah', date: '17-19 Abr', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(4, 17, 10, 30),
-      "TL2": d(4, 17, 14, 0),
-      "TL3": d(4, 18, 10, 30),
-      "Qualificação": d(4, 18, 14, 0),
+      "TL1": d(4, 17, 17, 30),
+      "TL2": d(4, 17, 21, 0),
+      "TL3": d(4, 18, 18, 30),
+      "Classificação": d(4, 18, 22, 0),
       "Corrida": d(4, 19, 14, 0)
     }
   },
   { 
-    id: 6, name: 'Miami', location: 'USA', date: '01-03 Mai', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    id: 6, name: 'Miami', location: 'EUA', date: '01-03 Mai', isSprint: true, status: 'UPCOMING', 
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(5, 1, 13, 30),
-      "Qualy Sprint": d(5, 1, 17, 30),
-      "Sprint": d(5, 2, 13, 0),
-      "Qualificação": d(5, 2, 17, 0),
+      "TL1": d(5, 1, 12, 30),
+      "Sprint Q": d(5, 1, 16, 30),
+      "TL2": d(5, 2, 13, 30),
+      "Classificação": d(5, 2, 17, 0),
       "Corrida": d(5, 3, 17, 0)
     }
   },
   { 
     id: 7, name: 'Canadá', location: 'Montreal', date: '22-24 Mai', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(5, 22, 13, 30),
-      "Qualy Sprint": d(5, 22, 17, 30),
-      "Sprint": d(5, 23, 13, 0),
-      "Qualificação": d(5, 23, 17, 0),
+      "TL1": d(5, 22, 12, 30),
+      "Sprint Q": d(5, 22, 16, 30),
+      "TL2": d(5, 23, 13, 30),
+      "Classificação": d(5, 23, 17, 0),
       "Corrida": d(5, 24, 17, 0)
     }
   },
   { 
     id: 8, name: 'Mônaco', location: 'Monte Carlo', date: '05-07 Jun', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(6, 5, 8, 30),
-      "TL2": d(6, 5, 12, 0),
-      "TL3": d(6, 6, 7, 30),
-      "Qualificação": d(6, 6, 11, 0),
+      "TL1": d(6, 5, 12, 30),
+      "TL2": d(6, 6, 16, 0),
+      "TL3": d(6, 6, 12, 30),
+      "Classificação": d(6, 7, 16, 0),
       "Corrida": d(6, 7, 10, 0)
     }
   },
   { 
     id: 9, name: 'Espanha', location: 'Barcelona', date: '12-14 Jun', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(6, 12, 8, 30),
-      "TL2": d(6, 12, 12, 0),
-      "TL3": d(6, 13, 7, 30),
-      "Qualificação": d(6, 13, 11, 0),
+      "TL1": d(6, 12, 12, 30),
+      "TL2": d(6, 12, 16, 0),
+      "TL3": d(6, 13, 12, 30),
+      "Classificação": d(6, 13, 16, 0),
       "Corrida": d(6, 14, 10, 0)
     }
   },
   { 
     id: 10, name: 'Áustria', location: 'Spielberg', date: '26-28 Jun', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(6, 26, 8, 30),
-      "TL2": d(6, 26, 12, 0),
-      "TL3": d(6, 27, 7, 30),
-      "Qualificação": d(6, 27, 11, 0),
+      "TL1": d(6, 26, 12, 30),
+      "TL2": d(6, 26, 16, 0),
+      "TL3": d(6, 27, 12, 30),
+      "Classificação": d(6, 27, 16, 0),
       "Corrida": d(6, 28, 10, 0)
     }
   },
   { 
     id: 11, name: 'Grã-Bretanha', location: 'Silverstone', date: '03-05 Jul', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(7, 3, 8, 30),
-      "Qualy Sprint": d(7, 3, 12, 30),
-      "Sprint": d(7, 4, 8, 0),
-      "Qualificação": d(7, 4, 12, 0),
+      "TL1": d(7, 3, 12, 30),
+      "Sprint Q": d(7, 3, 16, 0),
+      "TL2": d(7, 4, 12, 30),
+      "Classificação": d(7, 4, 16, 0),
       "Corrida": d(7, 5, 11, 0)
     }
   },
   { 
     id: 12, name: 'Bélgica', location: 'Spa', date: '17-19 Jul', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(7, 17, 8, 30),
-      "TL2": d(7, 17, 12, 0),
-      "TL3": d(7, 18, 7, 30),
-      "Qualificação": d(7, 18, 11, 0),
+      "TL1": d(7, 17, 12, 30),
+      "TL2": d(7, 17, 16, 0),
+      "TL3": d(7, 18, 12, 20),
+      "Classificação": d(7, 18, 16, 0),
       "Corrida": d(7, 19, 10, 0)
     }
   },
   { 
     id: 13, name: 'Hungria', location: 'Budapest', date: '24-26 Jul', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(7, 24, 8, 30),
-      "TL2": d(7, 24, 12, 0),
-      "TL3": d(7, 25, 7, 30),
-      "Qualificação": d(7, 25, 11, 0),
+      "TL1": d(7, 24, 12, 30),
+      "TL2": d(7, 24, 16, 0),
+      "TL3": d(7, 25, 12, 30),
+      "Classificação": d(7, 25, 16, 0),
       "Corrida": d(7, 26, 10, 0)
     }
   },
   { 
     id: 14, name: 'Holanda', location: 'Zandvoort', date: '21-23 Ago', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(8, 21, 7, 30),
-      "Qualy Sprint": d(8, 21, 11, 30),
-      "Sprint": d(8, 22, 7, 0),
-      "Qualificação": d(8, 22, 11, 0),
+      "TL1": d(8, 21, 12, 30),
+      "Sprint Q": d(8, 21, 16, 0),
+      "TL2": d(8, 22, 12, 30),
+      "Classificação": d(8, 22, 15, 0),
       "Corrida": d(8, 23, 10, 0)
     }
   },
   { 
     id: 15, name: 'Itália', location: 'Monza', date: '04-06 Set', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(9, 4, 7, 30),
-      "TL2": d(9, 4, 11, 0),
-      "TL3": d(9, 5, 7, 30),
-      "Qualificação": d(9, 5, 11, 0),
+      "TL1": d(9, 4, 12, 30),
+      "TL2": d(9, 4, 16, 0),
+      "TL3": d(9, 5, 12, 30),
+      "Classificação": d(9, 5, 16, 0),
       "Corrida": d(9, 6, 10, 0)
     }
   },
   { 
     id: 16, name: 'Madri', location: 'Espanha', date: '11-13 Set', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(9, 11, 8, 30),
-      "TL2": d(9, 11, 12, 0),
-      "TL3": d(9, 12, 7, 30),
-      "Qualificação": d(9, 12, 11, 0),
+      "TL1": d(9, 11, 12, 30),
+      "TL2": d(9, 11, 16, 0),
+      "TL3": d(9, 12, 12, 30),
+      "Classificação": d(9, 12, 16, 0),
       "Corrida": d(9, 13, 10, 0)
     }
   },
   { 
     id: 17, name: 'Azerbaijão', location: 'Baku', date: '24-26 Set', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(9, 24, 5, 30),
-      "TL2": d(9, 24, 9, 0),
-      "TL3": d(9, 25, 5, 30),
-      "Qualificação": d(9, 25, 9, 0),
+      "TL1": d(9, 24, 12, 30),
+      "TL2": d(9, 24, 16, 0),
+      "TL3": d(9, 25, 13, 30),
+      "Classificação": d(9, 25, 17, 0),
       "Corrida": d(9, 26, 8, 0)
     }
   },
   { 
     id: 18, name: 'Singapura', location: 'Marina Bay', date: '09-11 Out', isSprint: true, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy Sprint': true, 'corrida Sprint': true, 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'Sprint Q': true, 'TL2': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(10, 9, 6, 30),
-      "Qualy Sprint": d(10, 9, 9, 30),
-      "Sprint": d(10, 10, 6, 0),
-      "Qualificação": d(10, 10, 10, 0),
+      "TL1": d(10, 9, 12, 30),
+      "Sprint Q": d(10, 9, 17, 30),
+      "TL2": d(10, 10, 13, 30),
+      "Classificação": d(10, 10, 18, 0),
       "Corrida": d(10, 11, 9, 0)
     }
   },
   { 
     id: 19, name: 'EUA', location: 'Austin', date: '23-25 Out', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(10, 23, 14, 30),
-      "TL2": d(10, 23, 18, 0),
-      "TL3": d(10, 24, 14, 30),
-      "Qualificação": d(10, 24, 18, 0),
+      "TL1": d(10, 23, 12, 30),
+      "TL2": d(10, 23, 16, 0),
+      "TL3": d(10, 24, 13, 30),
+      "Classificação": d(10, 24, 17, 0),
       "Corrida": d(10, 25, 17, 0)
     }
   },
   { 
     id: 20, name: 'México', location: 'Mexico City', date: '30 Out-01 Nov', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(10, 30, 15, 30),
-      "TL2": d(10, 30, 19, 0),
-      "TL3": d(10, 31, 14, 30),
-      "Qualificação": d(10, 31, 18, 0),
+      "TL1": d(10, 30, 12, 30),
+      "TL2": d(10, 30, 16, 0),
+      "TL3": d(10, 31, 13, 30),
+      "Classificação": d(10, 31, 17, 0),
       "Corrida": d(11, 1, 17, 0)
     }
   },
   { 
     id: 21, name: 'São Paulo', location: 'Interlagos', date: '06-08 Nov', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
       "TL1": d(11, 6, 12, 30),
       "TL2": d(11, 6, 16, 0),
-      "TL3": d(11, 7, 11, 30),
-      "Qualificação": d(11, 7, 15, 0),
+      "TL3": d(11, 7, 12, 30),
+      "Classificação": d(11, 7, 16, 0),
       "Corrida": d(11, 8, 14, 0)
     }
   },
   { 
     id: 22, name: 'Las Vegas', location: 'Nevada', date: '19-22 Nov', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
       "TL1": d(11, 19, 21, 30),
-      "TL2": d(11, 20, 1, 0),
-      "TL3": d(11, 20, 21, 30),
-      "Qualificação": d(11, 21, 1, 0),
+      "TL2": d(11, 20, 1, 30),
+      "TL3": d(11, 20, 22, 30),
+      "Classificação": d(11, 21, 1, 30),
       "Corrida": d(11, 22, 1, 0)
     }
   },
   { 
     id: 23, name: 'Catar', location: 'Lusail', date: '27-29 Nov', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(11, 27, 10, 30),
-      "TL2": d(11, 27, 14, 0),
-      "TL3": d(11, 28, 11, 30),
-      "Qualificação": d(11, 28, 15, 0),
+      "TL1": d(11, 27, 12, 30),
+      "TL2": d(11, 27, 16, 0),
+      "TL3": d(11, 28, 13, 30),
+      "Classificação": d(11, 28, 17, 0),
       "Corrida": d(11, 29, 13, 0)
     }
   },
   { 
     id: 24, name: 'Abu Dhabi', location: 'Yas Marina', date: '04-06 Dez', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'Qualy corrida': true, 'corrida principal': true },
+    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(12, 4, 6, 30),
-      "TL2": d(12, 4, 10, 0),
-      "TL3": d(12, 5, 7, 30),
-      "Qualificação": d(12, 5, 11, 0),
+      "TL1": d(12, 4, 12, 30),
+      "TL2": d(12, 4, 16, 0),
+      "TL3": d(12, 5, 13, 30),
+      "Classificação": d(12, 5, 17, 0),
       "Corrida": d(12, 6, 10, 0)
     }
   },
