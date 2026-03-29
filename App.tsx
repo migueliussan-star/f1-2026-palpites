@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, RaceGP, SessionType, Prediction, Team, Achievement } from './types';
+import { User, RaceGP, SessionType, Prediction, Team, Achievement, League } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
