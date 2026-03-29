@@ -986,7 +986,7 @@ const App: React.FC = () => {
         
         {activeTab === 'desempenho' && <Performance currentUser={liveUser} calendar={currentCalendar} predictions={leaguePredictions} />}
         
-        {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} onNavigateToLeagues={() => setActiveTab('ligas')} hasSelectedLeague={!!selectedLeagueId} />}
 
         {activeTab === 'admin' && canAccessAdmin && (
           <Admin 

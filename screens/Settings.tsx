@@ -1,14 +1,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
-import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload, Bell } from 'lucide-react';
+import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload, Bell, Users } from 'lucide-react';
 
 interface SettingsProps {
   currentUser: User;
   onUpdateUser: (data: Partial<User>) => Promise<void>;
+  onNavigateToLeagues?: () => void;
+  hasSelectedLeague?: boolean;
 }
 
-const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
+const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNavigateToLeagues, hasSelectedLeague }) => {
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [theme, setTheme] = useState<'light' | 'dark'>(currentUser.theme || 'dark');
@@ -288,6 +290,18 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                 >
                     {isLoading ? 'Salvando...' : <><Save size={16} /> Salvar e Aplicar</>}
                 </button>
+
+                {/* MOBILE ONLY: LEAGUES NAVIGATION WHEN IN A LEAGUE */}
+                {hasSelectedLeague && onNavigateToLeagues && (
+                    <div className="md:hidden mt-4">
+                        <button 
+                            onClick={onNavigateToLeagues}
+                            className="w-full py-5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 border border-gray-200 dark:border-white/10 transition-all active:scale-95"
+                        >
+                            <Users size={16} /> Gerenciar Ligas
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     </div>
