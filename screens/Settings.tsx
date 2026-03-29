@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
-import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload, Bell } from 'lucide-react';
 
 interface SettingsProps {
   currentUser: User;
@@ -12,6 +12,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [theme, setTheme] = useState<'light' | 'dark'>(currentUser.theme || 'dark');
+  const [pushEnabled, setPushEnabled] = useState(currentUser.pushEnabled || false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -24,6 +25,40 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      setMessage({ type: 'error', text: 'Seu navegador não suporta notificações.' });
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      setPushEnabled(true);
+    } else if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setPushEnabled(true);
+        new Notification('Notificações Ativadas!', {
+          body: 'Você receberá lembretes antes do fechamento dos palpites.',
+          icon: '/vite.svg'
+        });
+      } else {
+        setMessage({ type: 'error', text: 'Permissão para notificações negada.' });
+        setPushEnabled(false);
+      }
+    } else {
+      setMessage({ type: 'error', text: 'Notificações estão bloqueadas no seu navegador.' });
+      setPushEnabled(false);
+    }
+  };
+
+  const togglePush = () => {
+    if (!pushEnabled) {
+      requestNotificationPermission();
+    } else {
+      setPushEnabled(false);
+    }
+  };
 
   // Função para converter arquivo em Base64 comprimido
   const processImage = (file: File): Promise<string> => {
@@ -99,7 +134,8 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
       await onUpdateUser({
         name: name.trim(),
         avatarUrl: avatarUrl.trim(),
-        theme
+        theme,
+        pushEnabled
       });
       setMessage({ type: 'success', text: 'Configurações salvas e aplicadas!' });
     } catch (error) {
@@ -220,6 +256,24 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser }) => {
                                 >
                                     <div className="w-6 h-6 rounded-full bg-gray-200 border border-gray-300"></div>
                                     <span className="text-[10px] font-black uppercase">Claro</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Notifications Toggle */}
+                        <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label className="block text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                                        <Bell size={14} /> Notificações
+                                    </label>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">Lembretes antes do fechamento</p>
+                                </div>
+                                <button 
+                                    onClick={togglePush}
+                                    className={`w-12 h-6 rounded-full p-1 transition-colors ${pushEnabled ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${pushEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                 </button>
                             </div>
                         </div>

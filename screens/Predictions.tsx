@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Flag, CheckCircle, CheckCircle2, Lock, AlertCircle, Save, Trash2, Edit2, GripVertical, Edit3, RotateCcw, XCircle } from 'lucide-react';
 import { RaceGP, SessionType, Prediction, Driver } from '../types';
 import { DRIVERS, FALLBACK_IMG } from '../constants';
-import { CheckCircle2, GripVertical, Save, AlertCircle, CheckCircle, Lock, Edit3, Trash2, RotateCcw, Flag, XCircle } from 'lucide-react';
 
 interface PredictionsProps {
   gp: RaceGP;
@@ -110,8 +111,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
             <p className="text-xs font-bold uppercase tracking-widest">Sessão de Palpites</p>
         </div>
       </div>
-      
-      {/* Session Tabs */}
+            {/* Session Tabs */}
       <div className="flex gap-3 mb-8 overflow-x-auto pb-4 scrollbar-hide px-1">
         {sessions.map((s, idx) => {
           const isCompleted = savedPredictions.some(p => p.session === s && (p.top5?.length || 0) > 0);
@@ -119,28 +119,47 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
           const isActive = activeSession === s;
           
           return (
-            <button
+            <motion.button
               key={s}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveSessionIdx(idx)}
-              className={`whitespace-nowrap px-5 py-3 rounded-2xl text-[10px] font-black uppercase flex items-center gap-2 transition-all border shadow-lg ${
+              className={`relative whitespace-nowrap px-5 py-3 rounded-2xl text-[10px] font-black uppercase flex items-center gap-2 transition-all border shadow-lg ${
                 isActive 
-                  ? 'bg-[#e10600] text-white border-[#e10600] scale-105 shadow-red-600/30' 
+                  ? 'text-white border-transparent' 
                   : 'glass bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/10'
               }`}
             >
-              {s} 
-              {isCompleted && <div className="bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 size={10} /></div>}
-              {!isOpen && <Lock size={10} className="opacity-50" />}
-            </button>
+              {isActive && (
+                <motion.div
+                  layoutId="activeSessionTab"
+                  className="absolute inset-0 bg-[#e10600] rounded-2xl shadow-lg shadow-red-600/30"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-white' : ''}`}>
+                {s} 
+                {isCompleted && <div className="bg-green-500 text-white rounded-full p-0.5"><CheckCircle2 size={10} /></div>}
+                {!isOpen && <Lock size={10} className="opacity-50" />}
+              </span>
+            </motion.button>
           );
         })}
       </div>
 
       {/* --- RESPONSIVE LAYOUT (2 Columns on Large Screens) --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-        
-        {/* LEFT COLUMN: SELECTED GRID & STATUS (Sticky on Desktop) */}
-        <div className="lg:col-span-5 xl:col-span-4 order-1 lg:order-1">
+      <AnimatePresence mode="wait">
+        <motion.div 
+          key={activeSession}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12"
+        >
+          
+          {/* LEFT COLUMN: SELECTED GRID & STATUS (Sticky on Desktop) */}
+          <div className="lg:col-span-5 xl:col-span-4 order-1 lg:order-1">
             <div className="lg:sticky lg:top-8">
                  {/* Status Banner */}
                 {!isSessionOpen ? (
@@ -344,10 +363,10 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                     );
                 })}
                 </div>
-            </div>
-        </div>
-
-      </div>
+              </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

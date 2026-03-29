@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, RaceGP, Team } from '../types';
+import { User, RaceGP, Team, Achievement } from '../types';
 import { INITIAL_CALENDAR, TEAM_COLORS } from '../constants';
-import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Briefcase } from 'lucide-react';
+import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Briefcase, Eye, Shield, CloudRain, CheckCircle } from 'lucide-react';
 
 interface HomeProps {
   user: User;
@@ -14,6 +14,13 @@ interface HomeProps {
   onClaimAdmin: () => void;
   constructorsList: Team[];
 }
+
+const ACHIEVEMENT_INFO = {
+  'olho_de_lince': { icon: <Eye size={16} />, label: 'Olho de Lince', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' },
+  'fiel_escuderia': { icon: <Shield size={16} />, label: 'Fiel à Escuderia', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10', border: 'border-purple-200 dark:border-purple-500/20' },
+  'mestre_chuva': { icon: <CloudRain size={16} />, label: 'Mestre da Chuva', color: 'text-cyan-500', bg: 'bg-cyan-50 dark:bg-cyan-500/10', border: 'border-cyan-200 dark:border-cyan-500/20' },
+  'primeiro_palpite': { icon: <CheckCircle size={16} />, label: 'Primeiro Palpite', color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-200 dark:border-green-500/20' }
+};
 
 const Home: React.FC<HomeProps> = ({ 
   user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList
@@ -47,10 +54,12 @@ const Home: React.FC<HomeProps> = ({
 
   // --- Lógica de Contrato/Equipe ---
   const userRank = user.rank || 1;
-  const teamIndex = Math.floor((userRank - 1) / 2);
-  const assignedTeam = constructorsList[teamIndex % constructorsList.length] || 'Williams'; 
+  const teamIndex = userRank - 1;
+  // Se o rank for maior que o número de equipes de F1 (excluindo Safety Car), fica no Safety Car
+  const assignedTeam = teamIndex < constructorsList.length - 1 
+    ? constructorsList[teamIndex] 
+    : constructorsList[constructorsList.length - 1] || 'Safety Car'; 
   const teamColor = TEAM_COLORS[assignedTeam] || '#666';
-  const isLeadDriver = (userRank - 1) % 2 === 0;
   
   // Limpeza visual forçada do nome da equipe
   const displayTeamName = assignedTeam.split('-')[0];
@@ -155,19 +164,19 @@ const Home: React.FC<HomeProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
         
         {/* GP CARD: 16:9 no Mobile / Grande (2 colunas) no Desktop */}
-        <div className="lg:col-span-2 relative w-full aspect-[16/9] lg:aspect-[16/10] rounded-[24px] lg:rounded-[40px] overflow-hidden shadow-2xl group animate-enter border border-gray-200 dark:border-white/5" style={{animationDelay: '0.1s'}}>
+        <div className="lg:col-span-2 relative w-full aspect-[16/9] lg:aspect-[16/10] rounded-[24px] lg:rounded-[40px] overflow-hidden shadow-2xl group animate-enter border border-gray-200 dark:border-white/5 bg-gray-900" style={{animationDelay: '0.1s'}}>
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1535136829775-7b3b3d81b947?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-black via-[#0a0a0c]/60 to-transparent"></div>
             <div className={`absolute inset-0 bg-gradient-to-b ${cardOverlayClass} transition-colors duration-500`}></div>
 
             <div className="absolute inset-0 p-5 lg:p-8 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                    <div className="glass px-2.5 py-1.5 lg:px-4 lg:py-2 rounded-full flex items-center gap-1.5 lg:gap-2 border-white/20">
+                    <div className="bg-black/40 backdrop-blur-md px-2.5 py-1.5 lg:px-4 lg:py-2 rounded-full flex items-center gap-1.5 lg:gap-2 border border-white/20">
                         <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full ${statusColor} animate-pulse`}></div>
                         <span className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-white">{statusText}</span>
                     </div>
                     <div className="text-right">
-                        <p className="text-2xl lg:text-5xl font-black f1-font leading-none text-white">{nextGP.id}</p>
+                        <p className="text-2xl lg:text-5xl font-black f1-font leading-none text-white">{nextGP.id >= 3 ? nextGP.id - 2 : nextGP.id}</p>
                         <p className="text-[8px] lg:text-[10px] font-bold uppercase text-gray-300 tracking-widest">Round</p>
                     </div>
                 </div>
@@ -232,10 +241,6 @@ const Home: React.FC<HomeProps> = ({
                     <p className="hidden lg:block text-[10px] uppercase text-gray-500 font-black tracking-widest mb-1">Contrato</p>
                     <h3 className="text-xs lg:text-xl font-black f1-font uppercase truncate w-full" style={{ color: teamColor }}>{displayTeamName}</h3>
                 </div>
-                
-                <span className={`relative z-10 text-[8px] lg:text-[10px] font-bold uppercase mt-1 lg:mt-3 px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-md ${isLeadDriver ? 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-500' : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400'}`}>
-                    {isLeadDriver ? '1º Piloto' : '2º Piloto'}
-                </span>
             </div>
 
             {/* 2. Pontos */}
@@ -288,6 +293,41 @@ const Home: React.FC<HomeProps> = ({
                     </div>
                 </div>
             )}
+        </div>
+
+        {/* Conquistas / Badges */}
+        <div className="mt-8">
+            <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Trophy size={16} className="text-yellow-500" />
+                Conquistas
+            </h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(ACHIEVEMENT_INFO).map(([id, info]) => {
+                    const isUnlocked = user.achievements?.some(a => a.id === id);
+                    return (
+                        <div 
+                            key={id} 
+                            className={`p-4 rounded-2xl border flex flex-col items-center justify-center text-center transition-all ${
+                                isUnlocked 
+                                    ? `${info.bg} ${info.border}` 
+                                    : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/5 opacity-50 grayscale'
+                            }`}
+                        >
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                                isUnlocked ? 'bg-white dark:bg-black/50 shadow-md' : 'bg-gray-200 dark:bg-white/10'
+                            }`}>
+                                <div className={isUnlocked ? info.color : 'text-gray-400'}>
+                                    {info.icon}
+                                </div>
+                            </div>
+                            <span className={`text-xs font-bold uppercase tracking-widest ${isUnlocked ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>
+                                {info.label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
       </div>
     </div>

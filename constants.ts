@@ -12,7 +12,8 @@ export const TEAM_COLORS: Record<Team, string> = {
   'Audi': '#A2A2A2',
   'Alpine': '#0093CC',
   'Cadillac': '#FFCC00',
-  'Williams': '#00A0DE'
+  'Williams': '#00A0DE',
+  'Safety Car': '#FFD700'
 };
 
 // Ordem de Fallback OFICIAL (Alfabética) Simplificada
@@ -27,7 +28,8 @@ export const FALLBACK_CONSTRUCTORS: Team[] = [
   'Mercedes',
   'Racing Bulls',
   'Red Bull',
-  'Williams'
+  'Williams',
+  'Safety Car'
 ];
 
 // URL de fallback oficial (silhueta)
@@ -180,33 +182,11 @@ export const INITIAL_CALENDAR: RaceGP[] = [
     id: 3, name: 'Japão', location: 'Suzuka', date: '26-29 Mar', isSprint: false, status: 'UPCOMING', 
     sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
     sessions: {
-      "TL1": d(3, 27, 22, 30),
-      "TL2": d(3, 28, 1, 30),
-      "TL3": d(3, 28, 22, 30),
-      "Classificação": d(3, 29, 1, 30),
+      "TL1": d(3, 26, 23, 30),
+      "TL2": d(3, 27, 3, 30),
+      "TL3": d(3, 27, 23, 30),
+      "Classificação": d(3, 28, 3, 0),
       "Corrida": d(3, 29, 2, 0)
-    }
-  },
-  { 
-    id: 4, name: 'Bahrein', location: 'Sakhir', date: '10-12 Abr', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
-    sessions: {
-      "TL1": d(4, 10, 12, 30),
-      "TL2": d(4, 10, 16, 0),
-      "TL3": d(4, 11, 13, 30),
-      "Classificação": d(4, 11, 17, 0),
-      "Corrida": d(4, 12, 12, 0)
-    }
-  },
-  { 
-    id: 5, name: 'Arábia Saudita', location: 'Jeddah', date: '17-19 Abr', isSprint: false, status: 'UPCOMING', 
-    sessionStatus: { 'TL1': true, 'TL2': true, 'TL3': true, 'Classificação': true, 'Corrida': true },
-    sessions: {
-      "TL1": d(4, 17, 17, 30),
-      "TL2": d(4, 17, 21, 0),
-      "TL3": d(4, 18, 18, 30),
-      "Classificação": d(4, 18, 22, 0),
-      "Corrida": d(4, 19, 14, 0)
     }
   },
   { 

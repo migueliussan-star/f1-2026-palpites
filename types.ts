@@ -10,7 +10,8 @@ export type Team =
   | 'Mercedes' 
   | 'Racing Bulls' 
   | 'Red Bull' 
-  | 'Williams';
+  | 'Williams'
+  | 'Safety Car';
 
 export interface Driver {
   id: string;
@@ -43,6 +44,7 @@ export interface RaceGP {
   results?: Partial<Record<SessionType, string[]>>; // Top 5 oficial
   // Mapeamento de nome da sessão (ex: "TL1") para data ISO string
   sessions?: Record<string, string>; 
+  isWet?: boolean;
 }
 
 export interface Prediction {
@@ -53,6 +55,23 @@ export interface Prediction {
   timestamp?: string; // Horário em que o palpite foi feito
 }
 
+export interface League {
+  id: string;
+  name: string;
+  code: string;
+  ownerId: string;
+  members: string[];
+  createdAt: number;
+}
+
+export type AchievementType = 'olho_de_lince' | 'fiel_escuderia' | 'mestre_chuva' | 'primeiro_palpite';
+
+export interface Achievement {
+  id: AchievementType;
+  unlockedAt: number;
+  gpId?: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -61,6 +80,7 @@ export interface User {
   rank: number;
   previousRank?: number; // Rank na rodada anterior
   positionHistory?: number[]; // Histórico de posições nas últimas corridas
+  pointsHistory?: { gpId: number; points: number }[]; // Histórico de pontos por corrida
   level: 'Ouro' | 'Prata' | 'Bronze';
   isAdmin: boolean;
   isGuest?: boolean; // Flag para usuários visitantes
@@ -69,4 +89,7 @@ export interface User {
   theme?: 'light' | 'dark';
   language?: string;
   invalidatedGPs?: number[]; // IDs dos GPs onde o palpite deste usuário foi invalidado
+  leagues?: string[]; // IDs das ligas que o usuário participa
+  achievements?: Achievement[]; // Conquistas desbloqueadas
+  pushEnabled?: boolean; // Se as notificações estão ativadas
 }

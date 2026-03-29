@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { User, RaceGP, SessionType, Prediction, Team } from './types';
+import { motion, AnimatePresence } from 'motion/react';
+import { User, RaceGP, SessionType, Prediction, Team, Achievement } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
@@ -11,6 +12,8 @@ import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
 import Settings from './screens/Settings';
 import Login from './screens/Login';
+import Leagues from './screens/Leagues';
+import Performance from './screens/Performance';
 import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
@@ -55,12 +58,15 @@ const getGpDates = (dateStr: string) => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings'>('home');
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(localStorage.getItem('selectedLeagueId'));
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings' | 'ligas' | 'desempenho'>(localStorage.getItem('selectedLeagueId') ? 'home' : 'ligas');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
   const [isCalendarLoaded, setIsCalendarLoaded] = useState(false);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [leagues, setLeagues] = useState<League[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const activePredictions = useMemo(() => predictions.filter(p => p && allUsers.some(u => u.id === p.userId)), [predictions, allUsers]);
   const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -73,6 +79,39 @@ const App: React.FC = () => {
     const dbUser = allUsers.find(u => u.id === user.id);
     return dbUser ? { ...user, ...dbUser } : user;
   }, [user, allUsers]);
+
+  const leagueUsers = useMemo(() => {
+    if (!selectedLeagueId) return allUsers;
+    return allUsers.filter(u => u.leagues?.includes(selectedLeagueId));
+  }, [allUsers, selectedLeagueId]);
+
+  const leaguePredictions = useMemo(() => {
+    if (!selectedLeagueId) return activePredictions;
+    const userIds = new Set(leagueUsers.map(u => u.id));
+    return activePredictions.filter(p => userIds.has(p.userId));
+  }, [activePredictions, leagueUsers, selectedLeagueId]);
+
+  const realTimeRank = useMemo(() => {
+    if (!liveUser) return 1;
+    if (!selectedLeagueId) return liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
+    return leagueUsers.sort((a, b) => (b.points || 0) - (a.points || 0)).findIndex(u => u.id === liveUser.id) + 1;
+  }, [liveUser?.rank, liveUser?.id, allUsers, leagueUsers, selectedLeagueId]);
+
+  const isLeagueOwner = useMemo(() => {
+    if (!selectedLeagueId || !liveUser) return false;
+    const league = leagues.find(l => l.id === selectedLeagueId);
+    return league?.ownerId === liveUser.id;
+  }, [leagues, selectedLeagueId, liveUser?.id]);
+
+  const canAccessAdmin = useMemo(() => {
+    if (!liveUser) return false;
+    // Se estiver em uma liga, apenas o dono tem acesso admin
+    if (selectedLeagueId) {
+      return isLeagueOwner;
+    }
+    // Se não estiver em liga, usa o status global
+    return liveUser.isAdmin;
+  }, [liveUser, selectedLeagueId, isLeagueOwner]);
 
   // APLICA O TEMA AO DOM
   useEffect(() => {
@@ -126,7 +165,9 @@ const App: React.FC = () => {
 
             if (apiTeams.length > 0) {
                  const combined = Array.from(new Set([...apiTeams, ...FALLBACK_CONSTRUCTORS]));
-                 setConstructorsOrder(combined);
+                 // Garante que o Safety Car seja sempre o último
+                 const filtered = combined.filter(t => t !== 'Safety Car');
+                 setConstructorsOrder([...filtered, 'Safety Car']);
                  return;
             }
         }
@@ -203,6 +244,7 @@ const App: React.FC = () => {
     const calendarRef = ref(db, 'calendar');
     const usersRef = ref(db, 'users');
     const predictionsRef = ref(db, 'predictions');
+    const leaguesRef = ref(db, 'leagues');
 
     get(calendarRef).then(snap => {
         if (snap.exists()) {
@@ -230,6 +272,14 @@ const App: React.FC = () => {
              setPredictions(predList);
         }
     }).catch(e => console.log("Predictions read skipped", e));
+
+    get(leaguesRef).then(snap => {
+        if (snap.exists()) {
+            const data = snap.val();
+            const leagueList = Object.keys(data).map(id => ({ id, ...data[id] }));
+            setLeagues(leagueList);
+        }
+    }).catch(e => console.log("Leagues read skipped", e));
 
     const unsubCalendar = onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -263,10 +313,23 @@ const App: React.FC = () => {
         console.error("Erro listener predictions:", error);
     });
 
+    const unsubLeagues = onValue(leaguesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const leagueList = Object.keys(data).map(id => ({ id, ...data[id] }));
+            setLeagues(leagueList);
+        } else {
+            setLeagues([]);
+        }
+    }, (error) => {
+        console.error("Erro listener leagues:", error);
+    });
+
     return () => {
         unsubCalendar();
         unsubUsers();
         unsubPredictions();
+        unsubLeagues();
     };
   }, [user?.id, processUsersData]);
 
@@ -505,13 +568,40 @@ const App: React.FC = () => {
 
     const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
     const userPointsMap: Record<string, number> = {};
+    const userPointsHistoryMap: Record<string, { gpId: number; points: number }[]> = {};
 
     // 2. Cálculo dos pontos
     allUsers.forEach(u => {
       let userTotalPoints = 0;
+      let earnedAchievements: Achievement[] = [];
+      let consecutiveP1Driver: string | null = null;
+      let consecutiveP1Count = 0;
+      let pointsHistory: { gpId: number; points: number }[] = [...(u.pointsHistory || [])];
+      
       updatedCalendar.forEach(calGp => {
           if (!calGp.results) return;
           if (u.invalidatedGPs?.includes(calGp.id)) return; // Ignora GPs onde o palpite foi invalidado
+          
+          let gpPoints = 0;
+          
+          // Check for "Fiel à Escuderia"
+          const mainRacePred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === 'corrida principal');
+          if (mainRacePred && mainRacePred.top5 && mainRacePred.top5.length > 0) {
+              const p1Driver = mainRacePred.top5[0];
+              if (p1Driver === consecutiveP1Driver) {
+                  consecutiveP1Count++;
+              } else {
+                  consecutiveP1Driver = p1Driver;
+                  consecutiveP1Count = 1;
+              }
+              
+              if (consecutiveP1Count >= 3 && !(u.achievements || []).some(a => a.id === 'fiel_escuderia') && !earnedAchievements.some(a => a.id === 'fiel_escuderia')) {
+                  earnedAchievements.push({ id: 'fiel_escuderia', unlockedAt: Date.now(), gpId: calGp.id });
+              }
+          } else {
+              consecutiveP1Driver = null;
+              consecutiveP1Count = 0;
+          }
           
           const sessions: SessionType[] = calGp.isSprint 
             ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
@@ -522,14 +612,62 @@ const App: React.FC = () => {
              if (!officialResult) return;
              const pred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === session);
              if (pred) {
+                let exactMatches = 0;
+                let pointsInSession = 0;
                 (pred.top5 || []).forEach((driverId, idx) => {
-                   if (driverId === officialResult[idx]) userTotalPoints += 5;
-                   else if (officialResult.includes(driverId)) userTotalPoints += 1;
+                   if (driverId === officialResult[idx]) {
+                       userTotalPoints += 5;
+                       gpPoints += 5;
+                       pointsInSession += 5;
+                       exactMatches++;
+                   }
+                   else if (officialResult.includes(driverId)) {
+                       userTotalPoints += 1;
+                       gpPoints += 1;
+                       pointsInSession += 1;
+                   }
                 });
+                
+                // Check for "Olho de Lince" (Acertou o Top 5 completo)
+                if (exactMatches === 5 && !(u.achievements || []).some(a => a.id === 'olho_de_lince') && !earnedAchievements.some(a => a.id === 'olho_de_lince')) {
+                    earnedAchievements.push({ id: 'olho_de_lince', unlockedAt: Date.now(), gpId: calGp.id });
+                }
+                
+                // Check for "Mestre da Chuva"
+                if (calGp.isWet && pointsInSession > 0 && !(u.achievements || []).some(a => a.id === 'mestre_chuva') && !earnedAchievements.some(a => a.id === 'mestre_chuva')) {
+                    earnedAchievements.push({ id: 'mestre_chuva', unlockedAt: Date.now(), gpId: calGp.id });
+                }
              }
           });
+          
+          // Update points history for this GP
+          const existingGpIndex = pointsHistory.findIndex(ph => ph.gpId === calGp.id);
+          if (existingGpIndex !== -1) {
+              pointsHistory[existingGpIndex].points = gpPoints;
+          } else {
+              pointsHistory.push({ gpId: calGp.id, points: gpPoints });
+          }
       });
+      
       userPointsMap[u.id] = userTotalPoints;
+      userPointsHistoryMap[u.id] = pointsHistory;
+      
+      if (earnedAchievements.length > 0) {
+          const newAchievements = [...(u.achievements || []), ...earnedAchievements];
+          updates[`users/${u.id}/achievements`] = newAchievements;
+          
+          if (u.id === liveUser?.id) {
+              earnedAchievements.forEach(ach => {
+                  if (ach.id === 'olho_de_lince') {
+                      toast.success('Conquista Desbloqueada: Olho de Lince!', { icon: '🎯' });
+                  } else if (ach.id === 'mestre_chuva') {
+                      toast.success('Conquista Desbloqueada: Mestre da Chuva!', { icon: '🌧️' });
+                  } else if (ach.id === 'fiel_escuderia') {
+                      toast.success('Conquista Desbloqueada: Fiel à Escuderia!', { icon: '🛡️' });
+                  }
+              });
+          }
+      }
     });
 
     const realUsers = allUsers.filter(u => !u.isGuest);
@@ -568,10 +706,12 @@ const App: React.FC = () => {
         updates[`users/${u.id}/level`] = newLevel; 
         updates[`users/${u.id}/previousRank`] = u.rank;
         updates[`users/${u.id}/positionHistory`] = newHistory;
+        updates[`users/${u.id}/pointsHistory`] = userPointsHistoryMap[u.id] || [];
     });
 
     guestUsers.forEach(u => {
         updates[`users/${u.id}/points`] = userPointsMap[u.id] || 0;
+        updates[`users/${u.id}/pointsHistory`] = userPointsHistoryMap[u.id] || [];
     });
 
     try {
@@ -660,12 +800,25 @@ const App: React.FC = () => {
       }
   };
 
-  const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
+  const handlePredict = async (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
     const newPrediction = { userId: liveUser.id, gpId, session, top5, timestamp: new Date().toISOString() };
     setPredictions(prev => [...prev.filter(p => !(p.userId === liveUser.id && p.gpId === gpId && p.session === session)), newPrediction]);
-    set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
+    
+    try {
+        await set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction);
+        
+        // Check for "Primeiro Palpite" achievement
+        const userAchievements = liveUser.achievements || [];
+        if (!userAchievements.some(a => a.id === 'primeiro_palpite')) {
+            const newAchievements = [...userAchievements, { id: 'primeiro_palpite', unlockedAt: Date.now(), gpId }];
+            await handleUpdateUser({ achievements: newAchievements as any });
+            toast.success('Conquista Desbloqueada: Primeiro Palpite!', { icon: '🏆' });
+        }
+    } catch (e) {
+        console.warn(e);
+    }
   };
   
   const safeCalendar = Array.isArray(calendar) ? calendar.filter(Boolean) : [];
@@ -683,7 +836,6 @@ const App: React.FC = () => {
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
-  const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
   // Lógica de Notificações
   useEffect(() => {
@@ -746,6 +898,14 @@ const App: React.FC = () => {
     if (hasMissingPredictions && storedLastRemindedDate !== today) {
         setTimeout(() => {
             toast('Você tem palpites pendentes para este GP! Não esqueça de palpitar.', { icon: '⏰', duration: 6000 });
+            
+            // Disparar notificação do navegador se ativado
+            if (liveUser.pushEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                new Notification(`Lembrete: GP de ${activeGP.name}`, {
+                    body: 'Você ainda tem palpites pendentes para este GP. Não se esqueça de palpitar antes do fechamento das sessões!',
+                    icon: '/vite.svg'
+                });
+            }
         }, 1500);
         localStorage.setItem('lastRemindedDate', today);
     }
@@ -756,7 +916,6 @@ const App: React.FC = () => {
   if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
 
   const hasAnyAdmin = allUsers.some(u => u.isAdmin);
-  const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
   
   if (!activeGP) {
       return (
@@ -767,7 +926,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
+    <>
       <Toaster position="top-center" toastOptions={{
         style: {
           background: '#333',
@@ -776,61 +935,75 @@ const App: React.FC = () => {
           fontWeight: 'bold',
         }
       }} />
-      {activeTab === 'home' && (
-        <Home 
-          user={{...liveUser, rank: realTimeRank}} 
-          nextGP={activeGP} 
-          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
-          onNavigateToPredict={() => setActiveTab('palpites')} 
-          onLogout={handleLogout} 
-          hasNoAdmin={!hasAnyAdmin}
-          onClaimAdmin={handlePromoteSelfToAdmin}
-          constructorsList={constructorsOrder}
-        />
-      )}
-      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
-      
-      {activeTab === 'adversarios' && (
-        <Adversarios 
-          gp={activeGP}
-          users={allUsers.filter(u => !u.isGuest)} 
-          predictions={activePredictions}
-          currentUser={liveUser}
-        />
-      )}
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={canAccessAdmin} hasSelectedLeague={!!selectedLeagueId} onLogout={handleLogout}>
+        {activeTab === 'home' && (
+          <Home 
+            user={{...liveUser, rank: realTimeRank}} 
+            nextGP={activeGP} 
+            predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
+            onNavigateToPredict={() => setActiveTab('palpites')} 
+            onLogout={handleLogout} 
+            hasNoAdmin={!hasAnyAdmin}
+            onClaimAdmin={handlePromoteSelfToAdmin}
+            constructorsList={constructorsOrder}
+          />
+        )}
+        {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
+        
+        {activeTab === 'adversarios' && (
+          <Adversarios 
+            gp={activeGP}
+            users={leagueUsers.filter(u => !u.isGuest)} 
+            predictions={leaguePredictions}
+            currentUser={liveUser}
+          />
+        )}
 
-      {activeTab === 'palpitometro' && (
-        <Palpitometro 
-          gp={activeGP} 
-          stats={activePredictions.filter(p => p.gpId === activeGP?.id).reduce((acc, p) => {
-            if (!acc[p.session]) acc[p.session] = {};
-            (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
-            return acc;
-          }, {} as any)} 
-          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
-        />
-      )}
-      
-      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={activePredictions} />}
-      
-      {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
+        {activeTab === 'palpitometro' && (
+          <Palpitometro 
+            gp={activeGP} 
+            stats={leaguePredictions.filter(p => p.gpId === activeGP?.id).reduce((acc, p) => {
+              if (!acc[p.session]) acc[p.session] = {};
+              (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
+              return acc;
+            }, {} as any)} 
+            totalUsers={new Set(leaguePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
+          />
+        )}
+        
+        {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={leaguePredictions} />}
+        
+        {activeTab === 'ligas' && <Leagues currentUser={liveUser} allUsers={allUsers.filter(u => !u.isGuest)} onUpdateUser={handleUpdateUser} selectedLeagueId={selectedLeagueId} onSelectLeague={(id) => {
+          setSelectedLeagueId(id);
+          if (id) {
+            localStorage.setItem('selectedLeagueId', id);
+            setActiveTab('home');
+          } else {
+            localStorage.removeItem('selectedLeagueId');
+          }
+        }} />}
+        
+        {activeTab === 'desempenho' && <Performance currentUser={liveUser} calendar={currentCalendar} predictions={leaguePredictions} />}
+        
+        {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
 
-      {activeTab === 'admin' && liveUser.isAdmin && (
-        <Admin 
-          gp={adminGP} 
-          calendar={currentCalendar} 
-          users={allUsers}
-          currentUser={liveUser}
-          onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
-          onSelectGp={(id) => setAdminEditingGpId(id)} 
-          onCalculatePoints={handleCalculatePoints} 
-          onDeleteUser={handleDeleteUser}
-          onClearAllPredictions={handleClearAllPredictions}
-          onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
-          constructorsOrder={constructorsOrder}
-        />
-      )}
-    </Layout>
+        {activeTab === 'admin' && canAccessAdmin && (
+          <Admin 
+            gp={adminGP} 
+            calendar={currentCalendar} 
+            users={leagueUsers}
+            currentUser={liveUser}
+            onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
+            onSelectGp={(id) => setAdminEditingGpId(id)} 
+            onCalculatePoints={handleCalculatePoints} 
+            onDeleteUser={handleDeleteUser}
+            onClearAllPredictions={handleClearAllPredictions}
+            onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
+            constructorsOrder={constructorsOrder}
+          />
+        )}
+      </Layout>
+    </>
   );
 };
 

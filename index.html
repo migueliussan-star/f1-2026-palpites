@@ -10,6 +10,26 @@
     <meta name="apple-mobile-web-app-title" content="F1 2026" />
 
     <title>Palpites F1 2026</title>
+    
+    <script>
+      // Fix for "Cannot set property fetch of #<Window> which has only a getter"
+      // Some libraries try to polyfill fetch by assigning to window.fetch, which fails in some environments.
+      (function() {
+        var originalFetch = window.fetch;
+        try {
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return originalFetch; },
+            set: function(v) { 
+              console.warn('A library attempted to overwrite window.fetch. This was prevented to avoid a TypeError.');
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // If we can't redefine it, we just hope for the best
+        }
+      })();
+    </script>
 
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/icon.svg" />
@@ -46,14 +66,14 @@
         }
 
         .glass {
-            background: rgba(20, 20, 25, 0.7);
+            background-color: rgba(20, 20, 25, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         html.light .glass {
-            background: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.8);
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 

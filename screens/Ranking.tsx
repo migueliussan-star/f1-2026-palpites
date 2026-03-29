@@ -101,11 +101,13 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                 // --- Lógica de Equipe ---
                 // Encontra o index real do usuário na lista original para manter a mesma equipe
                 const originalIdx = sortedUsers.findIndex(u => u.id === item.id);
-                const teamIndex = Math.floor(Math.max(0, originalIdx) / 2);
-                const assignedTeam = constructorsList[teamIndex % constructorsList.length];
+                const rankPosition = Math.max(0, originalIdx);
+                const driverPosition = (rankPosition % 4) + 1;
+                const teamIndex = Math.floor(rankPosition / 4);
+                const assignedTeam = teamIndex < constructorsList.length - 1 
+                  ? constructorsList[teamIndex] 
+                  : constructorsList[constructorsList.length - 1] || 'Safety Car';
                 const teamColor = TEAM_COLORS[assignedTeam] || '#666';
-                
-                const isLeadDriver = Math.max(0, originalIdx) % 2 === 0;
 
                 return (
                 <div 
@@ -113,7 +115,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                     className={`flex items-center justify-between p-4 px-6 border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors relative overflow-hidden group ${item.id === currentUser.id ? 'bg-red-50 dark:bg-[#e10600]/10' : ''}`}
                 >
                     {/* Barra de Cor da Equipe à esquerda */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: teamColor }}></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundImage: `linear-gradient(to bottom, ${teamColor}, transparent)` }}></div>
 
                     <div className="flex items-center gap-4 pl-2">
                         <div className="flex flex-col items-center w-6 shrink-0">
@@ -158,9 +160,13 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                                 <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: teamColor }}>
                                     {assignedTeam}
                                 </span>
-                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${isLeadDriver ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-500/20' : 'bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700/30'}`}>
-                                    {isLeadDriver ? <Flag size={8} /> : <Car size={8} />}
-                                    {isLeadDriver ? '1º Piloto' : '2º Piloto'}
+                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${
+                                    driverPosition === 1 ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-500/20' : 
+                                    driverPosition === 2 ? 'bg-gray-200 dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700/30' :
+                                    driverPosition === 3 ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-500 border border-orange-200 dark:border-orange-500/20' :
+                                    'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-500 border border-blue-200 dark:border-blue-500/20'
+                                }`}>
+                                    {driverPosition}º Piloto
                                 </span>
                             </div>
                         </div>

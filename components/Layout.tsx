@@ -1,19 +1,21 @@
-
 import React from 'react';
-import { Home, ClipboardList, Trophy, ShieldAlert, Swords, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Home, ClipboardList, Trophy, Swords, ShieldAlert, Settings, Users, BarChart3, LogOut } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   setActiveTab: (tab: any) => void;
   isAdmin?: boolean;
+  hasSelectedLeague?: boolean;
+  onLogout: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, isAdmin, hasSelectedLeague = true, onLogout }) => {
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-[#0a0a0c] overflow-hidden transition-colors duration-300">
       {/* Background effects */}
-      <div className="fixed top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-[#e10600]/10 to-transparent pointer-events-none z-0" />
+      <div className="fixed top-0 left-0 w-full h-[30vh] bg-gradient-to-b dark:from-[#e10600]/10 from-transparent to-transparent pointer-events-none z-0" />
 
       {/* --- DESKTOP SIDEBAR (Visible on md+) --- */}
       <aside className="hidden md:flex flex-col w-24 lg:w-64 h-full glass border-r border-gray-200 dark:border-white/5 z-50 relative bg-white/50 dark:bg-transparent">
@@ -25,10 +27,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
         </div>
 
         <div className="flex-1 px-4 space-y-2 overflow-y-auto">
-            <NavButtonDesktop icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-            <NavButtonDesktop icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonDesktop icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-            <NavButtonDesktop icon={<Swords size={20} />} label="Grid Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+            {hasSelectedLeague && (
+              <>
+                <NavButtonDesktop icon={<Home size={20} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+                <NavButtonDesktop icon={<ClipboardList size={20} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
+                <NavButtonDesktop icon={<Trophy size={20} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
+              </>
+            )}
+            <NavButtonDesktop icon={<Users size={20} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />
+            {hasSelectedLeague && (
+              <>
+                <NavButtonDesktop icon={<BarChart3 size={20} />} label="Desempenho" active={activeTab === 'desempenho'} onClick={() => setActiveTab('desempenho')} />
+                <NavButtonDesktop icon={<Swords size={20} />} label="Grid Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+              </>
+            )}
             {isAdmin && (
                 <div className="pt-4 mt-4 border-t border-gray-200 dark:border-white/5">
                     <NavButtonDesktop icon={<ShieldAlert size={20} />} label="Admin" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} isDanger />
@@ -43,19 +55,50 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative z-10 scroll-smooth pb-32 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <button 
+            onClick={onLogout}
+            className="absolute top-4 right-4 z-50 p-2 text-gray-500 hover:text-red-500 transition-colors"
+            title="Sair"
+        >
+            <LogOut size={20} />
+        </button>
         <div className="max-w-7xl mx-auto w-full h-full">
-            {children}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="w-full h-full"
+                >
+                    {children}
+                </motion.div>
+            </AnimatePresence>
         </div>
       </main>
 
       {/* --- MOBILE BOTTOM BAR (Visible on sm/mobile only) --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-bottom pointer-events-none">
-        <nav className="h-20 glass rounded-[32px] px-1 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5">
+        <nav className="h-20 glass rounded-[32px] px-1 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5 overflow-x-auto scrollbar-hide">
             
-            <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-            <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
-            <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-            <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+            {hasSelectedLeague && (
+              <>
+                <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+                <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
+                <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
+              </>
+            )}
+            <NavButtonMobile icon={<Users size={18} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />
+            {hasSelectedLeague && (
+              <>
+                <NavButtonMobile icon={<BarChart3 size={18} />} label="Desempenho" active={activeTab === 'desempenho'} onClick={() => setActiveTab('desempenho')} />
+                <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
+              </>
+            )}
+            {isAdmin && (
+              <NavButtonMobile icon={<ShieldAlert size={18} />} label="Admin" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} />
+            )}
             <NavButtonMobile icon={<Settings size={18} />} label="Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
@@ -65,7 +108,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
 // Mobile Button (Icon + Label Animation)
 const NavButtonMobile: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
-  <button 
+  <motion.button 
+    whileTap={{ scale: 0.9 }}
     onClick={onClick}
     className="relative flex-1 flex flex-col items-center justify-center h-full transition-all duration-300 group min-w-0"
   >
@@ -83,12 +127,14 @@ const NavButtonMobile: React.FC<{ icon: React.ReactNode, label: string, active: 
     `}>
       {label}
     </span>
-  </button>
+  </motion.button>
 );
 
 // Desktop Button (Row Layout)
 const NavButtonDesktop: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void, isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => (
-    <button
+    <motion.button
+        whileHover={{ x: 4 }}
+        whileTap={{ scale: 0.98 }}
         onClick={onClick}
         className={`
             w-full flex items-center justify-center lg:justify-start gap-4 p-3 rounded-xl transition-all duration-200 group
@@ -105,5 +151,5 @@ const NavButtonDesktop: React.FC<{ icon: React.ReactNode, label: string, active:
             {label}
         </span>
         {active && <div className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-[#e10600] shadow-[0_0_10px_#e10600]" />}
-    </button>
+    </motion.button>
 );

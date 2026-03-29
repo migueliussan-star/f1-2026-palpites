@@ -17,6 +17,7 @@ if (container) {
 }
 
 // Registra o Service Worker para PWA
+/*
 if ('serviceWorker' in navigator) {
   // Unregister existing SW to fix cache issues
   navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -35,3 +36,4 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+*/
