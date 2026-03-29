@@ -946,6 +946,7 @@ const App: React.FC = () => {
             hasNoAdmin={!hasAnyAdmin}
             onClaimAdmin={handlePromoteSelfToAdmin}
             constructorsList={constructorsOrder}
+            totalUsers={leagueUsers.filter(u => !u.isGuest).length}
           />
         )}
         {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}

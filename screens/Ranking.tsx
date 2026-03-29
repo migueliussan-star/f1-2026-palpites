@@ -102,8 +102,9 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                 // Encontra o index real do usuário na lista original para manter a mesma equipe
                 const originalIdx = sortedUsers.findIndex(u => u.id === item.id);
                 const rankPosition = Math.max(0, originalIdx);
-                const driverPosition = (rankPosition % 4) + 1;
-                const teamIndex = Math.floor(rankPosition / 4);
+                const driversPerTeam = sortedUsers.length > 12 ? 2 : 1;
+                const driverPosition = (rankPosition % driversPerTeam) + 1;
+                const teamIndex = Math.floor(rankPosition / driversPerTeam);
                 const assignedTeam = teamIndex < constructorsList.length - 1 
                   ? constructorsList[teamIndex] 
                   : constructorsList[constructorsList.length - 1] || 'Safety Car';
@@ -159,14 +160,6 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: teamColor }}>
                                     {assignedTeam}
-                                </span>
-                                <span className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase ${
-                                    driverPosition === 1 ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-500/20' : 
-                                    driverPosition === 2 ? 'bg-gray-200 dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700/30' :
-                                    driverPosition === 3 ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-500 border border-orange-200 dark:border-orange-500/20' :
-                                    'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-500 border border-blue-200 dark:border-blue-500/20'
-                                }`}>
-                                    {driverPosition}º Piloto
                                 </span>
                             </div>
                         </div>

@@ -13,6 +13,7 @@ interface HomeProps {
   hasNoAdmin: boolean;
   onClaimAdmin: () => void;
   constructorsList: Team[];
+  totalUsers: number;
 }
 
 const ACHIEVEMENT_INFO = {
@@ -23,7 +24,7 @@ const ACHIEVEMENT_INFO = {
 };
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList, totalUsers
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [nextSessionName, setNextSessionName] = useState<string>('');
@@ -54,7 +55,8 @@ const Home: React.FC<HomeProps> = ({
 
   // --- Lógica de Contrato/Equipe ---
   const userRank = user.rank || 1;
-  const teamIndex = userRank - 1;
+  const driversPerTeam = totalUsers > 12 ? 2 : 1;
+  const teamIndex = Math.floor((userRank - 1) / driversPerTeam);
   // Se o rank for maior que o número de equipes de F1 (excluindo Safety Car), fica no Safety Car
   const assignedTeam = teamIndex < constructorsList.length - 1 
     ? constructorsList[teamIndex] 
