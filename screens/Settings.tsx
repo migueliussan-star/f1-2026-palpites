@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
-import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload, Bell, Users } from 'lucide-react';
+import { Settings as SettingsIcon, User as UserIcon, Palette, Save, AlertCircle, CheckCircle2, Upload, Bell, Users, Download, Info, Smartphone, Share } from 'lucide-react';
 
 interface SettingsProps {
   currentUser: User;
   onUpdateUser: (data: Partial<User>) => Promise<void>;
   onNavigateToLeagues?: () => void;
   hasSelectedLeague?: boolean;
+  deferredPrompt?: any;
+  isInstalled?: boolean;
 }
 
-const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNavigateToLeagues, hasSelectedLeague }) => {
+const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNavigateToLeagues, hasSelectedLeague, deferredPrompt, isInstalled }) => {
   const [name, setName] = useState(currentUser.name);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || '');
   const [theme, setTheme] = useState<'light' | 'dark'>(currentUser.theme || 'dark');
@@ -147,6 +149,17 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
       setIsLoading(false);
     }
   };
+
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    }
+  };
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
   return (
     <div className="p-6 lg:p-12 pb-32">
@@ -290,6 +303,59 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
                 >
                     {isLoading ? 'Salvando...' : <><Save size={16} /> Salvar e Aplicar</>}
                 </button>
+
+                {/* PWA INSTALLATION SECTION */}
+                <div className="bg-white p-6 lg:p-8 rounded-[32px] border border-gray-200 shadow-sm dark:bg-white/5 dark:border-white/10 dark:shadow-none transition-colors mt-6">
+                    <div className="flex items-center gap-2 mb-6 text-orange-500 dark:text-orange-400">
+                        <Smartphone size={18} />
+                        <h3 className="text-sm font-black uppercase tracking-widest">Instalação</h3>
+                    </div>
+
+                    {isInstalled ? (
+                        <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                            <CheckCircle2 className="text-green-500" size={20} />
+                            <div>
+                                <p className="text-xs font-bold text-green-600 dark:text-green-400 uppercase">App Instalado!</p>
+                                <p className="text-[10px] text-green-600/70 dark:text-green-400/70">Você já está usando a versão de aplicativo.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {deferredPrompt && (
+                                <button 
+                                    onClick={handleInstallPWA}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all"
+                                >
+                                    <Download size={16} /> Instalar Aplicativo
+                                </button>
+                            )}
+
+                            {isIOS ? (
+                                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl space-y-3">
+                                    <div className="flex items-center gap-2 text-blue-500">
+                                        <Info size={14} />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Como instalar no iPhone</p>
+                                    </div>
+                                    <ol className="text-[11px] text-gray-600 dark:text-gray-400 space-y-2 list-decimal list-inside font-medium">
+                                        <li>Toque no botão <span className="inline-flex items-center bg-gray-200 dark:bg-white/10 p-1 rounded"><Share size={12} /></span> (Compartilhar)</li>
+                                        <li>Role para baixo e toque em <span className="font-bold text-gray-900 dark:text-white">"Adicionar à Tela de Início"</span></li>
+                                        <li>Toque em <span className="font-bold text-gray-900 dark:text-white">"Adicionar"</span> no canto superior</li>
+                                    </ol>
+                                </div>
+                            ) : !deferredPrompt && (
+                                <div className="p-4 bg-gray-500/5 border border-gray-500/10 rounded-xl space-y-3">
+                                    <div className="flex items-center gap-2 text-gray-500">
+                                        <Info size={14} />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Como instalar no Android/PC</p>
+                                    </div>
+                                    <p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">
+                                        Abra o menu do navegador (três pontos <span className="font-bold">⋮</span>) e selecione <span className="font-bold text-gray-900 dark:text-white">"Instalar Aplicativo"</span> ou <span className="font-bold text-gray-900 dark:text-white">"Adicionar à tela inicial"</span>.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* MOBILE ONLY: LEAGUES NAVIGATION WHEN NOT IN A LEAGUE */}
                 {!hasSelectedLeague && onNavigateToLeagues && (

@@ -72,6 +72,22 @@ const App: React.FC = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   // Deriva o usuário "vivo" (combinando Auth + Dados do DB em tempo real)
   const liveUser = useMemo(() => {
@@ -985,7 +1001,16 @@ const App: React.FC = () => {
         
         {activeTab === 'desempenho' && <Performance currentUser={liveUser} calendar={currentCalendar} predictions={leaguePredictions} />}
         
-        {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} onNavigateToLeagues={() => setActiveTab('ligas')} hasSelectedLeague={!!selectedLeagueId} />}
+        {activeTab === 'settings' && (
+          <Settings 
+            currentUser={liveUser} 
+            onUpdateUser={handleUpdateUser} 
+            onNavigateToLeagues={() => setActiveTab('ligas')}
+            hasSelectedLeague={!!selectedLeagueId}
+            deferredPrompt={deferredPrompt}
+            isInstalled={isInstalled}
+          />
+        )}
 
         {activeTab === 'admin' && canAccessAdmin && (
           <Admin 
