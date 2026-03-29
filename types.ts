@@ -64,14 +64,6 @@ export interface League {
   createdAt: number;
 }
 
-export type AchievementType = 'olho_de_lince' | 'fiel_escuderia' | 'mestre_chuva' | 'primeiro_palpite';
-
-export interface Achievement {
-  id: AchievementType;
-  unlockedAt: number;
-  gpId?: number;
-}
-
 export interface User {
   id: string;
   name: string;
@@ -90,6 +82,5 @@ export interface User {
   language?: string;
   invalidatedGPs?: number[]; // IDs dos GPs onde o palpite deste usuário foi invalidado
   leagues?: string[]; // IDs das ligas que o usuário participa
-  achievements?: Achievement[]; // Conquistas desbloqueadas
   pushEnabled?: boolean; // Se as notificações estão ativadas
 }

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { RaceGP, SessionType, User, Team } from '../types';
 import { DRIVERS, TEAM_COLORS } from '../constants';
+import toast from 'react-hot-toast';
 import { Settings, Lock, Unlock, CheckCircle, PlayCircle, Trophy, Save, Trash2, Users, ShieldAlert, ListOrdered, CloudRain } from 'lucide-react';
 
 interface AdminProps {
@@ -35,7 +36,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
       return c;
     });
     onUpdateCalendar(newCalendar);
-    alert(`Data do GP ${gp.name} atualizada para: ${editingDate}`);
+    toast.success(`Data do GP ${gp.name} atualizada para: ${editingDate}`);
   };
 
   const setActiveGP = () => {
@@ -44,7 +45,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
       status: (c.id === gp.id ? 'OPEN' : (c.id < gp.id ? 'FINISHED' : 'UPCOMING')) as RaceGP['status']
     }));
     onUpdateCalendar(newCalendar);
-    alert(`${gp.name} agora é o GP Ativo!`);
+    toast.success(`${gp.name} agora é o GP Ativo!`);
   };
 
   const toggleSession = (session: string) => {

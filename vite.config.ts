@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'favicon.ico'],
       manifest: {
         name: 'Palpites F1 2026',
         short_name: 'F1 2026',
@@ -22,15 +22,21 @@ export default defineConfig({
         icons: [
           {
             src: '/icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
+            src: '/icon.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'maskable'
           },
           {
             src: '/icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'maskable'
           }
         ]
       }

@@ -291,8 +291,8 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
                     {isLoading ? 'Salvando...' : <><Save size={16} /> Salvar e Aplicar</>}
                 </button>
 
-                {/* MOBILE ONLY: LEAGUES NAVIGATION WHEN IN A LEAGUE */}
-                {hasSelectedLeague && onNavigateToLeagues && (
+                {/* MOBILE ONLY: LEAGUES NAVIGATION WHEN NOT IN A LEAGUE */}
+                {!hasSelectedLeague && onNavigateToLeagues && (
                     <div className="md:hidden mt-4">
                         <button 
                             onClick={onNavigateToLeagues}

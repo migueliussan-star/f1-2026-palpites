@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, RaceGP, SessionType, Prediction, Team, Achievement, League } from './types';
+import { User, RaceGP, SessionType, Prediction, Team, League } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
@@ -212,6 +212,8 @@ const App: React.FC = () => {
         
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
+            
+            // Garantir que positionHistory é um array
             let safeHistory: number[] = [];
             if (u.positionHistory && Array.isArray(u.positionHistory)) {
                 safeHistory = u.positionHistory.map((val: any) => Number(val) || 0);
@@ -219,10 +221,28 @@ const App: React.FC = () => {
                 safeHistory = Object.values(u.positionHistory).map((val: any) => Number(val) || 0);
             }
 
+            // Garantir que leagues é um array
+            let safeLeagues: string[] = [];
+            if (u.leagues && Array.isArray(u.leagues)) {
+                safeLeagues = u.leagues.filter(Boolean) as string[];
+            } else if (u.leagues && typeof u.leagues === 'object') {
+                safeLeagues = Object.values(u.leagues).filter(Boolean) as string[];
+            }
+
+            // Garantir que invalidatedGPs é um array
+            let safeInvalidated: number[] = [];
+            if (u.invalidatedGPs && Array.isArray(u.invalidatedGPs)) {
+                safeInvalidated = u.invalidatedGPs.map((val: any) => Number(val)).filter(n => !isNaN(n));
+            } else if (u.invalidatedGPs && typeof u.invalidatedGPs === 'object') {
+                safeInvalidated = Object.values(u.invalidatedGPs).map((val: any) => Number(val)).filter(n => !isNaN(n));
+            }
+
             return {
                 ...u,
                 rank: currentRank,
                 positionHistory: safeHistory,
+                leagues: safeLeagues,
+                invalidatedGPs: safeInvalidated,
                 previousRank: u.previousRank || currentRank
             };
         });
@@ -265,7 +285,13 @@ const App: React.FC = () => {
              if (val && typeof val === 'object') {
                  Object.values(val).forEach((userPreds: any) => {
                     if (userPreds && typeof userPreds === 'object') {
-                        Object.values(userPreds).forEach((p: any) => predList.push(p));
+                        Object.values(userPreds).forEach((p: any) => {
+                            let safeTop5 = p.top5;
+                            if (safeTop5 && !Array.isArray(safeTop5) && typeof safeTop5 === 'object') {
+                                safeTop5 = Object.values(safeTop5);
+                            }
+                            predList.push({ ...p, top5: safeTop5 || [] });
+                        });
                     }
                  });
              }
@@ -433,7 +459,25 @@ const App: React.FC = () => {
         const snapshot = await get(userRef);
         
         if (snapshot.exists()) {
-          setUser(snapshot.val());
+          const userData = snapshot.val();
+          if (userData) {
+              // Garantir que o ID esteja presente
+              userData.id = userData.id || firebaseUser.uid;
+              
+              // Garantir que campos de array sejam arrays
+              userData.leagues = userData.leagues 
+                ? (Array.isArray(userData.leagues) ? userData.leagues : Object.values(userData.leagues)) 
+                : [];
+              
+              userData.invalidatedGPs = userData.invalidatedGPs 
+                ? (Array.isArray(userData.invalidatedGPs) ? userData.invalidatedGPs : Object.values(userData.invalidatedGPs)) 
+                : [];
+
+              userData.positionHistory = userData.positionHistory 
+                ? (Array.isArray(userData.positionHistory) ? userData.positionHistory : Object.values(userData.positionHistory)) 
+                : [];
+          }
+          setUser(userData);
         } else {
             if (firebaseUser.isAnonymous) {
                  const guestUser: User = {
@@ -558,7 +602,7 @@ const App: React.FC = () => {
     try {
         await update(ref(db, `users/${liveUser.id}`), { isAdmin: true });
     } catch(e) {
-        alert("Erro ao promover.");
+        toast.error("Erro ao promover.");
     }
   };
 
@@ -573,7 +617,6 @@ const App: React.FC = () => {
     // 2. Cálculo dos pontos
     allUsers.forEach(u => {
       let userTotalPoints = 0;
-      let earnedAchievements: Achievement[] = [];
       let consecutiveP1Driver: string | null = null;
       let consecutiveP1Count = 0;
       let pointsHistory: { gpId: number; points: number }[] = [...(u.pointsHistory || [])];
@@ -594,10 +637,6 @@ const App: React.FC = () => {
                   consecutiveP1Driver = p1Driver;
                   consecutiveP1Count = 1;
               }
-              
-              if (consecutiveP1Count >= 3 && !(u.achievements || []).some(a => a.id === 'fiel_escuderia') && !earnedAchievements.some(a => a.id === 'fiel_escuderia')) {
-                  earnedAchievements.push({ id: 'fiel_escuderia', unlockedAt: Date.now(), gpId: calGp.id });
-              }
           } else {
               consecutiveP1Driver = null;
               consecutiveP1Count = 0;
@@ -612,31 +651,16 @@ const App: React.FC = () => {
              if (!officialResult) return;
              const pred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === session);
              if (pred) {
-                let exactMatches = 0;
-                let pointsInSession = 0;
                 (pred.top5 || []).forEach((driverId, idx) => {
                    if (driverId === officialResult[idx]) {
                        userTotalPoints += 5;
                        gpPoints += 5;
-                       pointsInSession += 5;
-                       exactMatches++;
                    }
                    else if (officialResult.includes(driverId)) {
                        userTotalPoints += 1;
                        gpPoints += 1;
-                       pointsInSession += 1;
                    }
                 });
-                
-                // Check for "Olho de Lince" (Acertou o Top 5 completo)
-                if (exactMatches === 5 && !(u.achievements || []).some(a => a.id === 'olho_de_lince') && !earnedAchievements.some(a => a.id === 'olho_de_lince')) {
-                    earnedAchievements.push({ id: 'olho_de_lince', unlockedAt: Date.now(), gpId: calGp.id });
-                }
-                
-                // Check for "Mestre da Chuva"
-                if (calGp.isWet && pointsInSession > 0 && !(u.achievements || []).some(a => a.id === 'mestre_chuva') && !earnedAchievements.some(a => a.id === 'mestre_chuva')) {
-                    earnedAchievements.push({ id: 'mestre_chuva', unlockedAt: Date.now(), gpId: calGp.id });
-                }
              }
           });
           
@@ -651,23 +675,6 @@ const App: React.FC = () => {
       
       userPointsMap[u.id] = userTotalPoints;
       userPointsHistoryMap[u.id] = pointsHistory;
-      
-      if (earnedAchievements.length > 0) {
-          const newAchievements = [...(u.achievements || []), ...earnedAchievements];
-          updates[`users/${u.id}/achievements`] = newAchievements;
-          
-          if (u.id === liveUser?.id) {
-              earnedAchievements.forEach(ach => {
-                  if (ach.id === 'olho_de_lince') {
-                      toast.success('Conquista Desbloqueada: Olho de Lince!', { icon: '🎯' });
-                  } else if (ach.id === 'mestre_chuva') {
-                      toast.success('Conquista Desbloqueada: Mestre da Chuva!', { icon: '🌧️' });
-                  } else if (ach.id === 'fiel_escuderia') {
-                      toast.success('Conquista Desbloqueada: Fiel à Escuderia!', { icon: '🛡️' });
-                  }
-              });
-          }
-      }
     });
 
     const realUsers = allUsers.filter(u => !u.isGuest);
@@ -724,13 +731,13 @@ const App: React.FC = () => {
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
         }
-        alert("Pontos calculados com sucesso!");
+        toast.success("Pontos calculados com sucesso!");
         if (!allSessionsClosed) {
-            alert("AVISO: O histórico de 'Tempo no Topo' NÃO foi atualizado pois existem sessões abertas neste GP.");
+            toast("AVISO: O histórico de 'Tempo no Topo' NÃO foi atualizado pois existem sessões abertas neste GP.", { icon: '⚠️' });
         }
     } catch (e) {
         console.error(e);
-        alert("Erro ao salvar no banco.");
+        toast.error("Erro ao salvar no banco.");
     }
   };
 
@@ -748,7 +755,7 @@ const App: React.FC = () => {
             updates[`${u.id}/invalidatedGPs`] = [];
         });
         if (Object.keys(updates).length > 0) await update(ref(db, 'users'), updates);
-        alert("Resetado.");
+        toast.success("Resetado.");
     } catch (e) { console.error(e); }
   };
 
@@ -770,7 +777,7 @@ const App: React.FC = () => {
         await update(ref(db, `users/${userId}`), { invalidatedGPs: newInvalidated });
     } catch (e) {
         console.error("Erro ao invalidar/validar palpite:", e);
-        alert("Erro ao atualizar status do palpite.");
+        toast.error("Erro ao atualizar status do palpite.");
     }
   };
 
@@ -808,14 +815,6 @@ const App: React.FC = () => {
     
     try {
         await set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction);
-        
-        // Check for "Primeiro Palpite" achievement
-        const userAchievements = liveUser.achievements || [];
-        if (!userAchievements.some(a => a.id === 'primeiro_palpite')) {
-            const newAchievements = [...userAchievements, { id: 'primeiro_palpite', unlockedAt: Date.now(), gpId }];
-            await handleUpdateUser({ achievements: newAchievements as any });
-            toast.success('Conquista Desbloqueada: Primeiro Palpite!', { icon: '🏆' });
-        }
     } catch (e) {
         console.warn(e);
     }

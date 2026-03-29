@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, RaceGP, Team, Achievement } from '../types';
+import { User, RaceGP, Team } from '../types';
 import { INITIAL_CALENDAR, TEAM_COLORS } from '../constants';
 import { ChevronRight, Zap, Trophy, LogOut, MapPin, Download, CheckCircle2, Clock, Briefcase, Eye, Shield, CloudRain, CheckCircle } from 'lucide-react';
 
@@ -15,13 +15,6 @@ interface HomeProps {
   constructorsList: Team[];
   totalUsers: number;
 }
-
-const ACHIEVEMENT_INFO = {
-  'olho_de_lince': { icon: <Eye size={16} />, label: 'Olho de Lince', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' },
-  'fiel_escuderia': { icon: <Shield size={16} />, label: 'Fiel à Escuderia', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10', border: 'border-purple-200 dark:border-purple-500/20' },
-  'mestre_chuva': { icon: <CloudRain size={16} />, label: 'Mestre da Chuva', color: 'text-cyan-500', bg: 'bg-cyan-50 dark:bg-cyan-500/10', border: 'border-cyan-200 dark:border-cyan-500/20' },
-  'primeiro_palpite': { icon: <CheckCircle size={16} />, label: 'Primeiro Palpite', color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-200 dark:border-green-500/20' }
-};
 
 const Home: React.FC<HomeProps> = ({ 
   user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList, totalUsers
@@ -295,41 +288,6 @@ const Home: React.FC<HomeProps> = ({
                     </div>
                 </div>
             )}
-        </div>
-
-        {/* Conquistas / Badges */}
-        <div className="mt-8">
-            <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Trophy size={16} className="text-yellow-500" />
-                Conquistas
-            </h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(ACHIEVEMENT_INFO).map(([id, info]) => {
-                    const isUnlocked = user.achievements?.some(a => a.id === id);
-                    return (
-                        <div 
-                            key={id} 
-                            className={`p-4 rounded-2xl border flex flex-col items-center justify-center text-center transition-all ${
-                                isUnlocked 
-                                    ? `${info.bg} ${info.border}` 
-                                    : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/5 opacity-50 grayscale'
-                            }`}
-                        >
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
-                                isUnlocked ? 'bg-white dark:bg-black/50 shadow-md' : 'bg-gray-200 dark:bg-white/10'
-                            }`}>
-                                <div className={isUnlocked ? info.color : 'text-gray-400'}>
-                                    {info.icon}
-                                </div>
-                            </div>
-                            <span className={`text-xs font-bold uppercase tracking-widest ${isUnlocked ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>
-                                {info.label}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
         </div>
       </div>
     </div>
