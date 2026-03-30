@@ -55,10 +55,8 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
       await set(ref(db, `leagues/${leagueId}`), newLeague);
       
       const updatedLeagues = [...(Array.isArray(currentUser.leagues) ? currentUser.leagues : Object.values(currentUser.leagues || {}) as string[]), leagueId];
-      // Ao criar uma liga, o usuário ganha status de admin para gerenciar os resultados
       await onUpdateUser({ 
-        leagues: updatedLeagues,
-        isAdmin: true 
+        leagues: updatedLeagues
       });
       
       // Seleciona a liga automaticamente após criar

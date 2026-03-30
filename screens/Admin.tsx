@@ -16,10 +16,11 @@ interface AdminProps {
   onDeleteUser: (userId: string) => void;
   onClearAllPredictions: () => void;
   onToggleInvalidateUserGp: (userId: string, gpId: number) => void;
+  onToggleAdmin: (userId: string) => void;
   constructorsOrder?: Team[];
 }
 
-const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, onToggleInvalidateUserGp, constructorsOrder }) => {
+const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdateCalendar, onSelectGp, onCalculatePoints, onDeleteUser, onClearAllPredictions, onToggleInvalidateUserGp, onToggleAdmin, constructorsOrder }) => {
   const [activeResultSession, setActiveResultSession] = useState<SessionType>('Qualy corrida');
   const [showToast, setShowToast] = useState(false);
   const [editingDate, setEditingDate] = useState(gp.date);
@@ -165,6 +166,63 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
             </div>
           </div>
 
+          <div className="space-y-3 mb-6">
+            <p className="text-[10px] uppercase text-gray-500 font-black mb-2">Horários das Sessões (Fechamento)</p>
+            {sessions.map(session => {
+              let fallbackKey = '';
+              if (session === 'Qualy Sprint') fallbackKey = 'Sprint Q';
+              else if (session === 'corrida Sprint') fallbackKey = 'Sprint';
+              else if (session === 'Qualy corrida') fallbackKey = 'Classificação';
+              else if (session === 'corrida principal') fallbackKey = 'Corrida';
+
+              const sessionTime = gp.sessions?.[session] || gp.sessions?.[fallbackKey] || '';
+              const localTime = sessionTime ? new Date(sessionTime).toISOString().slice(0, 16) : '';
+              
+              return (
+                <div key={session} className="flex items-center gap-3 bg-white dark:bg-white/5 p-3 rounded-2xl border border-gray-200 dark:border-white/5">
+                  <div className="flex-1">
+                    <p className="text-[8px] uppercase text-gray-500 font-black mb-1">{session}</p>
+                    <input 
+                      type="datetime-local" 
+                      value={localTime}
+                      onChange={(e) => {
+                        if (!e.target.value) {
+                          const newCalendar = calendar.map(c => {
+                            if (c.id === gp.id) {
+                              const newSessions = { ...(c.sessions || {}) };
+                              delete newSessions[session];
+                              if (fallbackKey) delete newSessions[fallbackKey];
+                              return { ...c, sessions: newSessions };
+                            }
+                            return c;
+                          });
+                          onUpdateCalendar(newCalendar);
+                          return;
+                        }
+                        const newDate = new Date(e.target.value);
+                        if (isNaN(newDate.getTime())) return;
+                        const newCalendar = calendar.map(c => {
+                          if (c.id === gp.id) {
+                            return {
+                              ...c,
+                              sessions: {
+                                ...(c.sessions || {}),
+                                [session]: newDate.toISOString()
+                              }
+                            };
+                          }
+                          return c;
+                        });
+                        onUpdateCalendar(newCalendar);
+                      }}
+                      className="w-full bg-transparent text-sm font-bold outline-none border-b border-gray-300 dark:border-white/10 focus:border-[#e10600] pb-1 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
           <button 
             onClick={setActiveGP}
             className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
@@ -296,6 +354,17 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => onToggleAdmin(u.id)}
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                                        u.isAdmin
+                                            ? 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20'
+                                            : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20'
+                                    }`}
+                                    title={u.isAdmin ? "Remover Admin" : "Tornar Admin"}
+                                >
+                                    {u.isAdmin ? "Remover ADM" : "Tornar ADM"}
+                                </button>
                                 <button 
                                     onClick={() => onToggleInvalidateUserGp(u.id, gp.id)}
                                     className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${

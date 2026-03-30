@@ -121,8 +121,9 @@ const App: React.FC = () => {
 
   const canAccessAdmin = useMemo(() => {
     if (!liveUser) return false;
-    if (!selectedLeagueId) return false;
-    return isLeagueOwner || liveUser.isAdmin;
+    if (liveUser.isAdmin) return true;
+    if (selectedLeagueId && isLeagueOwner) return true;
+    return false;
   }, [liveUser, selectedLeagueId, isLeagueOwner]);
 
   // APLICA O TEMA AO DOM
@@ -395,26 +396,24 @@ const App: React.FC = () => {
              return;
           }
           
-          // Mapeamento do nome da sessão para a chave no objeto sessions
-          let sessionKey = '';
-          if (session === 'Qualy Sprint') sessionKey = 'Qualy Sprint';
-          else if (session === 'corrida Sprint') sessionKey = 'Sprint';
-          else if (session === 'Qualy corrida') sessionKey = 'Qualificação';
-          else if (session === 'corrida principal') sessionKey = 'Corrida';
-          
           // Determinar a sessão de referência para o deadline
-          let referenceSessionKey = '';
+          let referenceSessionKey: SessionType;
+          let fallbackSessionKey = '';
+          
           if (gp.isSprint) {
               if (session === 'Qualy Sprint' || session === 'corrida Sprint') {
                   referenceSessionKey = 'Qualy Sprint';
+                  fallbackSessionKey = 'Sprint Q';
               } else {
-                  referenceSessionKey = 'Qualificação';
+                  referenceSessionKey = 'Qualy corrida';
+                  fallbackSessionKey = 'Classificação';
               }
           } else {
-              referenceSessionKey = 'Qualificação';
+              referenceSessionKey = 'Qualy corrida';
+              fallbackSessionKey = 'Classificação';
           }
 
-          const referenceIsoDate = gp.sessions?.[referenceSessionKey];
+          const referenceIsoDate = gp.sessions?.[referenceSessionKey] || gp.sessions?.[fallbackSessionKey];
           if (referenceIsoDate) {
             const referenceDate = new Date(referenceIsoDate);
             
@@ -499,7 +498,7 @@ const App: React.FC = () => {
                     points: 0,
                     rank: 0,
                     level: 'Bronze',
-                    isAdmin: true,
+                    isAdmin: false,
                     isGuest: true,
                     previousRank: 0,
                     positionHistory: []
@@ -619,18 +618,32 @@ const App: React.FC = () => {
   };
 
   const handleCalculatePoints = async (currentGp: RaceGP) => {
+    if (selectedLeagueId) {
+      if (!isLeagueOwner && !liveUser?.isAdmin) {
+        toast.error("Apenas o dono da liga ou administradores podem calcular pontos.");
+        return;
+      }
+    } else {
+      if (!liveUser?.isAdmin) {
+        toast.error("Apenas administradores globais podem calcular pontos.");
+        return;
+      }
+    }
+
     // Fixa o GP atual na tela de admin para não pular para o próximo GP ativo
     setAdminEditingGpId(currentGp.id);
 
     // 1. Verificar se TODAS as sessões estão fechadas (status === false)
     const allSessionsClosed = Object.values(currentGp.sessionStatus).every(isOpen => isOpen === false);
 
-    const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
+    const updatedCalendar = currentCalendar.map(c => c.id === currentGp.id ? currentGp : c);
     const userPointsMap: Record<string, number> = {};
     const userPointsHistoryMap: Record<string, { gpId: number; points: number }[]> = {};
 
+    const targetUsers = selectedLeagueId ? leagueUsers : allUsers;
+
     // 2. Cálculo dos pontos
-    allUsers.forEach(u => {
+    targetUsers.forEach(u => {
       let userTotalPoints = 0;
       let consecutiveP1Driver: string | null = null;
       let consecutiveP1Count = 0;
@@ -692,8 +705,8 @@ const App: React.FC = () => {
       userPointsHistoryMap[u.id] = pointsHistory;
     });
 
-    const realUsers = allUsers.filter(u => !u.isGuest);
-    const guestUsers = allUsers.filter(u => u.isGuest);
+    const realUsers = targetUsers.filter(u => !u.isGuest);
+    const guestUsers = targetUsers.filter(u => u.isGuest);
 
     // Ordenação para Ranking
     const rankedUsers = realUsers.map(u => ({
@@ -737,12 +750,16 @@ const App: React.FC = () => {
     });
 
     try {
-        if (currentGp.status === 'OPEN') {
-            const newCalendar = updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c);
-            await set(ref(db, 'calendar'), newCalendar);
+        const finalCalendar = currentGp.status === 'OPEN' 
+            ? updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c)
+            : updatedCalendar;
+
+        if (selectedLeagueId) {
+            await set(ref(db, `leagues/${selectedLeagueId}/calendar`), finalCalendar);
         } else {
-            await set(ref(db, 'calendar'), updatedCalendar);
+            await set(ref(db, 'calendar'), finalCalendar);
         }
+
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
         }
@@ -757,6 +774,10 @@ const App: React.FC = () => {
   };
 
   const handleClearAllPredictions = async () => {
+    if (!liveUser?.isAdmin) {
+      toast.error("Apenas administradores globais podem zerar o sistema.");
+      return;
+    }
     if (!window.confirm("Zerar palpites e pontos?")) return;
     try {
         await remove(ref(db, 'predictions'));
@@ -775,6 +796,10 @@ const App: React.FC = () => {
   };
 
   const handleToggleInvalidateUserGp = async (userId: string, gpId: number) => {
+    if (!liveUser?.isAdmin) {
+      toast.error("Apenas administradores globais podem invalidar palpites.");
+      return;
+    }
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
     
@@ -797,6 +822,10 @@ const App: React.FC = () => {
   };
 
   const handleDeleteUser = async (targetUserId: string) => {
+    if (!liveUser?.isAdmin) {
+      toast.error("Apenas administradores globais podem excluir usuários.");
+      return;
+    }
     if (!window.confirm("Excluir usuário?")) return;
     try {
         await remove(ref(db, `predictions/${targetUserId}`));
@@ -823,6 +852,22 @@ const App: React.FC = () => {
       }
   };
 
+  const handleToggleAdmin = async (targetUserId: string) => {
+    if (!liveUser?.isAdmin) {
+      toast.error("Apenas administradores globais podem gerenciar administradores.");
+      return;
+    }
+    const targetUser = allUsers.find(u => u.id === targetUserId);
+    if (!targetUser) return;
+    try {
+        await update(ref(db, `users/${targetUserId}`), { isAdmin: !targetUser.isAdmin });
+        toast.success(`Status de admin ${!targetUser.isAdmin ? 'concedido' : 'removido'} para ${targetUser.name}`);
+    } catch (e) {
+        console.error("Erro ao alterar status de admin:", e);
+        toast.error("Erro ao atualizar status.");
+    }
+  };
+
   const handlePredict = async (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
@@ -836,21 +881,30 @@ const App: React.FC = () => {
     }
   };
   
-  const safeCalendar = Array.isArray(calendar) ? calendar.filter(Boolean) : [];
-  const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
+  const safeCalendar: RaceGP[] = Array.isArray(calendar) ? calendar.filter(Boolean) as RaceGP[] : [];
+  
+  const currentCalendar: RaceGP[] = useMemo(() => {
+    if (selectedLeagueId) {
+      const league = leagues.find(l => l.id === selectedLeagueId);
+      if (league && league.calendar && league.calendar.length > 0) {
+        return league.calendar;
+      }
+    }
+    return safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
+  }, [selectedLeagueId, leagues, safeCalendar]);
   
   const now = new Date();
   
-  let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
+  let activeGP = currentCalendar.find((gp: RaceGP) => gp.status === 'OPEN');
   if (!activeGP) {
-      activeGP = currentCalendar.find(gp => {
+      activeGP = currentCalendar.find((gp: RaceGP) => {
           const { endDate } = getGpDates(gp.date);
           return now <= endDate;
       });
   }
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
-  const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
+  const adminGP = currentCalendar.find((c: RaceGP) => c && c.id === adminEditingGpId) || activeGP;
 
   // Gerencia o GP selecionado na tela de admin para evitar pulos quando o status muda
   useEffect(() => {
@@ -1029,12 +1083,19 @@ const App: React.FC = () => {
             calendar={currentCalendar} 
             users={leagueUsers}
             currentUser={liveUser}
-            onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
+            onUpdateCalendar={(cal) => {
+              if (selectedLeagueId && (isLeagueOwner || liveUser?.isAdmin)) {
+                set(ref(db, `leagues/${selectedLeagueId}/calendar`), cal);
+              } else if (liveUser?.isAdmin) {
+                set(ref(db, 'calendar'), cal);
+              }
+            }} 
             onSelectGp={(id) => setAdminEditingGpId(id)} 
             onCalculatePoints={handleCalculatePoints} 
             onDeleteUser={handleDeleteUser}
             onClearAllPredictions={handleClearAllPredictions}
             onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
+            onToggleAdmin={handleToggleAdmin}
             constructorsOrder={constructorsOrder}
           />
         )}

@@ -62,6 +62,7 @@ export interface League {
   ownerId: string;
   members: string[];
   createdAt: number;
+  calendar?: RaceGP[];
 }
 
 export interface User {
