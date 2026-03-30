@@ -487,6 +487,11 @@ const App: React.FC = () => {
               userData.positionHistory = userData.positionHistory 
                 ? (Array.isArray(userData.positionHistory) ? userData.positionHistory : Object.values(userData.positionHistory)) 
                 : [];
+
+              if (firebaseUser.email === 'iussan639@gmail.com' && !userData.isAdmin) {
+                  userData.isAdmin = true;
+                  await set(userRef, userData);
+              }
           }
           setUser(userData);
         } else {
@@ -525,7 +530,7 @@ const App: React.FC = () => {
             });
           }
 
-          const shouldBeAdmin = userCount === 0;
+          const shouldBeAdmin = userCount === 0 || firebaseUser.email === 'iussan639@gmail.com';
 
           if (oldUserData && oldUserKey) {
              const newUserData: User = {
