@@ -121,12 +121,8 @@ const App: React.FC = () => {
 
   const canAccessAdmin = useMemo(() => {
     if (!liveUser) return false;
-    // Se estiver em uma liga, apenas o dono tem acesso admin
-    if (selectedLeagueId) {
-      return isLeagueOwner;
-    }
-    // Se não estiver em liga, usa o status global
-    return liveUser.isAdmin;
+    if (!selectedLeagueId) return false;
+    return isLeagueOwner || liveUser.isAdmin;
   }, [liveUser, selectedLeagueId, isLeagueOwner]);
 
   // APLICA O TEMA AO DOM
@@ -623,6 +619,9 @@ const App: React.FC = () => {
   };
 
   const handleCalculatePoints = async (currentGp: RaceGP) => {
+    // Fixa o GP atual na tela de admin para não pular para o próximo GP ativo
+    setAdminEditingGpId(currentGp.id);
+
     // 1. Verificar se TODAS as sessões estão fechadas (status === false)
     const allSessionsClosed = Object.values(currentGp.sessionStatus).every(isOpen => isOpen === false);
 
@@ -817,6 +816,7 @@ const App: React.FC = () => {
           await update(ref(db, `users/${liveUser.id}`), data);
           // Atualiza estado local para reflexo imediato
           setUser(prev => prev ? { ...prev, ...data } : null);
+          setAllUsers(prev => prev.map(u => u.id === liveUser.id ? { ...u, ...data } : u));
       } catch (e) {
           console.error("Erro ao atualizar usuário", e);
           throw e;
@@ -851,6 +851,15 @@ const App: React.FC = () => {
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
   const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
+
+  // Gerencia o GP selecionado na tela de admin para evitar pulos quando o status muda
+  useEffect(() => {
+    if (activeTab === 'admin') {
+      setAdminEditingGpId(prev => prev !== null ? prev : (activeGP ? activeGP.id : null));
+    } else {
+      setAdminEditingGpId(null);
+    }
+  }, [activeTab]);
 
   // Lógica de Notificações
   useEffect(() => {
@@ -962,6 +971,8 @@ const App: React.FC = () => {
             onClaimAdmin={handlePromoteSelfToAdmin}
             constructorsList={constructorsOrder}
             totalUsers={leagueUsers.filter(u => !u.isGuest).length}
+            currentRank={selectedLeagueId ? realTimeRank : undefined}
+            rankLabel={selectedLeagueId ? 'Na Liga' : 'Global'}
           />
         )}
         {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
@@ -989,7 +1000,7 @@ const App: React.FC = () => {
         
         {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={leaguePredictions} />}
         
-        {activeTab === 'ligas' && <Leagues currentUser={liveUser} allUsers={allUsers.filter(u => !u.isGuest)} onUpdateUser={handleUpdateUser} selectedLeagueId={selectedLeagueId} onSelectLeague={(id) => {
+        {activeTab === 'ligas' && <Leagues currentUser={liveUser} allUsers={allUsers.filter(u => !u.isGuest)} allLeagues={leagues} onUpdateUser={handleUpdateUser} selectedLeagueId={selectedLeagueId} onSelectLeague={(id) => {
           setSelectedLeagueId(id);
           if (id) {
             localStorage.setItem('selectedLeagueId', id);

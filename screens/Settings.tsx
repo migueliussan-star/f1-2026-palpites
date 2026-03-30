@@ -160,6 +160,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
   };
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isInIframe = window.self !== window.top;
 
   return (
     <div className="p-6 lg:p-12 pb-32">
@@ -321,6 +322,14 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
                         </div>
                     ) : (
                         <div className="space-y-4">
+                            {isInIframe && (
+                                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4">
+                                    <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase mb-1">Dica de Instalação</p>
+                                    <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                                        Para instalar o app, você deve abri-lo em uma <span className="font-bold underline">nova aba</span> do navegador.
+                                    </p>
+                                </div>
+                            )}
                             {deferredPrompt && (
                                 <button 
                                     onClick={handleInstallPWA}

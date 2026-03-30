@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, League } from '../types';
 import { Users, Plus, Key, Copy, Check, Trophy, Trash2 } from 'lucide-react';
 import { db, ref, set, get, update, remove } from '../firebase';
@@ -6,13 +6,13 @@ import { db, ref, set, get, update, remove } from '../firebase';
 interface LeaguesProps {
   currentUser: User;
   allUsers: User[];
+  allLeagues: League[];
   onUpdateUser: (data: Partial<User>) => Promise<void>;
   onSelectLeague: (leagueId: string | null) => void;
   selectedLeagueId: string | null;
 }
 
-const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, onSelectLeague, selectedLeagueId }) => {
-  const [leagues, setLeagues] = useState<League[]>([]);
+const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, onUpdateUser, onSelectLeague, selectedLeagueId }) => {
   const [activeTab, setActiveTab] = useState<'my_leagues' | 'join' | 'create'>('my_leagues');
   const [newLeagueName, setNewLeagueName] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -20,33 +20,12 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, 
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadLeagues();
-  }, [currentUser.leagues]);
-
-  const loadLeagues = async () => {
+  const leagues = useMemo(() => {
     const currentUserLeagues = Array.isArray(currentUser.leagues) 
       ? currentUser.leagues 
       : (currentUser.leagues ? Object.values(currentUser.leagues) as string[] : []);
-
-    if (currentUserLeagues.length === 0) {
-      setLeagues([]);
-      return;
-    }
-    
-    try {
-      const leaguesData: League[] = [];
-      for (const leagueId of currentUserLeagues) {
-        const snapshot = await get(ref(db, `leagues/${leagueId}`));
-        if (snapshot.exists()) {
-          leaguesData.push({ id: snapshot.key, ...snapshot.val() } as League);
-        }
-      }
-      setLeagues(leaguesData);
-    } catch (error) {
-      console.error("Erro ao carregar ligas:", error);
-    }
-  };
+    return allLeagues.filter(l => currentUserLeagues.includes(l.id));
+  }, [allLeagues, currentUser.leagues]);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -112,46 +91,27 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, 
     console.log("Tentando entrar na liga com código:", code);
     
     try {
-      const snapshot = await get(ref(db, 'leagues'));
-      
-      if (!snapshot.exists()) {
-        console.log("Nenhuma liga encontrada no banco.");
-        showMessage('error', 'Nenhuma liga encontrada.');
-        setLoading(false);
-        return;
-      }
+      const targetLeague = allLeagues.find(l => (l.code || "").toString().trim().toUpperCase() === code);
 
-      let foundLeague: League | null = null;
-      snapshot.forEach((child) => {
-        const data = child.val();
-        // Comparação robusta: garante que o código existe e remove espaços extras
-        const leagueCode = (data.code || "").toString().trim().toUpperCase();
-        if (leagueCode === code) {
-          foundLeague = { ...data, id: child.key as string };
-        }
-      });
-
-      if (!foundLeague) {
+      if (!targetLeague) {
         console.log("Liga não encontrada para o código:", code);
         showMessage('error', 'Código inválido ou liga não encontrada.');
         setLoading(false);
         return;
       }
-
-      const targetLeague = foundLeague as League;
       
-      // Garantir que members é um array (RTB pode retornar objeto se for esparso)
+      // Garantir que members é um array
       const members = Array.isArray(targetLeague.members) 
         ? targetLeague.members 
-        : Object.values(targetLeague.members || {}) as string[];
+        : (targetLeague.members ? Object.values(targetLeague.members).filter(v => typeof v === 'string') as string[] : []);
 
       if (members.includes(currentUser.id)) {
         console.log("Usuário já participa da liga:", targetLeague.name);
-        // Mesmo se já for membro, selecionamos ela para garantir que o usuário veja
         onSelectLeague(targetLeague.id);
         setJoinCode('');
         setActiveTab('my_leagues');
         showMessage('success', 'Você já participa desta liga!');
+        setLoading(false);
         return;
       }
 
@@ -162,12 +122,23 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, 
       await update(ref(db, `leagues/${targetLeague.id}`), { members: updatedMembers });
 
       // 2. Atualiza as ligas do usuário
-      const currentUserLeagues = Array.isArray(currentUser.leagues)
-        ? currentUser.leagues
-        : Object.values(currentUser.leagues || {}) as string[];
+      // Lógica robusta para ler as ligas atuais do usuário
+      let currentUserLeagues: string[] = [];
+      if (Array.isArray(currentUser.leagues)) {
+        currentUserLeagues = currentUser.leagues;
+      } else if (currentUser.leagues && typeof currentUser.leagues === 'object') {
+        // Se for um objeto, pode ser { "0": "id1" } ou { "id1": true }
+        const values = Object.values(currentUser.leagues);
+        if (values.every(v => typeof v === 'string')) {
+          currentUserLeagues = values as string[];
+        } else {
+          currentUserLeagues = Object.keys(currentUser.leagues);
+        }
+      }
         
-      // Deduplicar e garantir que é um array de strings
       const updatedUserLeagues = Array.from(new Set([...currentUserLeagues, targetLeague.id]));
+      
+      // Usamos update no App.tsx através do onUpdateUser
       await onUpdateUser({ leagues: updatedUserLeagues });
 
       // 3. Seleciona a liga automaticamente após entrar
@@ -175,10 +146,18 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, 
 
       setJoinCode('');
       setActiveTab('my_leagues');
-      showMessage('success', 'Você entrou na liga com sucesso!');
-    } catch (error) {
+      showMessage('success', `Bem-vindo à liga ${targetLeague.name}!`);
+    } catch (error: any) {
       console.error("Erro detalhado ao entrar na liga:", error);
-      showMessage('error', 'Erro ao processar sua entrada na liga. Tente novamente.');
+      let errorMsg = 'Erro ao processar sua entrada na liga. Tente novamente.';
+      
+      if (error.message?.includes('Permission denied')) {
+        errorMsg = 'Sem permissão para acessar as ligas. Contate o administrador.';
+      } else if (error.code === 'PERMISSION_DENIED') {
+        errorMsg = 'Acesso negado pelo banco de dados. Verifique as permissões.';
+      }
+      
+      showMessage('error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -191,18 +170,36 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, onUpdateUser, 
     try {
       const league = leagues.find(l => l.id === leagueId);
       if (league) {
-        const members = Array.isArray(league.members) 
-          ? league.members 
-          : Object.values(league.members || {}) as string[];
+        let members: string[] = [];
+        if (Array.isArray(league.members)) {
+          members = league.members.filter(m => typeof m === 'string');
+        } else if (league.members && typeof league.members === 'object') {
+          members = Object.values(league.members).filter(m => typeof m === 'string') as string[];
+        }
+        
         const updatedMembers = members.filter(id => id !== currentUser.id);
-        await update(ref(db, `leagues/${leagueId}`), { members: updatedMembers });
+        // Se o array ficar vazio, passamos null para o Firebase remover o nó, 
+        // ou um array vazio (o Firebase RTDB converte array vazio para null automaticamente, mas para garantir usamos null)
+        await update(ref(db, `leagues/${leagueId}`), { 
+          members: updatedMembers.length > 0 ? updatedMembers : null 
+        });
       }
 
-      const currentUserLeagues = Array.isArray(currentUser.leagues)
-        ? currentUser.leagues
-        : Object.values(currentUser.leagues || {}) as string[];
+      let currentUserLeagues: string[] = [];
+      if (Array.isArray(currentUser.leagues)) {
+        currentUserLeagues = currentUser.leagues.filter(l => typeof l === 'string');
+      } else if (currentUser.leagues && typeof currentUser.leagues === 'object') {
+        currentUserLeagues = Object.values(currentUser.leagues).filter(l => typeof l === 'string') as string[];
+      }
+      
       const updatedUserLeagues = currentUserLeagues.filter(id => id !== leagueId);
-      await onUpdateUser({ leagues: updatedUserLeagues });
+      await onUpdateUser({ 
+        leagues: updatedUserLeagues.length > 0 ? updatedUserLeagues : null as any 
+      });
+
+      if (selectedLeagueId === leagueId) {
+        onSelectLeague(null);
+      }
 
       showMessage('success', 'Você saiu da liga.');
     } catch (error) {

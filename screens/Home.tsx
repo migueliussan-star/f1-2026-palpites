@@ -14,10 +14,13 @@ interface HomeProps {
   onClaimAdmin: () => void;
   constructorsList: Team[];
   totalUsers: number;
+  currentRank?: number;
+  rankLabel?: string;
 }
 
 const Home: React.FC<HomeProps> = ({ 
-  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList, totalUsers
+  user, nextGP, predictionsCount, onNavigateToPredict, onLogout, hasNoAdmin, onClaimAdmin, constructorsList, totalUsers,
+  currentRank, rankLabel = 'Global'
 }) => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [nextSessionName, setNextSessionName] = useState<string>('');
@@ -256,8 +259,10 @@ const Home: React.FC<HomeProps> = ({
                 <div className="hidden lg:block mb-2">
                     <Trophy className="text-blue-500" size={28} />
                 </div>
-                <p className="text-xl lg:text-4xl font-black f1-font text-gray-900 dark:text-white leading-none relative z-10">{user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-'}</p>
-                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10">Global</p>
+                <p className="text-xl lg:text-4xl font-black f1-font text-gray-900 dark:text-white leading-none relative z-10">
+                    {currentRank || (user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-')}
+                </p>
+                <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10">{rankLabel}</p>
             </div>
 
             {/* Install Box */}
