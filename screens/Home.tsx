@@ -152,12 +152,6 @@ const Home: React.FC<HomeProps> = ({
         </button>
       </div>
 
-      {hasNoAdmin && !user.isAdmin && (
-        <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl animate-enter">
-            <button onClick={onClaimAdmin} className="w-full text-amber-600 dark:text-amber-500 font-black text-[10px] uppercase tracking-widest">REIVINDICAR ADMIN</button>
-        </div>
-      )}
-
       {/* Grid Principal - 1 Coluna Mobile / 3 Colunas Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
         
