@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, League } from '../types';
-import { Users, Plus, Key, Copy, Check, Trophy, Trash2 } from 'lucide-react';
+import { Users, Plus, Key, Copy, Check, Trophy, Trash2, LogOut } from 'lucide-react';
 import { db, ref, set, get, update, remove } from '../firebase';
 
 interface LeaguesProps {
@@ -162,11 +162,12 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
   };
 
   const handleLeaveLeague = async (leagueId: string) => {
+    if (!leagueId) return;
     if (!window.confirm('Tem certeza que deseja sair desta liga?')) return;
 
     setLoading(true);
     try {
-      const league = leagues.find(l => l.id === leagueId);
+      const league = allLeagues.find(l => l.id === leagueId);
       if (league) {
         let members: string[] = [];
         if (Array.isArray(league.members)) {
@@ -176,8 +177,6 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
         }
         
         const updatedMembers = members.filter(id => id !== currentUser.id);
-        // Se o array ficar vazio, passamos null para o Firebase remover o nó, 
-        // ou um array vazio (o Firebase RTDB converte array vazio para null automaticamente, mas para garantir usamos null)
         await update(ref(db, `leagues/${leagueId}`), { 
           members: updatedMembers.length > 0 ? updatedMembers : null 
         });
@@ -203,6 +202,59 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
     } catch (error) {
       console.error(error);
       showMessage('error', 'Erro ao sair da liga.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteLeague = async (leagueId: string) => {
+    const league = allLeagues.find(l => l.id === leagueId);
+    if (!league) return;
+
+    const isOwner = league.ownerId === currentUser.id || currentUser.isAdmin;
+    if (!isOwner) {
+      showMessage('error', 'Apenas o dono da liga pode excluí-la.');
+      return;
+    }
+
+    if (!window.confirm(`Tem certeza que deseja EXCLUIR permanentemente a liga "${league.name}"? Esta ação não pode ser desfeita.`)) return;
+
+    setLoading(true);
+    try {
+      // 1. Remover a liga de todos os usuários que participam dela
+      const membersArray = Array.isArray(league.members) 
+        ? league.members 
+        : Object.values(league.members || {}) as string[];
+
+      const updatePromises = membersArray.map(async (memberId) => {
+        const member = allUsers.find(u => u.id === memberId);
+        if (member) {
+          let userLeagues: string[] = [];
+          if (Array.isArray(member.leagues)) {
+            userLeagues = member.leagues;
+          } else if (member.leagues && typeof member.leagues === 'object') {
+            userLeagues = Object.values(member.leagues) as string[];
+          }
+          const updatedLeagues = userLeagues.filter(id => id !== leagueId);
+          await update(ref(db, `users/${memberId}`), { 
+            leagues: updatedLeagues.length > 0 ? updatedLeagues : null 
+          });
+        }
+      });
+
+      await Promise.all(updatePromises);
+
+      // 2. Remover a liga do banco de dados
+      await remove(ref(db, `leagues/${leagueId}`));
+
+      if (selectedLeagueId === leagueId) {
+        onSelectLeague(null);
+      }
+
+      showMessage('success', 'Liga excluída com sucesso.');
+    } catch (error) {
+      console.error(error);
+      showMessage('error', 'Erro ao excluir a liga.');
     } finally {
       setLoading(false);
     }
@@ -257,8 +309,8 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
         
         {selectedLeagueId && (
           <button
-            onClick={() => onSelectLeague(null)}
-            className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors bg-gray-800 text-white hover:bg-gray-700 dark:bg-white/10 dark:hover:bg-white/20"
+            onClick={() => handleLeaveLeague(selectedLeagueId)}
+            className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors bg-red-600 text-white hover:bg-red-700"
           >
             Sair da Liga Atual
           </button>
@@ -307,9 +359,24 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
                       >
                         {selectedLeagueId === league.id ? 'Liga Atual' : 'Acessar Liga'}
                       </button>
-                      <button onClick={() => handleLeaveLeague(league.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors">
-                        <Trash2 size={18} />
-                      </button>
+                      
+                      {league.ownerId === currentUser.id || currentUser.isAdmin ? (
+                        <button 
+                          onClick={() => handleDeleteLeague(league.id)} 
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
+                          title="Excluir Liga"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleLeaveLeague(league.id)} 
+                          className="p-2 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl transition-colors"
+                          title="Sair da Liga"
+                        >
+                          <LogOut size={18} />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="p-0">
