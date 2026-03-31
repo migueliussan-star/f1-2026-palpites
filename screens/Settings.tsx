@@ -366,8 +366,8 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
                     )}
                 </div>
 
-                {/* MOBILE ONLY: LEAGUES NAVIGATION WHEN NOT IN A LEAGUE */}
-                {!hasSelectedLeague && onNavigateToLeagues && (
+                {/* MOBILE ONLY: LEAGUES NAVIGATION */}
+                {onNavigateToLeagues && (
                     <div className="md:hidden mt-4">
                         <button 
                             onClick={onNavigateToLeagues}

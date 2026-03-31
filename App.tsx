@@ -116,7 +116,14 @@ const App: React.FC = () => {
   const isLeagueOwner = useMemo(() => {
     if (!selectedLeagueId || !liveUser) return false;
     const league = leagues.find(l => l.id === selectedLeagueId);
-    return league?.ownerId === liveUser.id;
+    if (!league) return false;
+    
+    // Verifica se o usuário é o dono E se ele ainda faz parte da liga
+    const members = Array.isArray(league.members) 
+      ? league.members 
+      : Object.values(league.members || {}) as string[];
+      
+    return league.ownerId === liveUser.id && members.includes(liveUser.id);
   }, [leagues, selectedLeagueId, liveUser?.id]);
 
   const canAccessAdmin = useMemo(() => {

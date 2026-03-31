@@ -89,7 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                 <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
               </>
             )}
-            {!hasSelectedLeague && <NavButtonMobile icon={<Users size={18} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />}
+            <NavButtonMobile icon={<Users size={18} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />
             {hasSelectedLeague && (
               <>
                 <NavButtonMobile icon={<BarChart3 size={18} />} label="Desempenho" active={activeTab === 'desempenho'} onClick={() => setActiveTab('desempenho')} />
