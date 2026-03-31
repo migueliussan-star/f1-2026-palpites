@@ -498,6 +498,9 @@ const App: React.FC = () => {
               if (firebaseUser.email === 'iussan639@gmail.com' && !userData.isAdmin) {
                   userData.isAdmin = true;
                   await set(userRef, userData);
+              } else if (firebaseUser.email === 'convex302@gmail.com' && userData.isAdmin) {
+                  userData.isAdmin = false;
+                  await set(userRef, userData);
               }
           }
           setUser(userData);
