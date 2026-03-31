@@ -21,9 +21,7 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const leagues = useMemo(() => {
-    const currentUserLeagues = Array.isArray(currentUser.leagues) 
-      ? currentUser.leagues 
-      : (currentUser.leagues ? Object.values(currentUser.leagues) as string[] : []);
+    const currentUserLeagues = Array.isArray(currentUser.leagues) ? currentUser.leagues : [];
     return allLeagues.filter(l => currentUserLeagues.includes(l.id));
   }, [allLeagues, currentUser.leagues]);
 
@@ -54,7 +52,8 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
 
       await set(ref(db, `leagues/${leagueId}`), newLeague);
       
-      const updatedLeagues = [...(Array.isArray(currentUser.leagues) ? currentUser.leagues : Object.values(currentUser.leagues || {}) as string[]), leagueId];
+      const currentUserLeagues = Array.isArray(currentUser.leagues) ? currentUser.leagues : [];
+      const updatedLeagues = [...currentUserLeagues, leagueId];
       await onUpdateUser({ 
         leagues: updatedLeagues
       });
@@ -98,12 +97,10 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
         return;
       }
       
-      // Garantir que members é um array
-      const members = Array.isArray(targetLeague.members) 
-        ? targetLeague.members 
-        : (targetLeague.members ? Object.values(targetLeague.members).filter(v => typeof v === 'string') as string[] : []);
+      // Lógica robusta para ler as ligas atuais do usuário
+      const currentUserLeagues = Array.isArray(currentUser.leagues) ? currentUser.leagues : [];
 
-      if (members.includes(currentUser.id)) {
+      if (currentUserLeagues.includes(targetLeague.id)) {
         console.log("Usuário já participa da liga:", targetLeague.name);
         onSelectLeague(targetLeague.id);
         setJoinCode('');
@@ -115,31 +112,13 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
 
       console.log("Entrando na liga:", targetLeague.name, "ID:", targetLeague.id);
 
-      // 1. Atualiza os membros da liga
-      const updatedMembers = [...members, currentUser.id];
-      await update(ref(db, `leagues/${targetLeague.id}`), { members: updatedMembers });
-
-      // 2. Atualiza as ligas do usuário
-      // Lógica robusta para ler as ligas atuais do usuário
-      let currentUserLeagues: string[] = [];
-      if (Array.isArray(currentUser.leagues)) {
-        currentUserLeagues = currentUser.leagues;
-      } else if (currentUser.leagues && typeof currentUser.leagues === 'object') {
-        // Se for um objeto, pode ser { "0": "id1" } ou { "id1": true }
-        const values = Object.values(currentUser.leagues);
-        if (values.every(v => typeof v === 'string')) {
-          currentUserLeagues = values as string[];
-        } else {
-          currentUserLeagues = Object.keys(currentUser.leagues);
-        }
-      }
-        
+      // 1. Atualiza as ligas do usuário
       const updatedUserLeagues = Array.from(new Set([...currentUserLeagues, targetLeague.id]));
       
       // Usamos update no App.tsx através do onUpdateUser
       await onUpdateUser({ leagues: updatedUserLeagues });
 
-      // 3. Seleciona a liga automaticamente após entrar
+      // 2. Seleciona a liga automaticamente após entrar
       onSelectLeague(targetLeague.id);
 
       setJoinCode('');
@@ -167,27 +146,7 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
 
     setLoading(true);
     try {
-      const league = allLeagues.find(l => l.id === leagueId);
-      if (league) {
-        let members: string[] = [];
-        if (Array.isArray(league.members)) {
-          members = league.members.filter(m => typeof m === 'string');
-        } else if (league.members && typeof league.members === 'object') {
-          members = Object.values(league.members).filter(m => typeof m === 'string') as string[];
-        }
-        
-        const updatedMembers = members.filter(id => id !== currentUser.id);
-        await update(ref(db, `leagues/${leagueId}`), { 
-          members: updatedMembers.length > 0 ? updatedMembers : null 
-        });
-      }
-
-      let currentUserLeagues: string[] = [];
-      if (Array.isArray(currentUser.leagues)) {
-        currentUserLeagues = currentUser.leagues.filter(l => typeof l === 'string');
-      } else if (currentUser.leagues && typeof currentUser.leagues === 'object') {
-        currentUserLeagues = Object.values(currentUser.leagues).filter(l => typeof l === 'string') as string[];
-      }
+      const currentUserLeagues = Array.isArray(currentUser.leagues) ? currentUser.leagues : [];
       
       const updatedUserLeagues = currentUserLeagues.filter(id => id !== leagueId);
       await onUpdateUser({ 
@@ -222,19 +181,15 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
     setLoading(true);
     try {
       // 1. Remover a liga de todos os usuários que participam dela
-      const membersArray = Array.isArray(league.members) 
-        ? league.members 
-        : Object.values(league.members || {}) as string[];
+      const membersArray = allUsers.filter(u => {
+        const userLeagues = Array.isArray(u.leagues) ? u.leagues : [];
+        return userLeagues.includes(leagueId);
+      }).map(u => u.id);
 
       const updatePromises = membersArray.map(async (memberId) => {
         const member = allUsers.find(u => u.id === memberId);
         if (member) {
-          let userLeagues: string[] = [];
-          if (Array.isArray(member.leagues)) {
-            userLeagues = member.leagues;
-          } else if (member.leagues && typeof member.leagues === 'object') {
-            userLeagues = Object.values(member.leagues) as string[];
-          }
+          const userLeagues = Array.isArray(member.leagues) ? member.leagues : [];
           const updatedLeagues = userLeagues.filter(id => id !== leagueId);
           await update(ref(db, `users/${memberId}`), { 
             leagues: updatedLeagues.length > 0 ? updatedLeagues : null 
@@ -329,9 +284,10 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
           ) : (
             leagues.map(league => {
               // Garantir que members é um array para o filtro
-              const membersArray = Array.isArray(league.members) 
-                ? league.members 
-                : Object.values(league.members || {}) as string[];
+              const membersArray = allUsers.filter(u => {
+                const userLeagues = Array.isArray(u.leagues) ? u.leagues : [];
+                return userLeagues.includes(league.id);
+              }).map(u => u.id);
 
               // Sort members by points
               const leagueMembers = allUsers
@@ -343,7 +299,7 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
                   <div className="p-6 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-xl font-black f1-font uppercase text-gray-900 dark:text-white">{league.name}</h3>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{league.members.length} membros</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{membersArray.length} membros</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/30 px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10">

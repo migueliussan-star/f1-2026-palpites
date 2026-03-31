@@ -119,12 +119,10 @@ const App: React.FC = () => {
     if (!league) return false;
     
     // Verifica se o usuário é o dono E se ele ainda faz parte da liga
-    const members = Array.isArray(league.members) 
-      ? league.members 
-      : Object.values(league.members || {}) as string[];
+    const userLeagues = Array.isArray(liveUser.leagues) ? liveUser.leagues : [];
       
-    return league.ownerId === liveUser.id && members.includes(liveUser.id);
-  }, [leagues, selectedLeagueId, liveUser?.id]);
+    return league.ownerId === liveUser.id && userLeagues.includes(league.id);
+  }, [leagues, selectedLeagueId, liveUser?.id, liveUser?.leagues]);
 
   const canAccessAdmin = useMemo(() => {
     if (!liveUser) return false;
@@ -241,12 +239,17 @@ const App: React.FC = () => {
                 safeHistory = Object.values(u.positionHistory).map((val: any) => Number(val) || 0);
             }
 
-            // Garantir que leagues é um array
+            // Garantir que leagues é um array de strings
             let safeLeagues: string[] = [];
             if (u.leagues && Array.isArray(u.leagues)) {
-                safeLeagues = u.leagues.filter(Boolean) as string[];
+                safeLeagues = u.leagues.filter((v: any) => typeof v === 'string' && v) as string[];
             } else if (u.leagues && typeof u.leagues === 'object') {
-                safeLeagues = Object.values(u.leagues).filter(Boolean) as string[];
+                const values = Object.values(u.leagues);
+                if (values.every((v: any) => typeof v === 'string')) {
+                    safeLeagues = values.filter(Boolean) as string[];
+                } else {
+                    safeLeagues = Object.keys(u.leagues).filter(Boolean) as string[];
+                }
             }
 
             // Garantir que invalidatedGPs é um array
@@ -482,10 +485,19 @@ const App: React.FC = () => {
               // Garantir que o ID esteja presente
               userData.id = userData.id || firebaseUser.uid;
               
-              // Garantir que campos de array sejam arrays
-              userData.leagues = userData.leagues 
-                ? (Array.isArray(userData.leagues) ? userData.leagues : Object.values(userData.leagues)) 
-                : [];
+              // Garantir que campos de array sejam arrays de strings
+              if (userData.leagues && Array.isArray(userData.leagues)) {
+                  userData.leagues = userData.leagues.filter((v: any) => typeof v === 'string' && v);
+              } else if (userData.leagues && typeof userData.leagues === 'object') {
+                  const values = Object.values(userData.leagues);
+                  if (values.every((v: any) => typeof v === 'string')) {
+                      userData.leagues = values.filter(Boolean);
+                  } else {
+                      userData.leagues = Object.keys(userData.leagues).filter(Boolean);
+                  }
+              } else {
+                  userData.leagues = [];
+              }
               
               userData.invalidatedGPs = userData.invalidatedGPs 
                 ? (Array.isArray(userData.invalidatedGPs) ? userData.invalidatedGPs : Object.values(userData.invalidatedGPs)) 
