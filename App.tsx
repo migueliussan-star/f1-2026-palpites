@@ -1098,7 +1098,7 @@ const App: React.FC = () => {
           />
         )}
         
-        {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={leaguePredictions} />}
+        {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={leaguePredictions} onNavigateToPerformance={() => setActiveTab('desempenho')} />}
         
         {activeTab === 'ligas' && <Leagues currentUser={liveUser} allUsers={allUsers.filter(u => !u.isGuest)} allLeagues={leagues} onUpdateUser={handleUpdateUser} selectedLeagueId={selectedLeagueId} onSelectLeague={(id) => {
           setSelectedLeagueId(id);
