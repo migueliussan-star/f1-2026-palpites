@@ -353,7 +353,13 @@ const App: React.FC = () => {
       if (data && typeof data === 'object') {
         Object.values(data).forEach((userPreds: any) => {
           if (userPreds && typeof userPreds === 'object') {
-            Object.values(userPreds).forEach((p: any) => predList.push(p));
+            Object.values(userPreds).forEach((p: any) => {
+              let safeTop5 = p.top5;
+              if (safeTop5 && !Array.isArray(safeTop5) && typeof safeTop5 === 'object') {
+                safeTop5 = Object.values(safeTop5);
+              }
+              predList.push({ ...p, top5: safeTop5 || [] });
+            });
           }
         });
       }
@@ -663,7 +669,17 @@ const App: React.FC = () => {
     // 1. Verificar se TODAS as sessões estão fechadas (status === false)
     const allSessionsClosed = Object.values(currentGp.sessionStatus).every(isOpen => isOpen === false);
 
-    const updatedCalendar = currentCalendar.map(c => c.id === currentGp.id ? currentGp : c);
+    // Resolve currentCalendar inline to avoid closure issues
+    const resolvedCurrentCalendar = (() => {
+      if (selectedLeagueId) {
+        const league = leagues.find(l => l.id === selectedLeagueId);
+        if (league && league.calendar && league.calendar.length > 0) return league.calendar;
+      }
+      const sc = Array.isArray(calendar) ? calendar.filter(Boolean) as RaceGP[] : [];
+      return sc.length > 0 ? sc : INITIAL_CALENDAR;
+    })();
+
+    const updatedCalendar = resolvedCurrentCalendar.map(c => c.id === currentGp.id ? currentGp : c);
     const userPointsMap: Record<string, number> = {};
     const userPointsHistoryMap: Record<string, { gpId: number; points: number }[]> = {};
 
@@ -786,6 +802,8 @@ const App: React.FC = () => {
         } else {
             await set(ref(db, 'calendar'), finalCalendar);
         }
+        // Also update local resolvedCurrentCalendar reference (unused var suppressor)
+        void resolvedCurrentCalendar;
 
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
@@ -940,6 +958,7 @@ const App: React.FC = () => {
     } else {
       setAdminEditingGpId(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Lógica de Notificações
