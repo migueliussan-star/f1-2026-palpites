@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'motion/react';
-import { User, RaceGP, SessionType, Prediction, Team, League } from './types';
+import { User, RaceGP, SessionType, Prediction, Team } from './types';
 import { INITIAL_CALENDAR, FALLBACK_CONSTRUCTORS } from './constants';
 import Home from './screens/Home';
 import Predictions from './screens/Predictions';
@@ -12,10 +10,7 @@ import Admin from './screens/Admin';
 import Adversarios from './screens/Adversarios';
 import Settings from './screens/Settings';
 import Login from './screens/Login';
-import Leagues from './screens/Leagues';
-import Performance from './screens/Performance';
 import { Layout } from './components/Layout';
-import { LoadingScreen } from './components/LoadingScreen';
 import { db, auth, ref, set, onValue, update, get, remove, onAuthStateChanged, signOut } from './firebase';
 
 // Helper ROBUSTO para datas
@@ -58,36 +53,16 @@ const getGpDates = (dateStr: string) => {
 };
 
 const App: React.FC = () => {
-  const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(localStorage.getItem('selectedLeagueId'));
-  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings' | 'ligas' | 'desempenho'>(localStorage.getItem('selectedLeagueId') ? 'home' : 'ligas');
+  const [activeTab, setActiveTab] = useState<'home' | 'palpites' | 'palpitometro' | 'ranking' | 'admin' | 'adversarios' | 'settings'>('home');
   const [user, setUser] = useState<User | null>(null);
   const [calendar, setCalendar] = useState<RaceGP[]>([]);
-  const [isCalendarLoaded, setIsCalendarLoaded] = useState(false);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [leagues, setLeagues] = useState<League[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const activePredictions = useMemo(() => predictions.filter(p => p && allUsers.some(u => u.id === p.userId)), [predictions, allUsers]);
   const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      setIsInstalled(true);
-    }
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
 
   // Deriva o usuário "vivo" (combinando Auth + Dados do DB em tempo real)
   const liveUser = useMemo(() => {
@@ -95,41 +70,6 @@ const App: React.FC = () => {
     const dbUser = allUsers.find(u => u.id === user.id);
     return dbUser ? { ...user, ...dbUser } : user;
   }, [user, allUsers]);
-
-  const leagueUsers = useMemo(() => {
-    if (!selectedLeagueId) return allUsers;
-    return allUsers.filter(u => u.leagues?.includes(selectedLeagueId));
-  }, [allUsers, selectedLeagueId]);
-
-  const leaguePredictions = useMemo(() => {
-    if (!selectedLeagueId) return activePredictions;
-    const userIds = new Set(leagueUsers.map(u => u.id));
-    return activePredictions.filter(p => userIds.has(p.userId));
-  }, [activePredictions, leagueUsers, selectedLeagueId]);
-
-  const realTimeRank = useMemo(() => {
-    if (!liveUser) return 1;
-    if (!selectedLeagueId) return liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
-    return leagueUsers.sort((a, b) => (b.points || 0) - (a.points || 0)).findIndex(u => u.id === liveUser.id) + 1;
-  }, [liveUser?.rank, liveUser?.id, allUsers, leagueUsers, selectedLeagueId]);
-
-  const isLeagueOwner = useMemo(() => {
-    if (!selectedLeagueId || !liveUser) return false;
-    const league = leagues.find(l => l.id === selectedLeagueId);
-    if (!league) return false;
-    
-    // Verifica se o usuário é o dono E se ele ainda faz parte da liga
-    const userLeagues = Array.isArray(liveUser.leagues) ? liveUser.leagues : [];
-      
-    return league.ownerId === liveUser.id && userLeagues.includes(league.id);
-  }, [leagues, selectedLeagueId, liveUser?.id, liveUser?.leagues]);
-
-  const canAccessAdmin = useMemo(() => {
-    if (!liveUser) return false;
-    if (liveUser.isAdmin) return true;
-    if (selectedLeagueId && isLeagueOwner) return true;
-    return false;
-  }, [liveUser, selectedLeagueId, isLeagueOwner]);
 
   // APLICA O TEMA AO DOM
   useEffect(() => {
@@ -159,7 +99,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchConstructors = async () => {
       try {
-        const res = await fetch('https://api.jolpi.ca/ergast/f1/2026/constructorstandings/');
+        const res = await fetch('https://ergast.com/api/f1/2026/constructorStandings.json');
         if (!res.ok) throw new Error('API not available');
         const data = await res.json();
         const standings = data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings;
@@ -183,9 +123,7 @@ const App: React.FC = () => {
 
             if (apiTeams.length > 0) {
                  const combined = Array.from(new Set([...apiTeams, ...FALLBACK_CONSTRUCTORS]));
-                 // Garante que o Safety Car seja sempre o último
-                 const filtered = combined.filter(t => t !== 'Safety Car');
-                 setConstructorsOrder([...filtered, 'Safety Car']);
+                 setConstructorsOrder(combined);
                  return;
             }
         }
@@ -230,8 +168,6 @@ const App: React.FC = () => {
         
         const processedList = sortedList.map((u, index) => {
             const currentRank = index + 1;
-            
-            // Garantir que positionHistory é um array
             let safeHistory: number[] = [];
             if (u.positionHistory && Array.isArray(u.positionHistory)) {
                 safeHistory = u.positionHistory.map((val: any) => Number(val) || 0);
@@ -239,33 +175,10 @@ const App: React.FC = () => {
                 safeHistory = Object.values(u.positionHistory).map((val: any) => Number(val) || 0);
             }
 
-            // Garantir que leagues é um array de strings
-            let safeLeagues: string[] = [];
-            if (u.leagues && Array.isArray(u.leagues)) {
-                safeLeagues = u.leagues.filter((v: any) => typeof v === 'string' && v) as string[];
-            } else if (u.leagues && typeof u.leagues === 'object') {
-                const values = Object.values(u.leagues);
-                if (values.every((v: any) => typeof v === 'string')) {
-                    safeLeagues = values.filter(Boolean) as string[];
-                } else {
-                    safeLeagues = Object.keys(u.leagues).filter(Boolean) as string[];
-                }
-            }
-
-            // Garantir que invalidatedGPs é um array
-            let safeInvalidated: number[] = [];
-            if (u.invalidatedGPs && Array.isArray(u.invalidatedGPs)) {
-                safeInvalidated = u.invalidatedGPs.map((val: any) => Number(val)).filter(n => !isNaN(n));
-            } else if (u.invalidatedGPs && typeof u.invalidatedGPs === 'object') {
-                safeInvalidated = Object.values(u.invalidatedGPs).map((val: any) => Number(val)).filter(n => !isNaN(n));
-            }
-
             return {
                 ...u,
                 rank: currentRank,
                 positionHistory: safeHistory,
-                leagues: safeLeagues,
-                invalidatedGPs: safeInvalidated,
                 previousRank: u.previousRank || currentRank
             };
         });
@@ -276,7 +189,7 @@ const App: React.FC = () => {
       }
   }, []);
 
-  // Listeners de Dados e Automação de Fechamento
+  // Listeners de Dados
   useEffect(() => {
     if (!user) {
         setAllUsers([]);
@@ -287,7 +200,6 @@ const App: React.FC = () => {
     const calendarRef = ref(db, 'calendar');
     const usersRef = ref(db, 'users');
     const predictionsRef = ref(db, 'predictions');
-    const leaguesRef = ref(db, 'leagues');
 
     get(calendarRef).then(snap => {
         if (snap.exists()) {
@@ -308,27 +220,13 @@ const App: React.FC = () => {
              if (val && typeof val === 'object') {
                  Object.values(val).forEach((userPreds: any) => {
                     if (userPreds && typeof userPreds === 'object') {
-                        Object.values(userPreds).forEach((p: any) => {
-                            let safeTop5 = p.top5;
-                            if (safeTop5 && !Array.isArray(safeTop5) && typeof safeTop5 === 'object') {
-                                safeTop5 = Object.values(safeTop5);
-                            }
-                            predList.push({ ...p, top5: safeTop5 || [] });
-                        });
+                        Object.values(userPreds).forEach((p: any) => predList.push(p));
                     }
                  });
              }
              setPredictions(predList);
         }
     }).catch(e => console.log("Predictions read skipped", e));
-
-    get(leaguesRef).then(snap => {
-        if (snap.exists()) {
-            const data = snap.val();
-            const leagueList = Object.keys(data).map(id => ({ id, ...data[id] }));
-            setLeagues(leagueList);
-        }
-    }).catch(e => console.log("Leagues read skipped", e));
 
     const unsubCalendar = onValue(calendarRef, (snapshot) => {
       const data = snapshot.val();
@@ -338,7 +236,6 @@ const App: React.FC = () => {
       } else {
         setCalendar(INITIAL_CALENDAR);
       }
-      setIsCalendarLoaded(true);
     }, (e) => console.log("Sync Calendar silenciado"));
 
     const unsubUsers = onValue(usersRef, (snapshot) => {
@@ -353,13 +250,7 @@ const App: React.FC = () => {
       if (data && typeof data === 'object') {
         Object.values(data).forEach((userPreds: any) => {
           if (userPreds && typeof userPreds === 'object') {
-            Object.values(userPreds).forEach((p: any) => {
-              let safeTop5 = p.top5;
-              if (safeTop5 && !Array.isArray(safeTop5) && typeof safeTop5 === 'object') {
-                safeTop5 = Object.values(safeTop5);
-              }
-              predList.push({ ...p, top5: safeTop5 || [] });
-            });
+            Object.values(userPreds).forEach((p: any) => predList.push(p));
           }
         });
       }
@@ -368,105 +259,12 @@ const App: React.FC = () => {
         console.error("Erro listener predictions:", error);
     });
 
-    const unsubLeagues = onValue(leaguesRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            const leagueList = Object.keys(data).map(id => ({ id, ...data[id] }));
-            setLeagues(leagueList);
-        } else {
-            setLeagues([]);
-        }
-    }, (error) => {
-        console.error("Erro listener leagues:", error);
-    });
-
     return () => {
         unsubCalendar();
         unsubUsers();
         unsubPredictions();
-        unsubLeagues();
     };
   }, [user?.id, processUsersData]);
-
-  // Automação de fechamento de sessões (1 hora antes)
-  useEffect(() => {
-    if (!user?.isAdmin || !calendar || calendar.length === 0) return;
-
-    const checkSessionTimes = () => {
-      const now = new Date();
-      let hasChanges = false;
-      
-      const updatedCalendar = calendar.map(gp => {
-        if (gp.status !== 'OPEN' && gp.status !== 'UPCOMING') return gp;
-        
-        const sessionsToCheck: SessionType[] = gp.isSprint 
-          ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
-          : ['Qualy corrida', 'corrida principal'];
-          
-        let gpChanged = false;
-        const newSessionStatus = { ...gp.sessionStatus };
-        
-        sessionsToCheck.forEach(session => {
-          // Se o admin fez override manual, não mexe
-          if (gp.manualOverride && gp.manualOverride[session] !== undefined) {
-             return;
-          }
-          
-          // Determinar a sessão de referência para o deadline
-          let referenceSessionKey: SessionType;
-          let fallbackSessionKey = '';
-          
-          if (gp.isSprint) {
-              if (session === 'Qualy Sprint' || session === 'corrida Sprint') {
-                  referenceSessionKey = 'Qualy Sprint';
-                  fallbackSessionKey = 'Sprint Q';
-              } else {
-                  referenceSessionKey = 'Qualy corrida';
-                  fallbackSessionKey = 'Classificação';
-              }
-          } else {
-              referenceSessionKey = 'Qualy corrida';
-              fallbackSessionKey = 'Classificação';
-          }
-
-          const referenceIsoDate = gp.sessions?.[referenceSessionKey] || gp.sessions?.[fallbackSessionKey];
-          if (referenceIsoDate) {
-            const referenceDate = new Date(referenceIsoDate);
-            
-            // 10 minutos antes da sessão de referência
-            const offset = (10 * 60 * 1000);
-            const deadline = new Date(referenceDate.getTime() - offset);
-            
-            if (now >= deadline && newSessionStatus[session] !== false) {
-              newSessionStatus[session] = false;
-              gpChanged = true;
-              hasChanges = true;
-              console.log(`Auto-fechando sessão ${session} do GP ${gp.name} baseado na qualy ${referenceSessionKey}`);
-            }
-          }
-        });
-        
-        if (gpChanged) {
-          return { ...gp, sessionStatus: newSessionStatus };
-        }
-        return gp;
-      });
-      
-      if (hasChanges) {
-        // Apenas o admin salva no banco para evitar múltiplas escritas
-        set(ref(db, 'calendar'), updatedCalendar).catch(e => console.error("Erro ao auto-fechar sessão:", e));
-      }
-    };
-
-    const intervalId = setInterval(checkSessionTimes, 60000); // Verifica a cada minuto
-    
-    // Executa uma vez na montagem também
-    checkSessionTimes();
-
-    return () => {
-        clearInterval(intervalId);
-    };
-  }, [calendar, user?.isAdmin]);
 
   const loadUserProfile = useCallback(async (firebaseUser: any) => {
       setLoginError('');
@@ -486,42 +284,7 @@ const App: React.FC = () => {
         const snapshot = await get(userRef);
         
         if (snapshot.exists()) {
-          const userData = snapshot.val();
-          if (userData) {
-              // Garantir que o ID esteja presente
-              userData.id = userData.id || firebaseUser.uid;
-              
-              // Garantir que campos de array sejam arrays de strings
-              if (userData.leagues && Array.isArray(userData.leagues)) {
-                  userData.leagues = userData.leagues.filter((v: any) => typeof v === 'string' && v);
-              } else if (userData.leagues && typeof userData.leagues === 'object') {
-                  const values = Object.values(userData.leagues);
-                  if (values.every((v: any) => typeof v === 'string')) {
-                      userData.leagues = values.filter(Boolean);
-                  } else {
-                      userData.leagues = Object.keys(userData.leagues).filter(Boolean);
-                  }
-              } else {
-                  userData.leagues = [];
-              }
-              
-              userData.invalidatedGPs = userData.invalidatedGPs 
-                ? (Array.isArray(userData.invalidatedGPs) ? userData.invalidatedGPs : Object.values(userData.invalidatedGPs)) 
-                : [];
-
-              userData.positionHistory = userData.positionHistory 
-                ? (Array.isArray(userData.positionHistory) ? userData.positionHistory : Object.values(userData.positionHistory)) 
-                : [];
-
-              if (firebaseUser.email === 'iussan639@gmail.com' && !userData.isAdmin) {
-                  userData.isAdmin = true;
-                  await set(userRef, userData);
-              } else if (firebaseUser.email === 'convex302@gmail.com' && userData.isAdmin) {
-                  userData.isAdmin = false;
-                  await set(userRef, userData);
-              }
-          }
-          setUser(userData);
+          setUser(snapshot.val());
         } else {
             if (firebaseUser.isAnonymous) {
                  const guestUser: User = {
@@ -531,7 +294,7 @@ const App: React.FC = () => {
                     points: 0,
                     rank: 0,
                     level: 'Bronze',
-                    isAdmin: false,
+                    isAdmin: true,
                     isGuest: true,
                     previousRank: 0,
                     positionHistory: []
@@ -558,7 +321,7 @@ const App: React.FC = () => {
             });
           }
 
-          const shouldBeAdmin = userCount === 0 || firebaseUser.email === 'iussan639@gmail.com';
+          const shouldBeAdmin = userCount === 0;
 
           if (oldUserData && oldUserKey) {
              const newUserData: User = {
@@ -646,73 +409,22 @@ const App: React.FC = () => {
     try {
         await update(ref(db, `users/${liveUser.id}`), { isAdmin: true });
     } catch(e) {
-        toast.error("Erro ao promover.");
+        alert("Erro ao promover.");
     }
   };
 
   const handleCalculatePoints = async (currentGp: RaceGP) => {
-    if (selectedLeagueId) {
-      if (!isLeagueOwner && !liveUser?.isAdmin) {
-        toast.error("Apenas o dono da liga ou administradores podem calcular pontos.");
-        return;
-      }
-    } else {
-      if (!liveUser?.isAdmin) {
-        toast.error("Apenas administradores globais podem calcular pontos.");
-        return;
-      }
-    }
-
-    // Fixa o GP atual na tela de admin para não pular para o próximo GP ativo
-    setAdminEditingGpId(currentGp.id);
-
     // 1. Verificar se TODAS as sessões estão fechadas (status === false)
     const allSessionsClosed = Object.values(currentGp.sessionStatus).every(isOpen => isOpen === false);
 
-    // Resolve currentCalendar inline to avoid closure issues
-    const resolvedCurrentCalendar = (() => {
-      if (selectedLeagueId) {
-        const league = leagues.find(l => l.id === selectedLeagueId);
-        if (league && league.calendar && league.calendar.length > 0) return league.calendar;
-      }
-      const sc = Array.isArray(calendar) ? calendar.filter(Boolean) as RaceGP[] : [];
-      return sc.length > 0 ? sc : INITIAL_CALENDAR;
-    })();
-
-    const updatedCalendar = resolvedCurrentCalendar.map(c => c.id === currentGp.id ? currentGp : c);
+    const updatedCalendar = calendar.map(c => c.id === currentGp.id ? currentGp : c);
     const userPointsMap: Record<string, number> = {};
-    const userPointsHistoryMap: Record<string, { gpId: number; points: number }[]> = {};
-
-    const targetUsers = selectedLeagueId ? leagueUsers : allUsers;
 
     // 2. Cálculo dos pontos
-    targetUsers.forEach(u => {
+    allUsers.forEach(u => {
       let userTotalPoints = 0;
-      let consecutiveP1Driver: string | null = null;
-      let consecutiveP1Count = 0;
-      let pointsHistory: { gpId: number; points: number }[] = [...(u.pointsHistory || [])];
-      
       updatedCalendar.forEach(calGp => {
           if (!calGp.results) return;
-          if (u.invalidatedGPs?.includes(calGp.id)) return; // Ignora GPs onde o palpite foi invalidado
-          
-          let gpPoints = 0;
-          
-          // Check for "Fiel à Escuderia"
-          const mainRacePred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === 'corrida principal');
-          if (mainRacePred && mainRacePred.top5 && mainRacePred.top5.length > 0) {
-              const p1Driver = mainRacePred.top5[0];
-              if (p1Driver === consecutiveP1Driver) {
-                  consecutiveP1Count++;
-              } else {
-                  consecutiveP1Driver = p1Driver;
-                  consecutiveP1Count = 1;
-              }
-          } else {
-              consecutiveP1Driver = null;
-              consecutiveP1Count = 0;
-          }
-          
           const sessions: SessionType[] = calGp.isSprint 
             ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
             : ['Qualy corrida', 'corrida principal'];
@@ -723,33 +435,17 @@ const App: React.FC = () => {
              const pred = predictions.find(p => p.gpId === calGp.id && p.userId === u.id && p.session === session);
              if (pred) {
                 (pred.top5 || []).forEach((driverId, idx) => {
-                   if (driverId === officialResult[idx]) {
-                       userTotalPoints += 5;
-                       gpPoints += 5;
-                   }
-                   else if (officialResult.includes(driverId)) {
-                       userTotalPoints += 1;
-                       gpPoints += 1;
-                   }
+                   if (driverId === officialResult[idx]) userTotalPoints += 5;
+                   else if (officialResult.includes(driverId)) userTotalPoints += 1;
                 });
              }
           });
-          
-          // Update points history for this GP
-          const existingGpIndex = pointsHistory.findIndex(ph => ph.gpId === calGp.id);
-          if (existingGpIndex !== -1) {
-              pointsHistory[existingGpIndex].points = gpPoints;
-          } else {
-              pointsHistory.push({ gpId: calGp.id, points: gpPoints });
-          }
       });
-      
       userPointsMap[u.id] = userTotalPoints;
-      userPointsHistoryMap[u.id] = pointsHistory;
     });
 
-    const realUsers = targetUsers.filter(u => !u.isGuest);
-    const guestUsers = targetUsers.filter(u => u.isGuest);
+    const realUsers = allUsers.filter(u => !u.isGuest);
+    const guestUsers = allUsers.filter(u => u.isGuest);
 
     // Ordenação para Ranking
     const rankedUsers = realUsers.map(u => ({
@@ -784,45 +480,33 @@ const App: React.FC = () => {
         updates[`users/${u.id}/level`] = newLevel; 
         updates[`users/${u.id}/previousRank`] = u.rank;
         updates[`users/${u.id}/positionHistory`] = newHistory;
-        updates[`users/${u.id}/pointsHistory`] = userPointsHistoryMap[u.id] || [];
     });
 
     guestUsers.forEach(u => {
         updates[`users/${u.id}/points`] = userPointsMap[u.id] || 0;
-        updates[`users/${u.id}/pointsHistory`] = userPointsHistoryMap[u.id] || [];
     });
 
     try {
-        const finalCalendar = currentGp.status === 'OPEN' 
-            ? updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c)
-            : updatedCalendar;
-
-        if (selectedLeagueId) {
-            await set(ref(db, `leagues/${selectedLeagueId}/calendar`), finalCalendar);
+        if (currentGp.status === 'OPEN') {
+            const newCalendar = updatedCalendar.map(c => c.id === currentGp.id ? { ...c, status: 'FINISHED' as const } : c);
+            await set(ref(db, 'calendar'), newCalendar);
         } else {
-            await set(ref(db, 'calendar'), finalCalendar);
+            await set(ref(db, 'calendar'), updatedCalendar);
         }
-        // Also update local resolvedCurrentCalendar reference (unused var suppressor)
-        void resolvedCurrentCalendar;
-
         if (Object.keys(updates).length > 0) {
             await update(ref(db), updates);
         }
-        toast.success("Pontos calculados com sucesso!");
+        alert("Pontos calculados com sucesso!");
         if (!allSessionsClosed) {
-            toast("AVISO: O histórico de 'Tempo no Topo' NÃO foi atualizado pois existem sessões abertas neste GP.", { icon: '⚠️' });
+            alert("AVISO: O histórico de 'Tempo no Topo' NÃO foi atualizado pois existem sessões abertas neste GP.");
         }
     } catch (e) {
         console.error(e);
-        toast.error("Erro ao salvar no banco.");
+        alert("Erro ao salvar no banco.");
     }
   };
 
   const handleClearAllPredictions = async () => {
-    if (!liveUser?.isAdmin) {
-      toast.error("Apenas administradores globais podem zerar o sistema.");
-      return;
-    }
     if (!window.confirm("Zerar palpites e pontos?")) return;
     try {
         await remove(ref(db, 'predictions'));
@@ -833,44 +517,13 @@ const App: React.FC = () => {
             updates[`${u.id}/level`] = 'Bronze'; 
             updates[`${u.id}/previousRank`] = 0;
             updates[`${u.id}/positionHistory`] = [];
-            updates[`${u.id}/invalidatedGPs`] = [];
         });
         if (Object.keys(updates).length > 0) await update(ref(db, 'users'), updates);
-        toast.success("Resetado.");
+        alert("Resetado.");
     } catch (e) { console.error(e); }
   };
 
-  const handleToggleInvalidateUserGp = async (userId: string, gpId: number) => {
-    if (!liveUser?.isAdmin) {
-      toast.error("Apenas administradores globais podem invalidar palpites.");
-      return;
-    }
-    const user = allUsers.find(u => u.id === userId);
-    if (!user) return;
-    
-    const currentInvalidated = user.invalidatedGPs || [];
-    const isInvalidated = currentInvalidated.includes(gpId);
-    
-    let newInvalidated;
-    if (isInvalidated) {
-        newInvalidated = currentInvalidated.filter(id => id !== gpId);
-    } else {
-        newInvalidated = [...currentInvalidated, gpId];
-    }
-    
-    try {
-        await update(ref(db, `users/${userId}`), { invalidatedGPs: newInvalidated });
-    } catch (e) {
-        console.error("Erro ao invalidar/validar palpite:", e);
-        toast.error("Erro ao atualizar status do palpite.");
-    }
-  };
-
   const handleDeleteUser = async (targetUserId: string) => {
-    if (!liveUser?.isAdmin) {
-      toast.error("Apenas administradores globais podem excluir usuários.");
-      return;
-    }
     if (!window.confirm("Excluir usuário?")) return;
     try {
         await remove(ref(db, `predictions/${targetUserId}`));
@@ -890,156 +543,38 @@ const App: React.FC = () => {
           await update(ref(db, `users/${liveUser.id}`), data);
           // Atualiza estado local para reflexo imediato
           setUser(prev => prev ? { ...prev, ...data } : null);
-          setAllUsers(prev => prev.map(u => u.id === liveUser.id ? { ...u, ...data } : u));
       } catch (e) {
           console.error("Erro ao atualizar usuário", e);
           throw e;
       }
   };
 
-  const handleToggleAdmin = async (targetUserId: string) => {
-    if (!liveUser?.isAdmin) {
-      toast.error("Apenas administradores globais podem gerenciar administradores.");
-      return;
-    }
-    const targetUser = allUsers.find(u => u.id === targetUserId);
-    if (!targetUser) return;
-    try {
-        await update(ref(db, `users/${targetUserId}`), { isAdmin: !targetUser.isAdmin });
-        toast.success(`Status de admin ${!targetUser.isAdmin ? 'concedido' : 'removido'} para ${targetUser.name}`);
-    } catch (e) {
-        console.error("Erro ao alterar status de admin:", e);
-        toast.error("Erro ao atualizar status.");
-    }
-  };
-
-  const handlePredict = async (gpId: number, session: SessionType, top5: string[]) => {
+  const handlePredict = (gpId: number, session: SessionType, top5: string[]) => {
     if (!liveUser) return;
     const sessionKey = session.replace(/\s/g, '_');
-    const newPrediction = { userId: liveUser.id, gpId, session, top5, timestamp: new Date().toISOString() };
+    const newPrediction = { userId: liveUser.id, gpId, session, top5 };
     setPredictions(prev => [...prev.filter(p => !(p.userId === liveUser.id && p.gpId === gpId && p.session === session)), newPrediction]);
-    
-    try {
-        await set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction);
-    } catch (e) {
-        console.warn(e);
-    }
+    set(ref(db, `predictions/${liveUser.id}/${gpId}_${sessionKey}`), newPrediction).catch(console.warn);
   };
   
-  const safeCalendar: RaceGP[] = Array.isArray(calendar) ? calendar.filter(Boolean) as RaceGP[] : [];
-  
-  const currentCalendar: RaceGP[] = useMemo(() => {
-    if (selectedLeagueId) {
-      const league = leagues.find(l => l.id === selectedLeagueId);
-      if (league && league.calendar && league.calendar.length > 0) {
-        return league.calendar;
-      }
-    }
-    return safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
-  }, [selectedLeagueId, leagues, safeCalendar]);
+  if (isInitialLoading) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center"><div className="w-16 h-16 border-4 border-[#e10600]/20 border-t-[#e10600] rounded-full animate-spin"></div></div>;
+  if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
+
+  const hasAnyAdmin = allUsers.some(u => u.isAdmin);
+  const realTimeRank = liveUser.rank || (allUsers.findIndex(u => u.id === liveUser.id) + 1) || 1;
+  const safeCalendar = Array.isArray(calendar) ? calendar.filter(Boolean) : [];
+  const currentCalendar = safeCalendar.length > 0 ? safeCalendar : INITIAL_CALENDAR;
   
   const now = new Date();
   
-  let activeGP = currentCalendar.find((gp: RaceGP) => gp.status === 'OPEN');
+  let activeGP = currentCalendar.find(gp => gp.status === 'OPEN');
   if (!activeGP) {
-      activeGP = currentCalendar.find((gp: RaceGP) => {
+      activeGP = currentCalendar.find(gp => {
           const { endDate } = getGpDates(gp.date);
           return now <= endDate;
       });
   }
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
-  
-  const adminGP = currentCalendar.find((c: RaceGP) => c && c.id === adminEditingGpId) || activeGP;
-
-  // Gerencia o GP selecionado na tela de admin para evitar pulos quando o status muda
-  useEffect(() => {
-    if (activeTab === 'admin') {
-      setAdminEditingGpId(prev => prev !== null ? prev : (activeGP ? activeGP.id : null));
-    } else {
-      setAdminEditingGpId(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  // Lógica de Notificações
-  useEffect(() => {
-    if (!liveUser || !activeGP || !isCalendarLoaded) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    const storedLastRemindedDate = localStorage.getItem('lastRemindedDate');
-    const storedLastSeenGpId = localStorage.getItem('lastSeenGpId');
-    const storedClosedSessionsStr = localStorage.getItem('closedSessions') || '[]';
-    
-    let closedSessions: string[] = [];
-    try {
-        closedSessions = JSON.parse(storedClosedSessionsStr);
-    } catch(e) {}
-
-    let justClosed = false;
-    let updatedClosedSessions = [...closedSessions];
-
-    // 1. Quando trocar de GP
-    if (storedLastSeenGpId && Number(storedLastSeenGpId) !== activeGP.id) {
-        toast.success(`O GP mudou para ${activeGP.name}! Faça seus palpites.`, { duration: 5000, icon: '🏁' });
-        localStorage.setItem('lastSeenGpId', String(activeGP.id));
-        
-        // Reset closed sessions for the new GP
-        updatedClosedSessions = [];
-        justClosed = true;
-    } else if (!storedLastSeenGpId) {
-        localStorage.setItem('lastSeenGpId', String(activeGP.id));
-    }
-
-    // 2. Quando os palpites forem fechados
-    const requiredSessions = activeGP.isSprint 
-        ? ['Qualy Sprint', 'corrida Sprint', 'Qualy corrida', 'corrida principal'] 
-        : ['Qualy corrida', 'corrida principal'];
-
-    const sessionStatus = activeGP.sessionStatus || {};
-
-    requiredSessions.forEach(session => {
-        const sessionKey = `${activeGP.id}-${session}`;
-        const isClosed = sessionStatus[session] === false;
-        
-        if (isClosed && !updatedClosedSessions.includes(sessionKey)) {
-            toast(`Palpites para ${session} encerrados!`, { icon: '🔒', duration: 4000 });
-            updatedClosedSessions.push(sessionKey);
-            justClosed = true;
-        }
-    });
-
-    if (justClosed) {
-        localStorage.setItem('closedSessions', JSON.stringify(updatedClosedSessions));
-    }
-
-    // 3. Uma vez por dia para lembrar de palpitar (se não tiver feito todos)
-    const myPredictions = activePredictions.filter(p => p.userId === liveUser.id && p.gpId === activeGP.id);
-    const openSessions = requiredSessions.filter(s => sessionStatus[s] !== false);
-    
-    // Verifica se há alguma sessão aberta que o usuário ainda não palpitou
-    const hasMissingPredictions = openSessions.some(s => !myPredictions.find(p => p.session === s));
-
-    if (hasMissingPredictions && storedLastRemindedDate !== today) {
-        setTimeout(() => {
-            toast('Você tem palpites pendentes para este GP! Não esqueça de palpitar.', { icon: '⏰', duration: 6000 });
-            
-            // Disparar notificação do navegador se ativado
-            if (liveUser.pushEnabled && 'Notification' in window && Notification.permission === 'granted') {
-                new Notification(`Lembrete: GP de ${activeGP.name}`, {
-                    body: 'Você ainda tem palpites pendentes para este GP. Não se esqueça de palpitar antes do fechamento das sessões!',
-                    icon: '/vite.svg'
-                });
-            }
-        }, 1500);
-        localStorage.setItem('lastRemindedDate', today);
-    }
-
-  }, [liveUser?.id, activeGP?.id, activeGP?.sessionStatus, activePredictions.length, isCalendarLoaded]);
-
-  if (isInitialLoading) return <LoadingScreen />;
-  if (!liveUser) return <Login authError={loginError} onRetry={handleRetryProfileLoad} isAuthButNoDb={isAuthButNoDb} onLogout={handleLogout} />;
-
-  const hasAnyAdmin = allUsers.some(u => u.isAdmin);
   
   if (!activeGP) {
       return (
@@ -1048,105 +583,65 @@ const App: React.FC = () => {
           </div>
       );
   }
+                   
+  const adminGP = (calendar && Array.isArray(calendar) ? calendar : currentCalendar).find(c => c && c.id === adminEditingGpId) || activeGP;
+  const activePredictions = predictions.filter(p => p && allUsers.some(u => u.id === p.userId));
 
   return (
-    <>
-      <Toaster position="top-center" toastOptions={{
-        style: {
-          background: '#333',
-          color: '#fff',
-          borderRadius: '12px',
-          fontWeight: 'bold',
-        }
-      }} />
-      <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={canAccessAdmin} hasSelectedLeague={!!selectedLeagueId} onLogout={handleLogout}>
-        {activeTab === 'home' && (
-          <Home 
-            user={{...liveUser, rank: realTimeRank}} 
-            nextGP={activeGP} 
-            predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
-            onNavigateToPredict={() => setActiveTab('palpites')} 
-            onLogout={handleLogout} 
-            hasNoAdmin={!hasAnyAdmin}
-            onClaimAdmin={handlePromoteSelfToAdmin}
-            constructorsList={constructorsOrder}
-            totalUsers={leagueUsers.filter(u => !u.isGuest).length}
-            currentRank={selectedLeagueId ? realTimeRank : undefined}
-            rankLabel={selectedLeagueId ? 'Na Liga' : 'Global'}
-          />
-        )}
-        {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
-        
-        {activeTab === 'adversarios' && (
-          <Adversarios 
-            gp={activeGP}
-            users={leagueUsers.filter(u => !u.isGuest)} 
-            predictions={leaguePredictions}
-            currentUser={liveUser}
-          />
-        )}
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={liveUser.isAdmin}>
+      {activeTab === 'home' && (
+        <Home 
+          user={{...liveUser, rank: realTimeRank}} 
+          nextGP={activeGP} 
+          predictionsCount={new Set(activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id && (p.top5?.length || 0) > 0).map(p => p.session)).size} 
+          onNavigateToPredict={() => setActiveTab('palpites')} 
+          onLogout={handleLogout} 
+          hasNoAdmin={!hasAnyAdmin}
+          onClaimAdmin={handlePromoteSelfToAdmin}
+          constructorsList={constructorsOrder}
+        />
+      )}
+      {activeTab === 'palpites' && <Predictions gp={activeGP} onSave={handlePredict} savedPredictions={activePredictions.filter(p => p.gpId === activeGP?.id && p.userId === liveUser.id)} />}
+      
+      {activeTab === 'adversarios' && (
+        <Adversarios 
+          gp={activeGP}
+          users={allUsers.filter(u => !u.isGuest)} 
+          predictions={activePredictions}
+          currentUser={liveUser}
+        />
+      )}
 
-        {activeTab === 'palpitometro' && (
-          <Palpitometro 
-            gp={activeGP} 
-            stats={leaguePredictions.filter(p => p.gpId === activeGP?.id).reduce((acc, p) => {
-              if (!acc[p.session]) acc[p.session] = {};
-              (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
-              return acc;
-            }, {} as any)} 
-            totalUsers={new Set(leaguePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
-          />
-        )}
-        
-        {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} predictions={leaguePredictions} onNavigateToPerformance={() => setActiveTab('desempenho')} />}
-        
-        {activeTab === 'ligas' && <Leagues currentUser={liveUser} allUsers={allUsers.filter(u => !u.isGuest)} allLeagues={leagues} onUpdateUser={handleUpdateUser} selectedLeagueId={selectedLeagueId} onSelectLeague={(id) => {
-          setSelectedLeagueId(id);
-          if (id) {
-            localStorage.setItem('selectedLeagueId', id);
-            setActiveTab('home');
-          } else {
-            localStorage.removeItem('selectedLeagueId');
-          }
-        }} />}
-        
-        {activeTab === 'desempenho' && <Performance currentUser={liveUser} calendar={currentCalendar} predictions={leaguePredictions} />}
-        
-        {activeTab === 'settings' && (
-          <Settings 
-            currentUser={liveUser} 
-            onUpdateUser={handleUpdateUser} 
-            onNavigateToLeagues={() => setActiveTab('ligas')}
-            hasSelectedLeague={!!selectedLeagueId}
-            deferredPrompt={deferredPrompt}
-            isInstalled={isInstalled}
-          />
-        )}
+      {activeTab === 'palpitometro' && (
+        <Palpitometro 
+          gp={activeGP} 
+          stats={activePredictions.filter(p => p.gpId === activeGP?.id).reduce((acc, p) => {
+            if (!acc[p.session]) acc[p.session] = {};
+            (p.top5 || []).forEach(dId => acc[p.session][dId] = (acc[p.session][dId] || 0) + 1);
+            return acc;
+          }, {} as any)} 
+          totalUsers={new Set(activePredictions.filter(p => p.gpId === activeGP?.id).map(p => p.userId)).size} 
+        />
+      )}
+      {activeTab === 'ranking' && <Ranking currentUser={liveUser} users={allUsers.filter(u => !u.isGuest)} calendar={currentCalendar} constructorsList={constructorsOrder} />}
+      
+      {activeTab === 'settings' && <Settings currentUser={liveUser} onUpdateUser={handleUpdateUser} />}
 
-        {activeTab === 'admin' && canAccessAdmin && (
-          <Admin 
-            gp={adminGP} 
-            calendar={currentCalendar} 
-            users={leagueUsers}
-            currentUser={liveUser}
-            onUpdateCalendar={(cal) => {
-              if (selectedLeagueId && (isLeagueOwner || liveUser?.isAdmin)) {
-                set(ref(db, `leagues/${selectedLeagueId}/calendar`), cal);
-              } else if (liveUser?.isAdmin) {
-                set(ref(db, 'calendar'), cal);
-              }
-            }} 
-            onSelectGp={(id) => setAdminEditingGpId(id)} 
-            onCalculatePoints={handleCalculatePoints} 
-            onDeleteUser={handleDeleteUser}
-            onClearAllPredictions={handleClearAllPredictions}
-            onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
-            onToggleAdmin={handleToggleAdmin}
-            constructorsOrder={constructorsOrder}
-          />
-        )}
-      </Layout>
-    </>
+      {activeTab === 'admin' && liveUser.isAdmin && (
+        <Admin 
+          gp={adminGP} 
+          calendar={currentCalendar} 
+          users={allUsers}
+          currentUser={liveUser}
+          onUpdateCalendar={(cal) => set(ref(db, 'calendar'), cal)} 
+          onSelectGp={(id) => setAdminEditingGpId(id)} 
+          onCalculatePoints={handleCalculatePoints} 
+          onDeleteUser={handleDeleteUser}
+          onClearAllPredictions={handleClearAllPredictions}
+          constructorsOrder={constructorsOrder}
+        />
+      )}
+    </Layout>
   );
 };
 

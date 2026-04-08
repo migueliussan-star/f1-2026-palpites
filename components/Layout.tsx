@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, ClipboardList, Trophy, Swords, ShieldAlert, Settings, Users, BarChart3, LogOut } from 'lucide-react';
+import { Home, ClipboardList, Trophy, Swords, ShieldAlert, Settings, Users, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -55,13 +55,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative z-10 scroll-smooth pb-32 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <button 
-            onClick={onLogout}
-            className="absolute top-4 right-4 z-50 p-2 text-gray-500 hover:text-red-500 transition-colors"
-            title="Sair"
-        >
-            <LogOut size={20} />
-        </button>
         <div className="max-w-7xl mx-auto w-full h-full">
             <AnimatePresence mode="wait">
                 <motion.div
@@ -82,19 +75,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-bottom pointer-events-none">
         <nav className="h-20 glass rounded-[32px] px-1 flex justify-between items-center relative overflow-hidden pointer-events-auto shadow-2xl bg-white/80 dark:bg-black/50 backdrop-blur-md border border-gray-200 dark:border-white/5 overflow-x-auto scrollbar-hide">
             
-            {hasSelectedLeague && (
+            {hasSelectedLeague ? (
               <>
                 <NavButtonMobile icon={<Home size={18} />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                 <NavButtonMobile icon={<ClipboardList size={18} />} label="Palpites" active={activeTab === 'palpites'} onClick={() => setActiveTab('palpites')} />
                 <NavButtonMobile icon={<Trophy size={18} />} label="Ranking" active={activeTab === 'ranking'} onClick={() => setActiveTab('ranking')} />
-              </>
-            )}
-            <NavButtonMobile icon={<Users size={18} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />
-            {hasSelectedLeague && (
-              <>
-                <NavButtonMobile icon={<BarChart3 size={18} />} label="Desempenho" active={activeTab === 'desempenho'} onClick={() => setActiveTab('desempenho')} />
                 <NavButtonMobile icon={<Swords size={18} />} label="Rival" active={activeTab === 'adversarios'} onClick={() => setActiveTab('adversarios')} />
               </>
+            ) : (
+              <NavButtonMobile icon={<Users size={18} />} label="Ligas" active={activeTab === 'ligas'} onClick={() => setActiveTab('ligas')} />
             )}
             {isAdmin && (
               <NavButtonMobile icon={<ShieldAlert size={18} />} label="Admin" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')} />

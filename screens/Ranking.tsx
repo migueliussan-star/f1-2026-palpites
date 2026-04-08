@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { User as UserType, RaceGP, Team, Prediction, SessionType } from '../types';
 import { TEAM_COLORS } from '../constants';
-import { ChevronUp, ChevronDown, Minus, Car, Flag } from 'lucide-react';
+import { ChevronUp, ChevronDown, Minus, BarChart3 } from 'lucide-react';
 
 interface RankingProps {
   currentUser: UserType;
@@ -10,9 +10,10 @@ interface RankingProps {
   calendar: RaceGP[];
   constructorsList: Team[];
   predictions?: Prediction[];
+  onNavigateToPerformance?: () => void;
 }
 
-const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constructorsList, predictions = [] }) => {
+const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constructorsList, predictions = [], onNavigateToPerformance }) => {
   const [selectedGpId, setSelectedGpId] = useState<number | 'global'>('global');
 
   // Ordena os usuários reais por pontos
@@ -79,7 +80,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
         </div>
 
         {/* Lista de Ranking */}
-        <div className="bg-white dark:bg-white/5 rounded-[32px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl mb-24 transition-colors">
+        <div className="bg-white dark:bg-white/5 rounded-[32px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl mb-6 transition-colors">
             {currentRanking.length === 0 ? (
             <div className="p-16 text-center text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest leading-relaxed">
                 Nenhum competidor <br/> cadastrado ainda.
@@ -186,6 +187,26 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
             })
             )}
         </div>
+        {/* MOBILE ONLY: Botão de Desempenho */}
+        {onNavigateToPerformance && (
+          <div className="md:hidden mb-24">
+            <button
+              onClick={onNavigateToPerformance}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-between px-6 py-5 shadow-xl shadow-blue-900/30 active:scale-95 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <BarChart3 size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-black text-sm leading-none">Meu Desempenho</p>
+                  <p className="text-[10px] text-white/70 font-medium normal-case tracking-normal mt-0.5">Ver histórico e estatísticas</p>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

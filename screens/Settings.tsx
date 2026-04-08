@@ -368,12 +368,21 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
 
                 {/* MOBILE ONLY: LEAGUES NAVIGATION */}
                 {onNavigateToLeagues && (
-                    <div className="md:hidden mt-4">
+                    <div className="md:hidden mt-2">
                         <button 
                             onClick={onNavigateToLeagues}
-                            className="w-full py-5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 border border-gray-200 dark:border-white/10 transition-all active:scale-95"
+                            className="w-full bg-gradient-to-r from-[#e10600] to-red-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-between px-6 py-5 shadow-xl shadow-red-900/30 active:scale-95 transition-all"
                         >
-                            <Users size={16} /> Gerenciar Ligas
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white/20 p-2 rounded-xl">
+                                    <Users size={18} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-black text-sm leading-none">Minhas Ligas</p>
+                                    <p className="text-[10px] text-white/70 font-medium normal-case tracking-normal mt-0.5">Gerenciar e trocar de liga</p>
+                                </div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
                     </div>
                 )}
