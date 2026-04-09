@@ -911,9 +911,20 @@ const App: React.FC = () => {
     try {
       const targetUser = allUsers.find(u => u.id === targetUserId);
       if (!targetUser) return;
+
+      // 1. Remove a liga do array de ligas do usuário
       const userLeagues = Array.isArray(targetUser.leagues) ? targetUser.leagues : [];
-      const newLeagues = userLeagues.filter(id => id !== selectedLeagueId);
+      const newLeagues = userLeagues.filter((id: string) => id !== selectedLeagueId);
       await update(ref(db, `users/${targetUserId}`), { leagues: newLeagues });
+
+      // 2. Remove o usuário do array members da liga
+      const league = leagues.find(l => l.id === selectedLeagueId);
+      if (league) {
+        const currentMembers = Array.isArray(league.members) ? league.members : [];
+        const newMembers = currentMembers.filter((id: string) => id !== targetUserId);
+        await update(ref(db, `leagues/${selectedLeagueId}`), { members: newMembers });
+      }
+
       toast.success("Usuário expulso da liga.");
     } catch (e) {
       console.error(e);
