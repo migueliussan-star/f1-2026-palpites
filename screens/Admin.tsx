@@ -390,11 +390,11 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                         </button>
                                     </>
                                 )}
-                                {/* Expulsar da liga — só para dono de liga (não admin global) */}
-                                {!currentUser.isAdmin && onKickFromLeague && (
+                                {/* Expulsar da liga — disponível para admin global E dono de liga */}
+                                {onKickFromLeague && (
                                     <button 
                                         onClick={() => onKickFromLeague(u.id)}
-                                        className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1"
+                                        className="bg-orange-500/10 hover:bg-orange-600 text-orange-500 hover:text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1"
                                         title="Expulsar da Liga"
                                     >
                                         <Trash2 size={12} /> Expulsar
