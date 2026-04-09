@@ -355,6 +355,18 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                {/* Invalidar — disponível para admin global E dono de liga */}
+                                <button 
+                                    onClick={() => onToggleInvalidateUserGp(u.id, gp.id)}
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                                        u.invalidatedGPs?.includes(gp.id)
+                                            ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                                            : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
+                                    }`}
+                                    title={u.invalidatedGPs?.includes(gp.id) ? "Validar Palpite neste GP" : "Invalidar Palpite neste GP"}
+                                >
+                                    {u.invalidatedGPs?.includes(gp.id) ? "Validar" : "Invalidar"}
+                                </button>
                                 {/* Botões exclusivos do admin global */}
                                 {currentUser.isAdmin && (
                                     <>
@@ -370,17 +382,6 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                             {u.isAdmin ? "Remover ADM" : "Tornar ADM"}
                                         </button>
                                         <button 
-                                            onClick={() => onToggleInvalidateUserGp(u.id, gp.id)}
-                                            className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                                                u.invalidatedGPs?.includes(gp.id)
-                                                    ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
-                                                    : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
-                                            }`}
-                                            title={u.invalidatedGPs?.includes(gp.id) ? "Validar Palpite neste GP" : "Invalidar Palpite neste GP"}
-                                        >
-                                            {u.invalidatedGPs?.includes(gp.id) ? "Validar" : "Invalidar"}
-                                        </button>
-                                        <button 
                                             onClick={() => onDeleteUser(u.id)}
                                             className="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-lg transition-all"
                                             title="Excluir Usuário"
@@ -389,7 +390,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                         </button>
                                     </>
                                 )}
-                                {/* Botão de expulsar da liga — disponível para dono de liga (não global) */}
+                                {/* Expulsar da liga — só para dono de liga (não admin global) */}
                                 {!currentUser.isAdmin && onKickFromLeague && (
                                     <button 
                                         onClick={() => onKickFromLeague(u.id)}

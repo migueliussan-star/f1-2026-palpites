@@ -254,7 +254,7 @@ const Home: React.FC<HomeProps> = ({
                     <Trophy className="text-blue-500" size={28} />
                 </div>
                 <p className="text-xl lg:text-4xl font-black f1-font text-gray-900 dark:text-white leading-none relative z-10">
-                    {currentRank || (user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-')}
+                    {currentRank != null ? `${currentRank}º` : (user.rank > 0 && !user.isGuest ? `${user.rank}º` : '-')}
                 </p>
                 <p className="text-[8px] lg:text-[10px] uppercase text-gray-500 font-black tracking-wider mt-1 lg:mt-2 relative z-10">{rankLabel}</p>
             </div>

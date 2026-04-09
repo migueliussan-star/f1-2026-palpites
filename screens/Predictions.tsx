@@ -190,7 +190,7 @@ const Predictions: React.FC<PredictionsProps> = ({ gp, onSave, savedPredictions 
                 ) : null}
 
                 {/* Selected Drivers Display */}
-                <div className={`mb-8 transition-transform ${errorShake ? 'translate-x-[-5px] rotate-[-1deg]' : ''}`} style={{ transitionDuration: '0.1s' }}>
+                <div className={`mb-8 transition-all duration-150 ${errorShake ? 'translate-x-[-6px]' : 'translate-x-0'}`}>
                     <div className="flex items-center justify-between mb-4 px-1">
                         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Seu Grid (Top 5)</h3>
                         {isEditable && filledCount > 0 && (

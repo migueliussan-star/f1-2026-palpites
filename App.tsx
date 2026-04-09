@@ -69,6 +69,11 @@ const App: React.FC = () => {
   const activePredictions = useMemo(() => predictions.filter(p => p && allUsers.some(u => u.id === p.userId)), [predictions, allUsers]);
   const [constructorsOrder, setConstructorsOrder] = useState<Team[]>(FALLBACK_CONSTRUCTORS);
   const [adminEditingGpId, setAdminEditingGpId] = useState<number | null>(null);
+
+  // Helper que persiste o GP selecionado no admin para sobreviver re-renders
+  const setAdminGpPersisted = React.useCallback((id: number | null) => {
+    setAdminEditingGpId(id);
+  }, []);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>('');
   const [isAuthButNoDb, setIsAuthButNoDb] = useState(false);
@@ -897,6 +902,25 @@ const App: React.FC = () => {
       }
   };
 
+  const handleKickFromLeague = async (targetUserId: string) => {
+    if (!selectedLeagueId || (!isLeagueOwner && !liveUser?.isAdmin)) {
+      toast.error("Apenas o dono da liga pode expulsar membros.");
+      return;
+    }
+    if (!window.confirm("Expulsar este usuário da liga?")) return;
+    try {
+      const targetUser = allUsers.find(u => u.id === targetUserId);
+      if (!targetUser) return;
+      const userLeagues = Array.isArray(targetUser.leagues) ? targetUser.leagues : [];
+      const newLeagues = userLeagues.filter(id => id !== selectedLeagueId);
+      await update(ref(db, `users/${targetUserId}`), { leagues: newLeagues });
+      toast.success("Usuário expulso da liga.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao expulsar usuário.");
+    }
+  };
+
   const handleToggleAdmin = async (targetUserId: string) => {
     if (!liveUser?.isAdmin) {
       toast.error("Apenas administradores globais podem gerenciar administradores.");
@@ -949,12 +973,16 @@ const App: React.FC = () => {
   }
   if (!activeGP) activeGP = currentCalendar[currentCalendar.length - 1] || currentCalendar[0];
   
+  // adminGP: nunca muda sozinho após cálculo de pontos
   const adminGP = currentCalendar.find((c: RaceGP) => c && c.id === adminEditingGpId) || activeGP;
 
-  // Gerencia o GP selecionado na tela de admin para evitar pulos quando o status muda
+  // Só define o GP ao ENTRAR na aba admin. Mantém o GP fixo mesmo após calcular pontos.
   useEffect(() => {
     if (activeTab === 'admin') {
-      setAdminEditingGpId(prev => prev !== null ? prev : (activeGP ? activeGP.id : null));
+      setAdminEditingGpId(prev => {
+        if (prev !== null && currentCalendar.some((c: RaceGP) => c.id === prev)) return prev;
+        return activeGP ? activeGP.id : null;
+      });
     } else {
       setAdminEditingGpId(null);
     }
@@ -1142,6 +1170,7 @@ const App: React.FC = () => {
             onClearAllPredictions={handleClearAllPredictions}
             onToggleInvalidateUserGp={handleToggleInvalidateUserGp}
             onToggleAdmin={handleToggleAdmin}
+            onKickFromLeague={handleKickFromLeague}
             constructorsOrder={constructorsOrder}
           />
         )}
