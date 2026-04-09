@@ -122,7 +122,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                     <div className="flex items-center gap-4 pl-2">
                         <div className="flex flex-col items-center w-6 shrink-0">
                                 <span className={`text-center font-black f1-font text-lg ${idx + 1 <= 3 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 dark:text-gray-500'}`}>
-                                {idx + 1}
+                                {idx + 1}º
                                 </span>
                                 {/* Indicador de Mudança de Posição */}
                                 {selectedGpId === 'global' && (
