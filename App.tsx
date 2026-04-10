@@ -103,8 +103,14 @@ const App: React.FC = () => {
 
   const leagueUsers = useMemo(() => {
     if (!selectedLeagueId) return allUsers;
-    return allUsers.filter(u => u.leagues?.includes(selectedLeagueId));
-  }, [allUsers, selectedLeagueId]);
+    // Usa members da liga como fonte primária, com fallback para u.leagues
+    const league = leagues.find(l => l.id === selectedLeagueId);
+    const memberIds = new Set<string>([
+      ...(Array.isArray(league?.members) ? league!.members : []),
+      ...allUsers.filter(u => u.leagues?.includes(selectedLeagueId)).map(u => u.id)
+    ]);
+    return allUsers.filter(u => memberIds.has(u.id));
+  }, [allUsers, selectedLeagueId, leagues]);
 
   const leaguePredictions = useMemo(() => {
     if (!selectedLeagueId) return activePredictions;
@@ -908,27 +914,36 @@ const App: React.FC = () => {
       return;
     }
     if (!window.confirm("Expulsar este usuário da liga?")) return;
+
+    let step1Ok = false;
+    let step2Ok = false;
+
+    // 1. Remove o usuário do array members da liga
+    try {
+      const league = leagues.find(l => l.id === selectedLeagueId);
+      const currentMembers = Array.isArray(league?.members) ? league!.members : [];
+      const newMembers = currentMembers.filter((id: string) => id !== targetUserId);
+      await update(ref(db, `leagues/${selectedLeagueId}`), { members: newMembers });
+      step1Ok = true;
+    } catch (e: any) {
+      console.error("[Kick] Erro ao remover de league/members:", e?.message || e);
+    }
+
+    // 2. Remove a liga do array de ligas do usuário
     try {
       const targetUser = allUsers.find(u => u.id === targetUserId);
-      if (!targetUser) return;
-
-      // 1. Remove a liga do array de ligas do usuário
-      const userLeagues = Array.isArray(targetUser.leagues) ? targetUser.leagues : [];
+      const userLeagues = Array.isArray(targetUser?.leagues) ? targetUser!.leagues! : [];
       const newLeagues = userLeagues.filter((id: string) => id !== selectedLeagueId);
       await update(ref(db, `users/${targetUserId}`), { leagues: newLeagues });
+      step2Ok = true;
+    } catch (e: any) {
+      console.error("[Kick] Erro ao remover de users/leagues:", e?.message || e);
+    }
 
-      // 2. Remove o usuário do array members da liga
-      const league = leagues.find(l => l.id === selectedLeagueId);
-      if (league) {
-        const currentMembers = Array.isArray(league.members) ? league.members : [];
-        const newMembers = currentMembers.filter((id: string) => id !== targetUserId);
-        await update(ref(db, `leagues/${selectedLeagueId}`), { members: newMembers });
-      }
-
+    if (step1Ok || step2Ok) {
       toast.success("Usuário expulso da liga.");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao expulsar usuário.");
+    } else {
+      toast.error("Sem permissão para expulsar. Verifique as regras do Firebase.");
     }
   };
 
