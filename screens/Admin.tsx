@@ -347,7 +347,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
                                     {u.avatarUrl ? (
                                         <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
                                     ) : (
-                                        <span className="text-[10px] font-bold text-gray-400">{u.name.charAt(0).toUpperCase()}</span>
+                                        <span className="text-[10px] font-bold text-gray-400">{(u?.name ?? "?").charAt(0).toUpperCase()}</span>
                                     )}
                                 </div>
                                 <div className="flex-1 overflow-hidden">

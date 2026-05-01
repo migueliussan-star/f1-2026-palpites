@@ -217,7 +217,7 @@ const Stats: React.FC<StatsProps> = ({ currentUser, users }) => {
                                      {u.avatarUrl ? (
                                         <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
                                      ) : (
-                                        <span className="text-[9px] font-bold text-gray-400">{u.name.charAt(0).toUpperCase()}</span>
+                                        <span className="text-[9px] font-bold text-gray-400">{(u?.name ?? "?").charAt(0).toUpperCase()}</span>
                                      )}
                                 </div>
 

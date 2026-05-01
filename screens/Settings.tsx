@@ -203,7 +203,7 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, onNaviga
                              {avatarUrl ? (
                                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                              ) : (
-                                 <span className="text-4xl font-black f1-font text-gray-400 dark:text-gray-600">{name.charAt(0).toUpperCase()}</span>
+                                 <span className="text-4xl font-black f1-font text-gray-400 dark:text-gray-600">{(name ?? "?").charAt(0).toUpperCase()}</span>
                              )}
                              
                              {/* Overlay Hover */}

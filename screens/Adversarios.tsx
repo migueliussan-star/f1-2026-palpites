@@ -117,7 +117,7 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                             {user.avatarUrl ? (
                                                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                 user.name.charAt(0).toUpperCase()
+                                                 (user?.name ?? "?").charAt(0).toUpperCase()
                                             )}
                                         </div>
                                         <div>

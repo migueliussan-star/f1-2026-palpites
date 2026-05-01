@@ -143,7 +143,7 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                              {item.avatarUrl ? (
                                 <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
                              ) : (
-                                <span className="text-xs font-bold text-gray-500">{item.name.charAt(0).toUpperCase()}</span>
+                                <span className="text-xs font-bold text-gray-500">{(item?.name ?? "?").charAt(0).toUpperCase()}</span>
                              )}
                         </div>
                         

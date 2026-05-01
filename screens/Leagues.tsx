@@ -341,7 +341,7 @@ const Leagues: React.FC<LeaguesProps> = ({ currentUser, allUsers, allLeagues, on
                         <div className="flex items-center gap-4">
                           <span className={`w-6 text-center font-black f1-font text-lg ${idx < 3 ? 'text-yellow-500' : 'text-gray-400'}`}>{idx + 1}</span>
                           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden">
-                            {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-gray-500">{member.name.charAt(0).toUpperCase()}</span>}
+                            {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-gray-500">{(member?.name ?? "?").charAt(0).toUpperCase()}</span>}
                           </div>
                           <span className="font-bold text-sm text-gray-900 dark:text-white">{member.name}</span>
                         </div>

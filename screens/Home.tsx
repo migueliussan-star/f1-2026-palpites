@@ -138,7 +138,7 @@ const Home: React.FC<HomeProps> = ({
                {user.avatarUrl ? (
                    <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                ) : (
-                   <span className="text-sm lg:text-xl font-bold f1-font text-gray-900 dark:text-white">{user.name.charAt(0).toUpperCase()}</span>
+                   <span className="text-sm lg:text-xl font-bold f1-font text-gray-900 dark:text-white">{(user?.name ?? "?").charAt(0).toUpperCase()}</span>
                )}
             </div>
           </div>
