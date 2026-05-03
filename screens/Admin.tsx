@@ -299,27 +299,7 @@ const Admin: React.FC<AdminProps> = ({ gp, calendar, users, currentUser, onUpdat
             ))}
           </div>
           
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/10">
-            <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-500/20">
-                <div className="flex items-center gap-3">
-                    <CloudRain size={18} className="text-blue-500" />
-                    <div>
-                        <span className="block font-bold text-xs uppercase tracking-tight text-blue-900 dark:text-blue-400">Corrida com Chuva</span>
-                        <span className="block text-[10px] text-blue-600/70 dark:text-blue-400/70">Ative se choveu durante o GP (Conquista Mestre da Chuva)</span>
-                    </div>
-                </div>
-                <button 
-                  onClick={toggleWetRace}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[10px] uppercase transition-all ${
-                    gp.isWet 
-                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
-                      : 'bg-white dark:bg-black/40 text-gray-500 border border-gray-200 dark:border-white/10'
-                  }`}
-                >
-                  {gp.isWet ? 'ATIVADO' : 'DESATIVADO'}
-                </button>
-            </div>
-          </div>
+
         </div>
 
         {/* ZONA DE PERIGO - GESTÃO DE PILOTOS E DADOS */}

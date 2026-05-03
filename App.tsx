@@ -1164,7 +1164,7 @@ const App: React.FC = () => {
           }
         }} />}
         
-        {activeTab === 'desempenho' && <Performance currentUser={liveUser} calendar={currentCalendar} predictions={leaguePredictions} />}
+        {activeTab === 'desempenho' && <Performance currentUser={liveUser} users={leagueUsers.filter(u => !u.isGuest)} calendar={currentCalendar} predictions={leaguePredictions} />}
         
         {activeTab === 'settings' && (
           <Settings 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User as UserType, RaceGP, Team, Prediction, SessionType } from '../types';
 import { TEAM_COLORS } from '../constants';
 import { ChevronUp, ChevronDown, Minus, BarChart3 } from 'lucide-react';
@@ -12,6 +12,54 @@ interface RankingProps {
   predictions?: Prediction[];
   onNavigateToPerformance?: () => void;
 }
+
+// Confete simples em canvas
+const Confetti: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const pieces: any[] = [];
+    const colors = ['#e10600','#FFD700','#ffffff','#3b82f6','#22c55e','#f97316'];
+    for (let i = 0; i < 120; i++) {
+      pieces.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 200,
+        w: 7 + Math.random() * 7,
+        h: 4 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        angle: Math.random() * Math.PI * 2,
+        speed: 1.5 + Math.random() * 2.5,
+        spin: (Math.random() - 0.5) * 0.2,
+        drift: (Math.random() - 0.5) * 1.2,
+      });
+    }
+    let frame = 0;
+    const MAX = 180;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        p.y += p.speed;
+        p.x += p.drift;
+        p.angle += p.spin;
+        ctx.save();
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, 1 - frame / MAX);
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      frame++;
+      if (frame < MAX + 40) requestAnimationFrame(animate);
+    };
+    animate();
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
+};
 
 const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constructorsList, predictions = [], onNavigateToPerformance }) => {
   const [selectedGpId, setSelectedGpId] = useState<number | 'global'>('global');
@@ -78,6 +126,82 @@ const Ranking: React.FC<RankingProps> = ({ currentUser, users, calendar, constru
                 ))}
             </select>
         </div>
+
+        {/* PÓDIO TOP 3 */}
+        {currentRanking.length >= 3 && (
+          <div className="relative mb-8 pt-4">
+            {/* Confete no 1º lugar */}
+            <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none">
+              <Confetti />
+            </div>
+
+            <div className="flex items-end justify-center gap-3 px-2">
+              {/* 2º lugar */}
+              {(() => {
+                const item = currentRanking[1];
+                const itemPoints = selectedGpId === 'global' ? (item.points || 0) : (item as any).gpPoints;
+                return (
+                  <div className="flex flex-col items-center gap-2 flex-1">
+                    <div className={`relative w-14 h-14 rounded-full overflow-hidden border-4 border-gray-400 shadow-lg mx-auto ${item.id === currentUser.id ? 'ring-2 ring-purple-500' : ''}`}>
+                      {item.avatarUrl
+                        ? <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-lg font-black text-gray-500">{(item?.name ?? '?').charAt(0).toUpperCase()}</div>
+                      }
+                    </div>
+                    <p className="text-[10px] font-black text-gray-700 dark:text-gray-300 truncate max-w-[80px] text-center">{item.name}</p>
+                    <p className="text-sm font-black f1-font text-gray-500">{itemPoints} pts</p>
+                    <div className="w-full bg-gray-400/20 dark:bg-white/10 rounded-t-2xl flex flex-col items-center justify-end py-4" style={{height: '80px'}}>
+                      <span className="text-3xl font-black f1-font text-gray-400">2</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 1º lugar */}
+              {(() => {
+                const item = currentRanking[0];
+                const itemPoints = selectedGpId === 'global' ? (item.points || 0) : (item as any).gpPoints;
+                return (
+                  <div className="flex flex-col items-center gap-2 flex-1 -mt-6">
+                    <div className="text-2xl animate-bounce">👑</div>
+                    <div className={`relative w-16 h-16 rounded-full overflow-hidden border-4 border-yellow-400 shadow-xl shadow-yellow-400/30 mx-auto ${item.id === currentUser.id ? 'ring-2 ring-purple-500' : ''}`}>
+                      {item.avatarUrl
+                        ? <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-xl font-black text-yellow-600">{(item?.name ?? '?').charAt(0).toUpperCase()}</div>
+                      }
+                    </div>
+                    <p className="text-[11px] font-black text-gray-900 dark:text-white truncate max-w-[90px] text-center">{item.name}</p>
+                    <p className="text-sm font-black f1-font text-yellow-500">{itemPoints} pts</p>
+                    <div className="w-full bg-yellow-400/20 dark:bg-yellow-500/10 border-t-2 border-yellow-400/50 rounded-t-2xl flex flex-col items-center justify-end py-4" style={{height: '110px'}}>
+                      <span className="text-3xl font-black f1-font text-yellow-500">1</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 3º lugar */}
+              {(() => {
+                const item = currentRanking[2];
+                const itemPoints = selectedGpId === 'global' ? (item.points || 0) : (item as any).gpPoints;
+                return (
+                  <div className="flex flex-col items-center gap-2 flex-1">
+                    <div className={`relative w-12 h-12 rounded-full overflow-hidden border-4 border-orange-400 shadow-lg mx-auto ${item.id === currentUser.id ? 'ring-2 ring-purple-500' : ''}`}>
+                      {item.avatarUrl
+                        ? <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-base font-black text-orange-500">{(item?.name ?? '?').charAt(0).toUpperCase()}</div>
+                      }
+                    </div>
+                    <p className="text-[10px] font-black text-gray-600 dark:text-gray-400 truncate max-w-[80px] text-center">{item.name}</p>
+                    <p className="text-sm font-black f1-font text-orange-400">{itemPoints} pts</p>
+                    <div className="w-full bg-orange-400/10 dark:bg-orange-500/10 rounded-t-2xl flex flex-col items-center justify-end py-4" style={{height: '60px'}}>
+                      <span className="text-3xl font-black f1-font text-orange-400">3</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Lista de Ranking */}
         <div className="bg-white dark:bg-white/5 rounded-[32px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl mb-6 transition-colors">
