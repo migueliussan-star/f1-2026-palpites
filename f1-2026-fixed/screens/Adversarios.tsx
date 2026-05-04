@@ -175,6 +175,13 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                     <div className="grid grid-cols-5 gap-2">
                                         {userPred.top5.map((driverId, idx) => {
                                             const driver = DRIVERS.find(d => d.id === driverId);
+                                            const official = gp.results?.[activeSession];
+                                            const hasResult = official && official.length > 0;
+                                            // Verde = acertou posição exata, Amarelo = está no top5 mas posição errada, Vermelho = errou
+                                            const isExact = hasResult && official![idx] === driverId;
+                                            const isTop5 = hasResult && !isExact && official!.includes(driverId);
+                                            const isMiss = hasResult && !isExact && !isTop5;
+                                            const barColor = !hasResult ? 'bg-gray-200 dark:bg-white/10' : isExact ? 'bg-green-500' : isTop5 ? 'bg-yellow-400' : 'bg-red-500';
                                             return (
                                                 <div key={idx} className="flex flex-col items-center gap-1.5 group">
                                                     <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
@@ -198,6 +205,8 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                             {driver?.name.split(' ').pop()?.substring(0, 3)}
                                                         </div>
                                                     </div>
+                                                    {/* Barrinha de acerto */}
+                                                    <div className={`w-full h-1 rounded-full ${barColor}`} title={isExact ? 'Posição exata! +5pts' : isTop5 ? 'No Top 5! +1pt' : isMiss ? 'Errou' : ''} />
                                                     <span className="text-[10px] font-black text-gray-400 dark:text-gray-500">{idx + 1}</span>
                                                 </div>
                                             )
