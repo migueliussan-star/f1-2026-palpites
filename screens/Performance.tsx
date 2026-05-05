@@ -95,6 +95,8 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
   const vsUser1PositionData = useMemo(() => vsUser1 ? calcPositionHistory(vsUser1, users, calendar, predictions) : [], [vsUser1, users, calendar, predictions]);
   const vsUser2PositionData = useMemo(() => vsUser2 ? calcPositionHistory(vsUser2, users, calendar, predictions) : [], [vsUser2, users, calendar, predictions]);
 
+  const geralUsers = useMemo(() => [...users].sort((a, b) => (b.points || 0) - (a.points || 0)), [users]);
+
   // Geral posição por GP para todos os usuários
   const geralPositionData = useMemo(() => {
     const finishedGPs = calendar.filter(gp => gp.results && Object.keys(gp.results).length > 0);
@@ -130,7 +132,6 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
     });
   }, [calendar, users, predictions]);
 
-  const geralUsers = useMemo(() => [...users].sort((a, b) => (b.points || 0) - (a.points || 0)), [users]);
   const BASE_COLORS = ['#e10600','#3b82f6','#22c55e','#f97316','#a855f7','#eab308','#ec4899','#14b8a6','#8b5cf6','#f43f5e','#0ea5e9','#84cc16','#f97316','#06b6d4','#d946ef','#64748b','#a16207','#be123c','#065f46','#1e3a8a'];
   const getColor = (i: number) => BASE_COLORS[i % BASE_COLORS.length];
 
@@ -424,7 +425,7 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
                       <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
                       <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
                       <YAxis reversed allowDecimals={false} tick={axisStyle} tickLine={false} axisLine={false} domain={[1, users.length]} />
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: string) => [`${v}º`, name]} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: any) => [`${v}º`, name]} />
                       {geralUsers.map((u, i) => (
                         <Line key={u.id} type="monotone" dataKey={u.name} stroke={getColor(i)} strokeWidth={u.id === currentUser.id ? 3 : 2} dot={false} activeDot={{ r: 4 }} connectNulls />
                       ))}
@@ -523,7 +524,7 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
                             <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
                             <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
                             <YAxis reversed allowDecimals={false} tick={axisStyle} tickLine={false} axisLine={false} domain={[1, users.length]} />
-                            <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: string) => [`${v}º lugar`, name]} />
+                            <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: any) => [`${v}º lugar`, name]} />
                             <Line type="monotone" dataKey={vsUser1Obj?.name} stroke="#e10600" strokeWidth={3} dot={{ r: 3, fill: '#e10600', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
                             <Line type="monotone" dataKey={vsUser2Obj?.name} stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
                           </LineChart>
