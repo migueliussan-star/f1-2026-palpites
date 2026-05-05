@@ -75,57 +75,8 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
         >
-          {isSessionOpen ? (
-            // TELA DE BLOQUEIO (ANTI-COLA) + QUEM JÁ APOSTOU
-            <div className="space-y-6">
-              <div className="flex flex-col items-center justify-center py-12 px-4 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-[32px] text-center max-w-2xl mx-auto shadow-sm">
-                  <div className="bg-gray-100 dark:bg-white/5 p-8 rounded-full mb-6 relative">
-                      <Lock size={64} className="text-gray-400 dark:text-gray-500" />
-                      <div className="absolute top-0 right-0 bg-red-600 rounded-full p-2 animate-pulse">
-                          <ShieldAlert size={20} className="text-white" />
-                      </div>
-                  </div>
-                  <h3 className="text-2xl font-black f1-font uppercase mb-4 text-gray-900 dark:text-white">Sessão Aberta</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium max-w-md leading-relaxed">
-                      Os palpites dos adversários estão ocultos para evitar cópias. 
-                      <br/><br/>
-                      <span className="text-gray-900 dark:text-white font-bold">O Grid será revelado assim que o Admin fechar as apostas.</span>
-                  </p>
-              </div>
-
-              {/* QUEM JÁ APOSTOU */}
-              <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-5 max-w-2xl mx-auto">
-                <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-4">Participantes</p>
-                <div className="space-y-3">
-                  {sortedUsers.map((user) => {
-                    const userPred = predictions.find(p => p.gpId === gp.id && p.session === activeSession && p.userId === user.id);
-                    const hasVoted = userPred && userPred.top5 && userPred.top5.length > 0;
-                    const isMe = user.id === currentUser.id;
-                    return (
-                      <div key={user.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black overflow-hidden ${isMe ? 'ring-2 ring-purple-500' : ''} ${!user.avatarUrl ? (isMe ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400') : ''}`}>
-                            {user.avatarUrl
-                              ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                              : (user?.name ?? '?').charAt(0).toUpperCase()
-                            }
-                          </div>
-                          <span className={`text-sm font-bold ${isMe ? 'text-purple-500' : 'text-gray-800 dark:text-gray-200'}`}>
-                            {user.name}{isMe && ' (Você)'}
-                          </span>
-                        </div>
-                        {hasVoted
-                          ? <span className="text-[10px] font-black uppercase bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-1 rounded-full flex items-center gap-1">✓ Apostou</span>
-                          : <span className="text-[10px] font-black uppercase bg-red-100 dark:bg-red-500/10 text-red-500 dark:text-red-400 px-2.5 py-1 rounded-full flex items-center gap-1">✗ Não apostou</span>
-                        }
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // LISTA DE ADVERSÁRIOS (SESSÃO FECHADA) - GRID RESPONSIVO
+          {(
+            // LISTA DE ADVERSÁRIOS - GRID RESPONSIVO
             <div className="space-y-4 pb-24">
                 <div className="flex items-center gap-2 mb-4 px-2">
                     <Eye size={14} className="text-green-600 dark:text-green-500" />
@@ -175,6 +126,13 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                     <div className="grid grid-cols-5 gap-2">
                                         {userPred.top5.map((driverId, idx) => {
                                             const driver = DRIVERS.find(d => d.id === driverId);
+                                            const official = gp.results?.[activeSession];
+                                            const hasResult = official && official.length > 0;
+                                            // Verde = acertou posição exata, Amarelo = está no top5 mas posição errada, Vermelho = errou
+                                            const isExact = hasResult && official![idx] === driverId;
+                                            const isTop5 = hasResult && !isExact && official!.includes(driverId);
+                                            const isMiss = hasResult && !isExact && !isTop5;
+                                            const barColor = !hasResult ? 'bg-gray-200 dark:bg-white/10' : isExact ? 'bg-green-500' : isTop5 ? 'bg-yellow-400' : 'bg-red-500';
                                             return (
                                                 <div key={idx} className="flex flex-col items-center gap-1.5 group">
                                                     <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/5 overflow-hidden relative">
@@ -198,6 +156,8 @@ const Adversarios: React.FC<AdversariosProps> = ({ gp, users, predictions, curre
                                                             {driver?.name.split(' ').pop()?.substring(0, 3)}
                                                         </div>
                                                     </div>
+                                                    {/* Barrinha de acerto */}
+                                                    <div className={`w-full h-1 rounded-full ${barColor}`} title={isExact ? 'Posição exata! +5pts' : isTop5 ? 'No Top 5! +1pt' : isMiss ? 'Errou' : ''} />
                                                     <span className="text-[10px] font-black text-gray-400 dark:text-gray-500">{idx + 1}</span>
                                                 </div>
                                             )
