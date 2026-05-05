@@ -43,6 +43,23 @@ function calcUserPoints(userId: string, calendar: RaceGP[], predictions: Predict
   return gpData;
 }
 
+// Calcula posição de cada usuário em cada GP com base nos pontos acumulados
+function calcPositionHistory(userId: string, users: User[], calendar: RaceGP[], predictions: Prediction[]) {
+  const finishedGPs = calendar.filter(gp => gp.results && Object.keys(gp.results).length > 0);
+  // Pre-calc accumulated points per user per GP index
+  const allAccumulated: Record<string, number[]> = {};
+  users.forEach(u => {
+    const data = calcUserPoints(u.id, calendar, predictions);
+    allAccumulated[u.id] = data.map(d => d.accumulated);
+  });
+  return finishedGPs.map((gp, i) => {
+    const pointsAtThisGP = users.map(u => ({ id: u.id, pts: allAccumulated[u.id]?.[i] ?? 0 }));
+    pointsAtThisGP.sort((a, b) => b.pts - a.pts);
+    const pos = pointsAtThisGP.findIndex(u => u.id === userId) + 1;
+    return { name: gp.name.split(' ')[0], 'Posição': pos > 0 ? pos : null };
+  });
+}
+
 function calcStats(gpData: ReturnType<typeof calcUserPoints>) {
   let exactHits = 0, top5Hits = 0, misses = 0, totalPredictions = 0, bestGpPoints = 0, bestGpName = '';
   gpData.forEach(d => {
@@ -70,6 +87,33 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
     const sorted = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
     return sorted.findIndex(u => u.id === currentUser.id) + 1;
   }, [users, currentUser.id]);
+
+  // Posição individual por GP
+  const myPositionData = useMemo(() => calcPositionHistory(currentUser.id, users, calendar, predictions), [currentUser.id, users, calendar, predictions]);
+
+  // Posição vs por GP
+  const vsUser1PositionData = useMemo(() => vsUser1 ? calcPositionHistory(vsUser1, users, calendar, predictions) : [], [vsUser1, users, calendar, predictions]);
+  const vsUser2PositionData = useMemo(() => vsUser2 ? calcPositionHistory(vsUser2, users, calendar, predictions) : [], [vsUser2, users, calendar, predictions]);
+
+  // Geral posição por GP para todos os usuários
+  const geralPositionData = useMemo(() => {
+    const finishedGPs = calendar.filter(gp => gp.results && Object.keys(gp.results).length > 0);
+    const allAccumulated: Record<string, number[]> = {};
+    geralUsers.forEach(u => {
+      const data = calcUserPoints(u.id, calendar, predictions);
+      allAccumulated[u.id] = data.map(d => d.accumulated);
+    });
+    return finishedGPs.map((gp, i) => {
+      const obj: any = { name: gp.name.split(' ')[0] };
+      const pointsAtGP = geralUsers.map(u => ({ id: u.id, pts: allAccumulated[u.id]?.[i] ?? 0 }));
+      pointsAtGP.sort((a, b) => b.pts - a.pts);
+      geralUsers.forEach(u => {
+        const pos = pointsAtGP.findIndex(x => x.id === u.id) + 1;
+        obj[u.name] = pos > 0 ? pos : null;
+      });
+      return obj;
+    });
+  }, [calendar, geralUsers, predictions]);
 
   // Geral: todos os usuários acumulados
   const geralChartData = useMemo(() => {
@@ -110,6 +154,17 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
 
   const vsUser1Obj = users.find(u => u.id === vsUser1);
   const vsUser2Obj = users.find(u => u.id === vsUser2);
+
+  // Posição 1v1 combinada por GP
+  const vsPositionChartData = useMemo(() => {
+    const finishedGPs = calendar.filter(gp => gp.results && Object.keys(gp.results).length > 0);
+    return finishedGPs.map((gp, i) => {
+      const obj: any = { name: gp.name.split(' ')[0] };
+      if (vsUser1Obj) obj[vsUser1Obj.name] = vsUser1PositionData[i]?.'Posição' ?? null;
+      if (vsUser2Obj) obj[vsUser2Obj.name] = vsUser2PositionData[i]?.'Posição' ?? null;
+      return obj;
+    });
+  }, [calendar, vsUser1Obj, vsUser2Obj, vsUser1PositionData, vsUser2PositionData]);
   const vsUser1Stats = useMemo(() => calcStats(vsUser1Data), [vsUser1Data]);
   const vsUser2Stats = useMemo(() => calcStats(vsUser2Data), [vsUser2Data]);
 
@@ -231,19 +286,19 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
                   </div>
                 ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
               ) : (
-                myGpData.length > 0 ? (
+                myPositionData.length > 0 ? (
                   <div className="h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={myGpData.map((d, i) => ({ name: d.gpName, 'Posição': currentUser.positionHistory?.[i] ?? null }))} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                      <LineChart data={myPositionData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
                         <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
-                        <YAxis reversed tick={axisStyle} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`${v}º`, 'Posição']} />
+                        <YAxis reversed allowDecimals={false} tick={axisStyle} tickLine={false} axisLine={false} domain={[1, users.length]} />
+                        <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`${v}º lugar`, 'Posição']} />
                         <Line type="monotone" dataKey="Posição" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} connectNulls />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
-                ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem histórico de posições ainda.</div>
+                ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
               )}
             </div>
 
@@ -362,12 +417,29 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
                 </div>
               ) : <div className="h-[280px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
             ) : (
-              <div className="h-[280px] flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-400 text-sm font-bold mb-1">Histórico de posições gerais</p>
-                  <p className="text-gray-300 dark:text-gray-600 text-xs">em breve disponível</p>
+              geralPositionData.length > 0 ? (
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={geralPositionData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
+                      <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
+                      <YAxis reversed allowDecimals={false} tick={axisStyle} tickLine={false} axisLine={false} domain={[1, users.length]} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: string) => [`${v}º`, name]} />
+                      {geralUsers.map((u, i) => (
+                        <Line key={u.id} type="monotone" dataKey={u.name} stroke={getColor(i)} strokeWidth={u.id === currentUser.id ? 3 : 2} dot={false} activeDot={{ r: 4 }} connectNulls />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap gap-3 mt-4 justify-center">
+                    {geralUsers.map((u, i) => (
+                      <div key={u.id} className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getColor(i) }} />
+                        <span className={`text-[10px] font-black ${u.id === currentUser.id ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>{u.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : <div className="h-[280px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
             )}
           </div>
         )}
@@ -428,20 +500,37 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
                     </div>
                     <ChartToggle />
                   </div>
-                  {vsChartData.length > 0 ? (
-                    <div className="h-[220px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={vsChartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
-                          <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
-                          <YAxis tick={axisStyle} tickLine={false} axisLine={false} />
-                          <Tooltip contentStyle={tooltipStyle} />
-                          <Line type="monotone" dataKey={vsUser1Obj?.name} stroke="#e10600" strokeWidth={3} dot={{ r: 3, fill: '#e10600', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} />
-                          <Line type="monotone" dataKey={vsUser2Obj?.name} stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>}
+                  {chartType === 'points' ? (
+                    vsChartData.length > 0 ? (
+                      <div className="h-[220px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={vsChartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
+                            <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
+                            <YAxis tick={axisStyle} tickLine={false} axisLine={false} />
+                            <Tooltip contentStyle={tooltipStyle} />
+                            <Line type="monotone" dataKey={vsUser1Obj?.name} stroke="#e10600" strokeWidth={3} dot={{ r: 3, fill: '#e10600', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
+                            <Line type="monotone" dataKey={vsUser2Obj?.name} stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
+                  ) : (
+                    vsPositionChartData.length > 0 ? (
+                      <div className="h-[220px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={vsPositionChartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#33333322" vertical={false} />
+                            <XAxis dataKey="name" tick={axisStyle} tickLine={false} axisLine={false} />
+                            <YAxis reversed allowDecimals={false} tick={axisStyle} tickLine={false} axisLine={false} domain={[1, users.length]} />
+                            <Tooltip contentStyle={tooltipStyle} formatter={(v: any, name: string) => [`${v}º lugar`, name]} />
+                            <Line type="monotone" dataKey={vsUser1Obj?.name} stroke="#e10600" strokeWidth={3} dot={{ r: 3, fill: '#e10600', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
+                            <Line type="monotone" dataKey={vsUser2Obj?.name} stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} connectNulls />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm font-bold">Sem GPs pontuados ainda.</div>
+                  )}
                 </div>
 
                 {/* Stats comparativas */}
