@@ -160,8 +160,8 @@ const Performance: React.FC<PerformanceProps> = ({ currentUser, users, calendar,
     const finishedGPs = calendar.filter(gp => gp.results && Object.keys(gp.results).length > 0);
     return finishedGPs.map((gp, i) => {
       const obj: any = { name: gp.name.split(' ')[0] };
-      if (vsUser1Obj) obj[vsUser1Obj.name] = vsUser1PositionData[i]?.'Posição' ?? null;
-      if (vsUser2Obj) obj[vsUser2Obj.name] = vsUser2PositionData[i]?.'Posição' ?? null;
+      if (vsUser1Obj) obj[vsUser1Obj.name] = vsUser1PositionData[i]?.['Posição'] ?? null;
+      if (vsUser2Obj) obj[vsUser2Obj.name] = vsUser2PositionData[i]?.['Posição'] ?? null;
       return obj;
     });
   }, [calendar, vsUser1Obj, vsUser2Obj, vsUser1PositionData, vsUser2PositionData]);
